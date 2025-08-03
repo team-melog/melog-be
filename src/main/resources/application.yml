@@ -1,0 +1,10 @@
+spring:
+    application:
+        name: melog
+    devtools:
+        restart:
+            enabled: true
+        livereload:
+            enabled: true
+server:
+    port: 8080

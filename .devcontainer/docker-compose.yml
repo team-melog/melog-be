@@ -1,0 +1,38 @@
+version: "3.8"
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: melog-dev
+    volumes:
+      - ..:/workspace:cached
+    command: sleep infinity
+    ports:
+      - "8080:8080"
+    networks:
+      - dev-net
+    depends_on:
+      - postgres
+
+  postgres:
+    image: postgres:15.4
+    container_name: local-postgres
+    environment:
+      POSTGRES_USER: melog
+      POSTGRES_PASSWORD: melog
+      POSTGRES_DB: melog
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    networks:
+      - dev-net
+
+volumes:
+  pgdata:
+
+networks:
+  dev-net:
+    name: dev-net
