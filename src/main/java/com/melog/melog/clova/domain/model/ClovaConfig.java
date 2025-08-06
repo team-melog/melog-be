@@ -14,7 +14,7 @@ public class ClovaConfig {
     private Map<String, ClovaProperties> config;
 
     public ClovaProperties getProperties(ClovaEndpoint ep) {
-        return config.get(ep.name().toUpperCase());
+        return config.get(ep.name());
     }
 
 }

@@ -2,10 +2,17 @@ package com.melog.melog.clova.domain.model.response;
 
 import lombok.Getter;
 
-@Getter
-public class ClovaStudioResponse implements ClovaApiResponse {
-    
-    private String text;
-    private String language;
+import java.util.Map;
 
+@Getter
+public class ClovaStudioResponse {
+
+    private Status status;
+    private Map<String, Object> result;
+
+    @Getter
+    public static class Status {
+        private String code;
+        private String message;
+    }
 }

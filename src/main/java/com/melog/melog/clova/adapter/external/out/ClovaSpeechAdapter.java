@@ -33,7 +33,7 @@ public class ClovaSpeechAdapter implements ClovaSpeechPort{
         HttpEntity<Object> entity = new HttpEntity<>(request.getText(), new HttpHeaders());
 
         ResponseEntity<ClovaSpeechResponse> response = restTemplate.exchange(
-                endpoint.getUrl(),
+                props.getUrl(),
                 HttpMethod.POST, // 이게 ClovaApiRequest에 있으면 좋음. 없으면 HttpMethod.POST로 고정
                 entity,
                 ClovaSpeechResponse.class);

@@ -7,6 +7,7 @@ import com.melog.melog.clova.application.port.out.ClovaStudioPort;
 import com.melog.melog.clova.domain.model.request.AnalyzeSentimentRequest;
 import com.melog.melog.clova.domain.model.request.ClovaStudioRequest;
 import com.melog.melog.clova.domain.model.response.AnalyzeSentimentResponse;
+import com.melog.melog.clova.domain.model.response.ClovaStudioResponse;
 
 import lombok.AllArgsConstructor;
 
@@ -20,12 +21,12 @@ public class AnalyzeSentimentService implements AnalyzeSentimentUseCase {
     public AnalyzeSentimentResponse execute(AnalyzeSentimentRequest request) {
 
         // Studio 스크립트 작성해야함.
-        clovaApiPort.sendRequest(
+        ClovaStudioResponse response = clovaApiPort.sendRequest(
                 ClovaStudioRequest.builder()
+                        .text(request.getText())
                         .build());
-        // 감정 분석 저장.
 
-        return AnalyzeSentimentResponse.builder().result("결과").build();
+        return AnalyzeSentimentResponse.builder().result(response.getResult().toString()).build();
     }
 
 }

@@ -18,25 +18,37 @@ import lombok.RequiredArgsConstructor;
 
 @Component
 @RequiredArgsConstructor
-public class ClovaStudioAdapter implements ClovaStudioPort{
+public class ClovaStudioAdapter implements ClovaStudioPort {
 
     private final RestTemplate restTemplate;
     private final ClovaConfig clovaConfig;
 
     @Override
-    public ClovaStudioResponse sendRequest(ClovaStudioRequest request){
+    public ClovaStudioResponse sendRequest(ClovaStudioRequest request) {
         ClovaEndpoint endpoint = ClovaEndpoint.STUDIO;
-        ClovaProperties props = clovaConfig.getConfig().get(endpoint);
+        ClovaProperties props = clovaConfig.getProperties(endpoint);
         if (props == null) {
             throw new IllegalArgumentException("No Clova config found for type: " + endpoint);
         }
-        HttpEntity<Object> entity = new HttpEntity<>(request.getText(), new HttpHeaders());
+
+        // HttpHeaders headers = new HttpHeaders();
+        // headers.setContentType(MediaType.APPLICATION_JSON);
+        // headers.setBearerAuth(props.getApiKey());
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.set("Content-Type", "application/json");
+        headers.set("Authorization", "Bearer " + props.getApiKey()); // ← 여기에 진짜 키가 들어가야 함
+
+        System.out.println(headers);
+        HttpEntity<Object> entity = new HttpEntity<>(request.getText(), headers);
 
         ResponseEntity<ClovaStudioResponse> response = restTemplate.exchange(
-                endpoint.getUrl(),
-                HttpMethod.POST, // 이게 ClovaApiRequest에 있으면 좋음. 없으면 HttpMethod.POST로 고정
+                props.getUrl(),
+                HttpMethod.GET,
                 entity,
                 ClovaStudioResponse.class);
+
+        System.out.println(response.getBody());
 
         return response.getBody();
     }
