@@ -30,21 +30,6 @@ public interface EmotionRecordRepository {
     Optional<EmotionRecord> findByUserAndDate(User user, LocalDate date);
     
     /**
-     * 사용자의 날짜 범위 감정 기록 조회
-     */
-    List<EmotionRecord> findByUserAndDateBetween(User user, LocalDate startDate, LocalDate endDate);
-    
-    /**
-     * 사용자의 최근 감정 기록 조회 (최신순)
-     */
-    List<EmotionRecord> findByUserOrderByDateDesc(User user);
-    
-    /**
-     * 사용자의 감정 기록 개수 조회
-     */
-    long countByUser(User user);
-    
-    /**
      * 감정 기록 삭제
      */
     void delete(EmotionRecord emotionRecord);

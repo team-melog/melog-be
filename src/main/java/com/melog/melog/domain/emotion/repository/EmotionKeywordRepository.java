@@ -24,16 +24,6 @@ public interface EmotionKeywordRepository {
     List<EmotionKeyword> findByRecord(EmotionRecord record);
     
     /**
-     * 감정 기록의 키워드들을 가중치 순으로 조회 (내림차순)
-     */
-    List<EmotionKeyword> findByRecordOrderByWeightDesc(EmotionRecord record);
-    
-    /**
-     * 특정 키워드로 조회
-     */
-    Optional<EmotionKeyword> findByRecordAndKeyword(EmotionRecord record, String keyword);
-    
-    /**
      * 감정 키워드 삭제
      */
     void delete(EmotionKeyword emotionKeyword);
