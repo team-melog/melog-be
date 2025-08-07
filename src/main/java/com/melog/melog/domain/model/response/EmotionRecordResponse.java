@@ -1,6 +1,5 @@
 package com.melog.melog.domain.model.response;
 
-import com.melog.melog.domain.emotion.EmotionType;
 import lombok.Builder;
 import lombok.Getter;
 
