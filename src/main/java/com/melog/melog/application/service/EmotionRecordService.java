@@ -3,8 +3,7 @@ package com.melog.melog.application.service;
 import com.melog.melog.application.port.in.EmotionRecordUseCase;
 import com.melog.melog.application.port.out.*;
 import com.melog.melog.domain.emotion.*;
-import com.melog.melog.domain.model.request.EmotionRecordCreateRequest;
-import com.melog.melog.domain.model.request.EmotionRecordUpdateRequest;
+import com.melog.melog.domain.model.request.*;
 import com.melog.melog.domain.model.response.*;
 import com.melog.melog.domain.user.User;
 import lombok.RequiredArgsConstructor;
@@ -12,6 +11,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
+import java.time.YearMonth;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -28,33 +28,36 @@ public class EmotionRecordService implements EmotionRecordUseCase {
 
     @Override
     @Transactional
-    public EmotionRecordResponse createEmotionRecord(Long userId, EmotionRecordCreateRequest request) {
+    public EmotionRecordResponse createEmotionRecord(String nickname, EmotionRecordCreateRequest request) {
         // 사용자 조회
-        User user = userPersistencePort.findById(userId)
-                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다: " + userId));
+        User user = userPersistencePort.findByNickname(nickname)
+                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다: " + nickname));
 
+        // 오늘 날짜로 감정 기록 생성
+        LocalDate today = LocalDate.now();
+        
         // 해당 날짜에 이미 기록이 있는지 확인
-        if (emotionRecordPersistencePort.existsByUserAndDate(user, request.getDate())) {
-            throw new IllegalArgumentException("해당 날짜에 이미 감정 기록이 존재합니다: " + request.getDate());
+        if (emotionRecordPersistencePort.existsByUserAndDate(user, today)) {
+            throw new IllegalArgumentException("오늘 이미 감정 기록이 존재합니다: " + today);
         }
 
         // 감정 기록 생성
         EmotionRecord emotionRecord = EmotionRecord.builder()
                 .user(user)
                 .text(request.getText())
-                .summary(request.getSummary())
-                .date(request.getDate())
+                .date(today)
                 .build();
 
         EmotionRecord savedRecord = emotionRecordPersistencePort.save(emotionRecord);
 
         // 사용자 선택 감정 저장
-        if (request.getSelectedEmotion() != null) {
+        if (request.getUserSelectedEmotion() != null) {
+            EmotionType emotionType = convertToEmotionType(request.getUserSelectedEmotion().getType());
             UserSelectedEmotion userSelectedEmotion = UserSelectedEmotion.builder()
                     .record(savedRecord)
-                    .emotionType(request.getSelectedEmotion())
-                    .percentage(request.getSelectedEmotionPercentage())
-                    .step(request.getSelectedEmotionStep())
+                    .emotionType(emotionType)
+                    .percentage(request.getUserSelectedEmotion().getPercentage())
+                    .step(2) // 기본값
                     .build();
             userSelectedEmotionPersistencePort.save(userSelectedEmotion);
         }
@@ -65,55 +68,71 @@ public class EmotionRecordService implements EmotionRecordUseCase {
         // - 키워드 추출
         // - 요약 생성
 
-        return getEmotionRecord(savedRecord.getId());
-    }
-
-    @Override
-    public EmotionRecordResponse getEmotionRecord(Long recordId) {
-        EmotionRecord record = emotionRecordPersistencePort.findById(recordId)
-                .orElseThrow(() -> new IllegalArgumentException("감정 기록을 찾을 수 없습니다: " + recordId));
-
-        return buildEmotionRecordResponse(record);
-    }
-
-    @Override
-    public List<EmotionRecordResponse> getEmotionRecordsByUser(Long userId) {
-        User user = userPersistencePort.findById(userId)
-                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다: " + userId));
-
-        List<EmotionRecord> records = emotionRecordPersistencePort.findByUser(user);
-
-        return records.stream()
-                .map(this::buildEmotionRecordResponse)
-                .collect(Collectors.toList());
-    }
-
-    @Override
-    public EmotionRecordResponse getEmotionRecordByUserAndDate(Long userId, LocalDate date) {
-        User user = userPersistencePort.findById(userId)
-                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다: " + userId));
-
-        EmotionRecord record = emotionRecordPersistencePort.findByUserAndDate(user, date)
-                .orElseThrow(() -> new IllegalArgumentException("해당 날짜의 감정 기록을 찾을 수 없습니다: " + date));
-
-        return buildEmotionRecordResponse(record);
+        return getEmotionRecord(nickname, savedRecord.getId());
     }
 
     @Override
     @Transactional
-    public EmotionRecordResponse updateEmotionRecord(Long recordId, EmotionRecordUpdateRequest request) {
+    public EmotionRecordResponse updateEmotionSelection(String nickname, Long recordId, EmotionRecordSelectRequest request) {
+        // 사용자 및 기록 조회
+        User user = userPersistencePort.findByNickname(nickname)
+                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다: " + nickname));
+        
         EmotionRecord record = emotionRecordPersistencePort.findById(recordId)
                 .orElseThrow(() -> new IllegalArgumentException("감정 기록을 찾을 수 없습니다: " + recordId));
 
-        record.updateRecord(request.getText(), request.getSummary());
+        // 기존 감정 점수 삭제
+        emotionScorePersistencePort.deleteByRecord(record);
+
+        // 새로운 감정 점수 저장
+        for (EmotionRecordSelectRequest.EmotionSelection selection : request.getEmotions()) {
+            EmotionScore emotionScore = EmotionScore.builder()
+                    .record(record)
+                    .emotionType(selection.getType())
+                    .percentage(selection.getPercentage())
+                    .step(2) // 기본값
+                    .build();
+            emotionScorePersistencePort.save(emotionScore);
+        }
+
+        return getEmotionRecord(nickname, recordId);
+    }
+
+    @Override
+    @Transactional
+    public EmotionRecordResponse updateEmotionText(String nickname, Long recordId, EmotionRecordTextUpdateRequest request) {
+        // 사용자 및 기록 조회
+        User user = userPersistencePort.findByNickname(nickname)
+                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다: " + nickname));
+        
+        EmotionRecord record = emotionRecordPersistencePort.findById(recordId)
+                .orElseThrow(() -> new IllegalArgumentException("감정 기록을 찾을 수 없습니다: " + recordId));
+
+        record.updateRecord(request.getText(), null);
         EmotionRecord updatedRecord = emotionRecordPersistencePort.save(record);
 
-        return buildEmotionRecordResponse(updatedRecord);
+        return getEmotionRecord(nickname, recordId);
+    }
+
+    @Override
+    public EmotionRecordResponse getEmotionRecord(String nickname, Long recordId) {
+        // 사용자 조회
+        User user = userPersistencePort.findByNickname(nickname)
+                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다: " + nickname));
+        
+        EmotionRecord record = emotionRecordPersistencePort.findById(recordId)
+                .orElseThrow(() -> new IllegalArgumentException("감정 기록을 찾을 수 없습니다: " + recordId));
+
+        return buildEmotionRecordResponse(record);
     }
 
     @Override
     @Transactional
-    public void deleteEmotionRecord(Long recordId) {
+    public void deleteEmotionRecord(String nickname, Long recordId) {
+        // 사용자 및 기록 조회
+        User user = userPersistencePort.findByNickname(nickname)
+                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다: " + nickname));
+        
         EmotionRecord record = emotionRecordPersistencePort.findById(recordId)
                 .orElseThrow(() -> new IllegalArgumentException("감정 기록을 찾을 수 없습니다: " + recordId));
 
@@ -126,10 +145,33 @@ public class EmotionRecordService implements EmotionRecordUseCase {
         emotionRecordPersistencePort.delete(record);
     }
 
+    @Override
+    public List<EmotionCalendarResponse> getEmotionCalendar(String nickname, YearMonth month) {
+        // TODO: 월별 캘린더 감정 리스트 조회 구현
+        throw new UnsupportedOperationException("아직 구현되지 않았습니다.");
+    }
+
+    @Override
+    public EmotionChartResponse getEmotionChart(String nickname, YearMonth month) {
+        // TODO: 월별 감정 분포 통계 구현
+        throw new UnsupportedOperationException("아직 구현되지 않았습니다.");
+    }
+
+    @Override
+    public EmotionInsightResponse getEmotionInsight(String nickname, YearMonth month) {
+        // TODO: 월별 키워드 및 한줄 요약 구현
+        throw new UnsupportedOperationException("아직 구현되지 않았습니다.");
+    }
+
+    @Override
+    public EmotionListResponse getEmotionList(String nickname, int page, int size) {
+        // TODO: 감정 기록 리스트 조회 (페이징) 구현
+        throw new UnsupportedOperationException("아직 구현되지 않았습니다.");
+    }
+
     private EmotionRecordResponse buildEmotionRecordResponse(EmotionRecord record) {
         // 사용자 정보
         UserResponse userResponse = UserResponse.builder()
-                .id(record.getUser().getId())
                 .nickname(record.getUser().getNickname())
                 .createdAt(record.getUser().getCreatedAt())
                 .build();
@@ -176,5 +218,17 @@ public class EmotionRecordService implements EmotionRecordUseCase {
                 .userSelectedEmotion(userSelectedEmotionResponse)
                 .emotionKeywords(emotionKeywordResponses)
                 .build();
+    }
+
+    private EmotionType convertToEmotionType(String type) {
+        switch (type) {
+            case "기쁨": return EmotionType.JOY;
+            case "분노": return EmotionType.ANGER;
+            case "슬픔": return EmotionType.SADNESS;
+            case "평온": return EmotionType.CALM;
+            case "설렘": return EmotionType.EXCITEMENT;
+            case "지침": return EmotionType.CONFUSION;
+            default: throw new IllegalArgumentException("지원하지 않는 감정 타입입니다: " + type);
+        }
     }
 } 
