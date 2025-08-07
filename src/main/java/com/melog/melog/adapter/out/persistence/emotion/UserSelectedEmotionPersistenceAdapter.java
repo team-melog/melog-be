@@ -1,16 +1,16 @@
-package com.melog.melog.infrastructure.persistence.emotion;
+package com.melog.melog.adapter.out.persistence.emotion;
 
+import com.melog.melog.application.port.out.UserSelectedEmotionPersistencePort;
 import com.melog.melog.domain.emotion.EmotionRecord;
 import com.melog.melog.domain.emotion.UserSelectedEmotion;
-import com.melog.melog.domain.emotion.repository.UserSelectedEmotionRepository;
 import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Repository;
+import org.springframework.stereotype.Component;
 
 import java.util.Optional;
 
-@Repository
+@Component
 @RequiredArgsConstructor
-public class UserSelectedEmotionRepositoryImpl implements UserSelectedEmotionRepository {
+public class UserSelectedEmotionPersistenceAdapter implements UserSelectedEmotionPersistencePort {
 
     private final UserSelectedEmotionJpaRepository userSelectedEmotionJpaRepository;
 

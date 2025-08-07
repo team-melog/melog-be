@@ -1,15 +1,15 @@
-package com.melog.melog.infrastructure.persistence.user;
+package com.melog.melog.adapter.out.persistence.user;
 
+import com.melog.melog.application.port.out.UserPersistencePort;
 import com.melog.melog.domain.user.User;
-import com.melog.melog.domain.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Repository;
+import org.springframework.stereotype.Component;
 
 import java.util.Optional;
 
-@Repository
+@Component
 @RequiredArgsConstructor
-public class UserRepositoryImpl implements UserRepository {
+public class UserPersistenceAdapter implements UserPersistencePort {
 
     private final UserJpaRepository userJpaRepository;
 

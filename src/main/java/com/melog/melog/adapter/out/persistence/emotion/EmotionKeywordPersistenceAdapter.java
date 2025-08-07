@@ -1,17 +1,17 @@
-package com.melog.melog.infrastructure.persistence.emotion;
+package com.melog.melog.adapter.out.persistence.emotion;
 
+import com.melog.melog.application.port.out.EmotionKeywordPersistencePort;
 import com.melog.melog.domain.emotion.EmotionKeyword;
 import com.melog.melog.domain.emotion.EmotionRecord;
-import com.melog.melog.domain.emotion.repository.EmotionKeywordRepository;
 import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Repository;
+import org.springframework.stereotype.Component;
 
 import java.util.List;
 import java.util.Optional;
 
-@Repository
+@Component
 @RequiredArgsConstructor
-public class EmotionKeywordRepositoryImpl implements EmotionKeywordRepository {
+public class EmotionKeywordPersistenceAdapter implements EmotionKeywordPersistencePort {
 
     private final EmotionKeywordJpaRepository emotionKeywordJpaRepository;
 
