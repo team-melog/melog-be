@@ -1,16 +1,9 @@
 package com.melog.melog.clova.adapter.external.out;
 
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpMethod;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
-import org.springframework.web.client.RestTemplate;
 
 import com.melog.melog.clova.application.port.out.ClovaSpeechPort;
-import com.melog.melog.clova.domain.model.ClovaConfig;
 import com.melog.melog.clova.domain.model.ClovaEndpoint;
-import com.melog.melog.clova.domain.model.ClovaProperties;
 import com.melog.melog.clova.domain.model.request.ClovaSpeechRequest;
 import com.melog.melog.clova.domain.model.response.ClovaSpeechResponse;
 
@@ -18,26 +11,27 @@ import lombok.RequiredArgsConstructor;
 
 @Component
 @RequiredArgsConstructor
-public class ClovaSpeechAdapter implements ClovaSpeechPort{
+public class ClovaSpeechAdapter implements ClovaSpeechPort {
 
-    private final RestTemplate restTemplate;
-    private final ClovaConfig clovaConfig;
+    private final ClovaApiAdapter clovaApiAdapter;
 
     @Override
-    public ClovaSpeechResponse sendRequest(ClovaSpeechRequest request){
-        ClovaEndpoint endpoint = ClovaEndpoint.SPEECH_STT;
-        ClovaProperties props = clovaConfig.getProperties(endpoint);
-        if (props == null) {
-            throw new IllegalArgumentException("No Clova config found for type: " + endpoint);
-        }
-        HttpEntity<Object> entity = new HttpEntity<>(request.getText(), new HttpHeaders());
+    public ClovaSpeechResponse sendSpeechRequest(ClovaSpeechRequest request) {
+        return clovaApiAdapter.sendRequest(
+                ClovaEndpoint.SPEECH_STT,
+                request,
+                ClovaSpeechResponse.class
+        );
+    }
 
-        ResponseEntity<ClovaSpeechResponse> response = restTemplate.exchange(
-                props.getUrl(),
-                HttpMethod.POST, // 이게 ClovaApiRequest에 있으면 좋음. 없으면 HttpMethod.POST로 고정
-                entity,
-                ClovaSpeechResponse.class);
-
-        return response.getBody();
+    /**
+     * 음성 합성 API 호출
+     */
+    public ClovaSpeechResponse sendTextToSpeechRequest(ClovaSpeechRequest request) {
+        return clovaApiAdapter.sendRequest(
+                ClovaEndpoint.SPEECH_TTS,
+                request,
+                ClovaSpeechResponse.class
+        );
     }
 }

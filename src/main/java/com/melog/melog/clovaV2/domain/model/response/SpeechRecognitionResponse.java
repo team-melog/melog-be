@@ -1,4 +1,4 @@
-package com.melog.melog.clova.domain.model.response;
+package com.melog.melog.clovaV2.domain.model.response;
 
 import java.util.List;
 
@@ -9,7 +9,7 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class ClovaSpeechResponse {
+public class SpeechRecognitionResponse {
     private String text;
     private List<Segment> segments;
     private Double confidence;

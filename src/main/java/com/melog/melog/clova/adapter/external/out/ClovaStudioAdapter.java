@@ -1,18 +1,14 @@
 package com.melog.melog.clova.adapter.external.out;
 
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpMethod;
-import org.springframework.http.ResponseEntity;
+import java.util.Map;
+
 import org.springframework.stereotype.Component;
-import org.springframework.web.client.RestTemplate;
 
 import com.melog.melog.clova.application.port.out.ClovaStudioPort;
-import com.melog.melog.clova.domain.model.ClovaConfig;
 import com.melog.melog.clova.domain.model.ClovaEndpoint;
-import com.melog.melog.clova.domain.model.ClovaProperties;
-import com.melog.melog.clova.domain.model.request.ClovaStudioRequest;
-import com.melog.melog.clova.domain.model.response.ClovaStudioResponse;
+import com.melog.melog.clova.domain.model.request.ClovaStudioChatRequest;
+import com.melog.melog.clova.domain.model.response.ClovaStudioChatResponse;
+import com.melog.melog.common.util.RestTemplateUtil;
 
 import lombok.RequiredArgsConstructor;
 
@@ -20,36 +16,39 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class ClovaStudioAdapter implements ClovaStudioPort {
 
-    private final RestTemplate restTemplate;
-    private final ClovaConfig clovaConfig;
+    private final ClovaApiAdapter clovaApiAdapter;
 
     @Override
-    public ClovaStudioResponse sendRequest(ClovaStudioRequest request) {
-        ClovaEndpoint endpoint = ClovaEndpoint.STUDIO;
-        ClovaProperties props = clovaConfig.getProperties(endpoint);
-        if (props == null) {
-            throw new IllegalArgumentException("No Clova config found for type: " + endpoint);
-        }
+    public ClovaStudioChatResponse sendChatRequest(ClovaStudioChatRequest request) {
+        return clovaApiAdapter.sendRequest(
+                ClovaEndpoint.STUDIO_CHAT,
+                request,
+                ClovaStudioChatResponse.class
+        );
+    }
 
-        // HttpHeaders headers = new HttpHeaders();
-        // headers.setContentType(MediaType.APPLICATION_JSON);
-        // headers.setBearerAuth(props.getApiKey());
+    /**
+     * 텍스트 생성 API 호출
+     */
+    public ClovaStudioChatResponse sendTextGenerationRequest(ClovaStudioChatRequest request) {
+        return clovaApiAdapter.sendRequest(
+                ClovaEndpoint.STUDIO_TEXT,
+                request,
+                ClovaStudioChatResponse.class
+        );
+    }
 
-        HttpHeaders headers = new HttpHeaders();
-        headers.set("Content-Type", "application/json");
-        headers.set("Authorization", "Bearer " + props.getApiKey()); // ← 여기에 진짜 키가 들어가야 함
-
-        System.out.println(headers);
-        HttpEntity<Object> entity = new HttpEntity<>(request.getText(), headers);
-
-        ResponseEntity<ClovaStudioResponse> response = restTemplate.exchange(
-                props.getUrl(),
-                HttpMethod.GET,
-                entity,
-                ClovaStudioResponse.class);
-
-        System.out.println(response.getBody());
-
-        return response.getBody();
+    /**
+     * 특정 모델 정보 조회 (Path Variable 사용)
+     */
+    public ClovaStudioChatResponse getModelInfo(String modelId) {
+        Object[] pathVariables = {modelId};
+        
+        return clovaApiAdapter.sendRequestWithPathVariables(
+                ClovaEndpoint.STUDIO_MODEL_INFO,
+                pathVariables,
+                null,
+                ClovaStudioChatResponse.class
+        );
     }
 }

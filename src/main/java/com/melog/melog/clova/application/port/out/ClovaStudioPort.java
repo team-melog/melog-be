@@ -1,8 +1,10 @@
 package com.melog.melog.clova.application.port.out;
 
-import com.melog.melog.clova.domain.model.request.ClovaStudioRequest;
-import com.melog.melog.clova.domain.model.response.ClovaStudioResponse;
+import com.melog.melog.clova.domain.model.request.ClovaStudioChatRequest;
+import com.melog.melog.clova.domain.model.response.ClovaStudioChatResponse;
 
 public interface ClovaStudioPort {
-    ClovaStudioResponse sendRequest(ClovaStudioRequest request);
+    ClovaStudioChatResponse sendChatRequest(ClovaStudioChatRequest request);
+    ClovaStudioChatResponse sendTextGenerationRequest(ClovaStudioChatRequest request);
+    ClovaStudioChatResponse getModelInfo(String modelId);
 }
