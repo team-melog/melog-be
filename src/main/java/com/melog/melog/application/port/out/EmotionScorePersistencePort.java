@@ -1,4 +1,4 @@
-package com.melog.melog.domain.emotion.repository;
+package com.melog.melog.application.port.out;
 
 import com.melog.melog.domain.emotion.EmotionRecord;
 import com.melog.melog.domain.emotion.EmotionScore;
@@ -7,7 +7,7 @@ import com.melog.melog.domain.emotion.EmotionType;
 import java.util.List;
 import java.util.Optional;
 
-public interface EmotionScoreRepository {
+public interface EmotionScorePersistencePort {
     
     /**
      * 감정 점수 저장

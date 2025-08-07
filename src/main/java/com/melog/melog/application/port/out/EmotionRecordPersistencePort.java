@@ -1,4 +1,4 @@
-package com.melog.melog.domain.emotion.repository;
+package com.melog.melog.application.port.out;
 
 import com.melog.melog.domain.emotion.EmotionRecord;
 import com.melog.melog.domain.user.User;
@@ -7,7 +7,7 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
-public interface EmotionRecordRepository {
+public interface EmotionRecordPersistencePort {
     
     /**
      * 감정 기록 저장

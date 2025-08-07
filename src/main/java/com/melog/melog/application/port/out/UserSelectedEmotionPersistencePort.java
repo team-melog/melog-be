@@ -1,11 +1,11 @@
-package com.melog.melog.domain.emotion.repository;
+package com.melog.melog.application.port.out;
 
 import com.melog.melog.domain.emotion.EmotionRecord;
 import com.melog.melog.domain.emotion.UserSelectedEmotion;
 
 import java.util.Optional;
 
-public interface UserSelectedEmotionRepository {
+public interface UserSelectedEmotionPersistencePort {
     
     /**
      * 사용자 선택 감정 저장

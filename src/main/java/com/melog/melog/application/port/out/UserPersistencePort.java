@@ -1,10 +1,10 @@
-package com.melog.melog.domain.user.repository;
+package com.melog.melog.application.port.out;
 
 import com.melog.melog.domain.user.User;
 
 import java.util.Optional;
 
-public interface UserRepository {
+public interface UserPersistencePort {
     
     /**
      * 사용자 저장
