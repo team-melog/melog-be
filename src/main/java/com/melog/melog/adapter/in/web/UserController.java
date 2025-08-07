@@ -2,6 +2,7 @@ package com.melog.melog.adapter.in.web;
 
 import com.melog.melog.application.port.in.UserUseCase;
 import com.melog.melog.domain.model.request.UserCreateRequest;
+import com.melog.melog.domain.model.request.UserUpdateRequest;
 import com.melog.melog.domain.model.response.UserResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -27,11 +28,32 @@ public class UserController {
 
     /**
      * 사용자 정보 조회
-     * GET /api/users/{userId}
+     * GET /api/users/{nickname}
      */
-    @GetMapping("/{userId}")
-    public ResponseEntity<UserResponse> getUserById(@PathVariable Long userId) {
-        UserResponse response = userUseCase.getUserById(userId);
+    @GetMapping("/{nickname}")
+    public ResponseEntity<UserResponse> getUser(@PathVariable String nickname) {
+        UserResponse response = userUseCase.getUserByNickname(nickname);
         return ResponseEntity.ok(response);
+    }
+
+    /**
+     * 사용자 닉네임 수정
+     * PUT /api/users/{nickname}
+     */
+    @PutMapping("/{nickname}")
+    public ResponseEntity<UserResponse> updateUser(@PathVariable String nickname, 
+                                                 @RequestBody UserUpdateRequest request) {
+        UserResponse response = userUseCase.updateUserNickname(nickname, request);
+        return ResponseEntity.ok(response);
+    }
+
+    /**
+     * 사용자 삭제
+     * DELETE /api/users/{nickname}
+     */
+    @DeleteMapping("/{nickname}")
+    public ResponseEntity<Void> deleteUser(@PathVariable String nickname) {
+        userUseCase.deleteUser(nickname);
+        return ResponseEntity.noContent().build();
     }
 } 
