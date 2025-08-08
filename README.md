@@ -22,7 +22,7 @@ Melog 백엔드 API 서버입니다. 감정 기록 및 분석을 위한 RESTful 
 
 ### 1. 작업 내용 요약
 - **도메인 엔티티 구현 완료**: ERD 기반으로 User, EmotionRecord, EmotionScore, UserSelectedEmotion, EmotionKeyword 엔티티 구현
-- **헥사고날 아키텍처 적용**: Ports & Adapters 패턴으로 프로젝트 구조 재구성
+- **도메인 중심 헥사고날 아키텍처 적용**: Ports & Adapters 패턴으로 도메인별 구조 재구성
 - **API 명세 구현 완료**: API 명세에 맞는 RESTful API 엔드포인트 구현
 - **Repository 계층 구현**: JPA 기반 데이터 접근 계층 구현
 - **Service 계층 구현**: 비즈니스 로직 처리 서비스 구현
@@ -51,9 +51,9 @@ flowchart TD
     H --> I[Database]
     
     D --> J[External APIs]
-    J --> K[NAVER STT API]
-    J --> L[NAVER Emotion Analysis API]
-    J --> M[NAVER Keyword Extraction API]
+    J --> K[CLOVA STT API]
+    J --> L[CLOVA Emotion Analysis API]
+    J --> M[CLOVA Keyword Extraction API]
     
     E --> N[Response DTO]
     N --> O[Client Response]
@@ -88,45 +88,91 @@ flowchart TD
 
 ```
 src/main/java/com/melog/melog/
-├── domain/                    # 도메인 계층
-│   ├── user/                 # 사용자 엔티티
-│   ├── emotion/              # 감정 관련 엔티티
-│   └── model/                # DTO 모델
-│       ├── request/          # 요청 DTO
-│       └── response/         # 응답 DTO
-├── application/              # 애플리케이션 계층
-│   ├── port/                 # 포트 인터페이스
-│   │   ├── in/              # 인바운드 포트 (UseCase)
-│   │   └── out/             # 아웃바운드 포트 (Persistence)
-│   └── service/             # 서비스 구현체
-├── adapter/                  # 어댑터 계층
-│   ├── in/                  # 인바운드 어댑터
-│   │   └── web/             # 웹 컨트롤러
-│   └── out/                 # 아웃바운드 어댑터
-│       └── persistence/     # 데이터 접근 어댑터
-└── MelogApplication.java    # 메인 애플리케이션
+├── user/                         # 사용자 도메인
+│   ├── domain/                  # 사용자 도메인 엔티티
+│   │   └── User.java
+│   ├── application/             # 사용자 애플리케이션 계층
+│   │   ├── port/
+│   │   │   ├── in/             # UseCase 인터페이스
+│   │   │   │   └── UserUseCase.java
+│   │   │   └── out/            # PersistencePort 인터페이스
+│   │   │       └── UserPersistencePort.java
+│   │   └── service/            # 서비스 구현체
+│   │       └── UserService.java
+│   └── adapter/                # 사용자 어댑터 계층
+│       ├── in/
+│       │   └── web/            # 컨트롤러
+│       │       └── UserController.java
+│       └── out/
+│           └── persistence/    # 데이터 접근 어댑터
+│               ├── UserPersistenceAdapter.java
+│               └── UserJpaRepository.java
+├── emotion/                     # 감정 도메인
+│   ├── domain/                  # 감정 도메인 엔티티
+│   │   ├── EmotionRecord.java
+│   │   ├── EmotionScore.java
+│   │   ├── UserSelectedEmotion.java
+│   │   ├── EmotionKeyword.java
+│   │   └── EmotionType.java
+│   ├── application/             # 감정 애플리케이션 계층
+│   │   ├── port/
+│   │   │   ├── in/             # UseCase 인터페이스
+│   │   │   │   └── EmotionRecordUseCase.java
+│   │   │   └── out/            # PersistencePort 인터페이스
+│   │   │       ├── EmotionRecordPersistencePort.java
+│   │   │       ├── EmotionScorePersistencePort.java
+│   │   │       ├── UserSelectedEmotionPersistencePort.java
+│   │   │       └── EmotionKeywordPersistencePort.java
+│   │   └── service/            # 서비스 구현체
+│   │       └── EmotionRecordService.java
+│   └── adapter/                # 감정 어댑터 계층
+│       ├── in/
+│       │   └── web/            # 컨트롤러
+│       │       └── EmotionRecordController.java
+│       └── out/
+│           └── persistence/    # 데이터 접근 어댑터
+│               ├── EmotionRecordPersistenceAdapter.java
+│               ├── EmotionRecordJpaRepository.java
+│               ├── EmotionScorePersistenceAdapter.java
+│               ├── EmotionScoreJpaRepository.java
+│               ├── UserSelectedEmotionPersistenceAdapter.java
+│               ├── UserSelectedEmotionJpaRepository.java
+│               ├── EmotionKeywordPersistenceAdapter.java
+│               └── EmotionKeywordJpaRepository.java
+└── common/                      # 공통 모듈
+    ├── model/                   # DTO 모델
+    │   ├── request/             # 요청 DTO
+    │   └── response/            # 응답 DTO
+    ├── exception/               # 예외 처리
+    │   └── GlobalExceptionHandler.java
+    └── config/                  # 설정
+        └── RestTemplateConfig.java
 ```
 
 ### 4. 주요 클래스 설명
 
-#### Domain Layer
+#### User Domain Layer
 - **User**: 사용자 엔티티 (id, nickname, createdAt)
+- **UserUseCase**: 사용자 관련 비즈니스 로직 인터페이스
+- **UserPersistencePort**: 사용자 데이터 접근 인터페이스
+- **UserService**: 사용자 서비스 구현체
+- **UserController**: 사용자 관련 REST API 컨트롤러
+- **UserPersistenceAdapter**: 사용자 데이터 접근 어댑터
+
+#### Emotion Domain Layer
 - **EmotionRecord**: 감정 기록 엔티티 (text, summary, date, user)
 - **EmotionScore**: 감정 분석 결과 엔티티 (emotionType, percentage, step)
 - **UserSelectedEmotion**: 사용자 선택 감정 엔티티
 - **EmotionKeyword**: 감정 키워드 엔티티
-
-#### Application Layer
-- **UserUseCase**: 사용자 관련 비즈니스 로직 인터페이스
+- **EmotionType**: 감정 타입 enum (기쁨, 분노, 슬픔, 평온, 설렘, 지침)
 - **EmotionRecordUseCase**: 감정 기록 관련 비즈니스 로직 인터페이스
-- **UserService**: 사용자 서비스 구현체
 - **EmotionRecordService**: 감정 기록 서비스 구현체
-
-#### Adapter Layer
-- **UserController**: 사용자 관련 REST API 컨트롤러
 - **EmotionRecordController**: 감정 기록 관련 REST API 컨트롤러
-- **UserPersistenceAdapter**: 사용자 데이터 접근 어댑터
-- **EmotionRecordPersistenceAdapter**: 감정 기록 데이터 접근 어댑터
+
+#### Common Layer
+- **DTO Models**: 요청/응답 데이터 전송 객체
+- **GlobalExceptionHandler**: 전역 예외 처리
+- **RestTemplateConfig**: 외부 API 연동 설정
 
 ### 5. API 엔드포인트
 
@@ -146,4 +192,12 @@ src/main/java/com/melog/melog/
 - `GET /api/users/{nickname}/emotions/summary/chart` - 차트 데이터
 - `GET /api/users/{nickname}/emotions/summary/insight` - 인사이트
 - `GET /api/users/{nickname}/emotions` - 감정 기록 리스트
+
+### 6. 도메인 중심 아키텍처의 장점
+
+1. **도메인 독립성**: 각 도메인(user, emotion)이 독립적으로 관리되어 도메인 간 의존성이 최소화됩니다.
+2. **확장성**: 새로운 도메인 추가 시 기존 도메인에 영향을 주지 않고 독립적으로 개발할 수 있습니다.
+3. **유지보수성**: 도메인별로 명확한 경계가 있어 코드 이해와 수정이 용이합니다.
+4. **팀 협업**: 도메인별로 팀을 나누어 병렬 개발이 가능합니다.
+5. **테스트 용이성**: 도메인별로 독립적인 테스트가 가능합니다.
 
