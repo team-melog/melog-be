@@ -1,8 +1,8 @@
 package com.melog.melog.adapter.out.persistence.emotion;
 
-import com.melog.melog.domain.emotion.EmotionRecord;
-import com.melog.melog.domain.emotion.EmotionScore;
-import com.melog.melog.domain.emotion.EmotionType;
+import com.melog.melog.emotion.domain.EmotionRecord;
+import com.melog.melog.emotion.domain.EmotionScore;
+import com.melog.melog.emotion.domain.EmotionType;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;

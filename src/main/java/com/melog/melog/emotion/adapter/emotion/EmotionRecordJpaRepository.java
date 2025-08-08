@@ -1,7 +1,7 @@
 package com.melog.melog.adapter.out.persistence.emotion;
 
-import com.melog.melog.domain.emotion.EmotionRecord;
-import com.melog.melog.domain.user.User;
+import com.melog.melog.emotion.domain.EmotionRecord;
+import com.melog.melog.user.domain.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 

@@ -1,8 +1,8 @@
-package com.melog.melog.adapter.out.persistence.emotion;
+package com.melog.melog.emotion.adapter.emotion;
 
-import com.melog.melog.application.port.out.EmotionRecordPersistencePort;
-import com.melog.melog.domain.emotion.EmotionRecord;
-import com.melog.melog.domain.user.User;
+import com.melog.melog.emotion.application.EmotionRecordPersistencePort;
+import com.melog.melog.emotion.domain.EmotionRecord;
+import com.melog.melog.user.domain.User;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 

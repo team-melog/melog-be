@@ -1,6 +1,6 @@
 package com.melog.melog.common.model.request;
 
-import com.melog.melog.domain.emotion.EmotionType;
+import com.melog.melog.emotion.domain.EmotionType;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
