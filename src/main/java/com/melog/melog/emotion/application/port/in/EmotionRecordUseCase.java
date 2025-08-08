@@ -1,4 +1,4 @@
-package com.melog.melog.emotion.application;
+package com.melog.melog.emotion.application.port.in;
 
 import com.melog.melog.common.model.request.EmotionRecordCreateRequest;
 import com.melog.melog.common.model.request.EmotionRecordSelectRequest;

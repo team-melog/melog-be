@@ -1,9 +1,11 @@
-package com.melog.melog.emotion.application;
+package com.melog.melog.emotion.application.service;
 
 import com.melog.melog.common.model.request.*;
 import com.melog.melog.common.model.response.*;
+import com.melog.melog.emotion.application.port.in.EmotionRecordUseCase;
+import com.melog.melog.emotion.application.port.out.*;
 import com.melog.melog.emotion.domain.*;
-import com.melog.melog.user.application.UserPersistencePort;
+import com.melog.melog.user.application.port.out.UserPersistencePort;
 import com.melog.melog.user.domain.User;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;

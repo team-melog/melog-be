@@ -1,8 +1,10 @@
-package com.melog.melog.user.application;
+package com.melog.melog.user.application.service;
 
 import com.melog.melog.common.model.request.UserCreateRequest;
 import com.melog.melog.common.model.request.UserUpdateRequest;
 import com.melog.melog.common.model.response.UserResponse;
+import com.melog.melog.user.application.port.in.UserUseCase;
+import com.melog.melog.user.application.port.out.UserPersistencePort;
 import com.melog.melog.user.domain.User;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;

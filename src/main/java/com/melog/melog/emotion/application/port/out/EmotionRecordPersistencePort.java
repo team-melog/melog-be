@@ -1,4 +1,4 @@
-package com.melog.melog.emotion.application;
+package com.melog.melog.emotion.application.service;
 
 import com.melog.melog.emotion.domain.EmotionRecord;
 import com.melog.melog.user.domain.User;

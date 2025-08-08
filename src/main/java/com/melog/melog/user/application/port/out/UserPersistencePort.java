@@ -1,4 +1,4 @@
-package com.melog.melog.user.application;
+package com.melog.melog.user.application.port.out;
 
 import com.melog.melog.user.domain.User;
 

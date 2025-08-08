@@ -1,4 +1,4 @@
-package com.melog.melog.user.application;
+package com.melog.melog.user.application.port.in;
 
 import com.melog.melog.common.model.request.UserCreateRequest;
 import com.melog.melog.common.model.request.UserUpdateRequest;
