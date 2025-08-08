@@ -1,8 +1,8 @@
-package com.melog.melog.application.port.out;
+package com.melog.melog.emotion.application;
 
-import com.melog.melog.domain.emotion.EmotionRecord;
-import com.melog.melog.domain.emotion.EmotionScore;
-import com.melog.melog.domain.emotion.EmotionType;
+import com.melog.melog.emotion.domain.EmotionRecord;
+import com.melog.melog.emotion.domain.EmotionScore;
+import com.melog.melog.emotion.domain.EmotionType;
 
 import java.util.List;
 import java.util.Optional;

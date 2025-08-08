@@ -1,13 +1,13 @@
-package com.melog.melog.application.port.in;
+package com.melog.melog.emotion.application;
 
-import com.melog.melog.domain.model.request.EmotionRecordCreateRequest;
-import com.melog.melog.domain.model.request.EmotionRecordSelectRequest;
-import com.melog.melog.domain.model.request.EmotionRecordTextUpdateRequest;
-import com.melog.melog.domain.model.response.EmotionRecordResponse;
-import com.melog.melog.domain.model.response.EmotionCalendarResponse;
-import com.melog.melog.domain.model.response.EmotionChartResponse;
-import com.melog.melog.domain.model.response.EmotionInsightResponse;
-import com.melog.melog.domain.model.response.EmotionListResponse;
+import com.melog.melog.common.model.request.EmotionRecordCreateRequest;
+import com.melog.melog.common.model.request.EmotionRecordSelectRequest;
+import com.melog.melog.common.model.request.EmotionRecordTextUpdateRequest;
+import com.melog.melog.common.model.response.EmotionRecordResponse;
+import com.melog.melog.common.model.response.EmotionCalendarResponse;
+import com.melog.melog.common.model.response.EmotionChartResponse;
+import com.melog.melog.common.model.response.EmotionInsightResponse;
+import com.melog.melog.common.model.response.EmotionListResponse;
 
 import java.time.YearMonth;
 import java.util.List;

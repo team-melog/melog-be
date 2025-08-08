@@ -1,8 +1,8 @@
-package com.melog.melog.adapter.in.web;
+package com.melog.melog.emotion.adapter;
 
-import com.melog.melog.application.port.in.EmotionRecordUseCase;
-import com.melog.melog.domain.model.request.*;
-import com.melog.melog.domain.model.response.*;
+import com.melog.melog.common.model.request.*;
+import com.melog.melog.common.model.response.*;
+import com.melog.melog.emotion.application.EmotionRecordUseCase;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;

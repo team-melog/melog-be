@@ -1,7 +1,7 @@
-package com.melog.melog.application.port.out;
+package com.melog.melog.emotion.application;
 
-import com.melog.melog.domain.emotion.EmotionRecord;
-import com.melog.melog.domain.user.User;
+import com.melog.melog.emotion.domain.EmotionRecord;
+import com.melog.melog.user.domain.User;
 
 import java.time.LocalDate;
 import java.util.List;
