@@ -10,6 +10,11 @@ spring:
         active: dev
     config:
         import: classpath:clova-properties.yml
+    servlet:
+        multipart:
+            max-file-size: 3MB
+            max-request-size: 3MB
+            enabled: true
 server:
     port: 8080
 

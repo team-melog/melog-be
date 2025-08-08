@@ -1,11 +1,7 @@
 package com.melog.melog.common.model;
 import java.util.Arrays;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonValue;
-
 public enum EmotionType {
-
     JOY("기쁨"),
     SADNESS("슬픔"),
     ANGER("분노"),
@@ -19,17 +15,14 @@ public enum EmotionType {
         this.displayName = displayName;
     }
 
-    @JsonValue
     public String getDisplayName() {
         return displayName;
     }
 
-    /** 한글명 → Enum 매핑 */
-    @JsonCreator
-    public static EmotionType fromDisplayName(String value) {
+    public static EmotionType fromNameIgnoreCase(String name) {
         return Arrays.stream(values())
-                .filter(e -> e.displayName.equals(value))
+                .filter(e -> e.name().equalsIgnoreCase(name))
                 .findFirst()
-                .orElseThrow(() -> new IllegalArgumentException("Unknown emotion type: " + value));
+                .orElseThrow(() -> new IllegalArgumentException("Invalid emotion type: " + name));
     }
 }

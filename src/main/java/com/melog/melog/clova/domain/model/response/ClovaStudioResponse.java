@@ -1,31 +1,24 @@
 package com.melog.melog.clova.domain.model.response;
 
-import java.util.List;
-
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.melog.melog.common.model.EmotionType;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
-import lombok.ToString;
+import lombok.*;
+
+import java.util.List;
 
 @Getter
-@Setter
-@ToString
 @Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class ClovaStudioResponse {
-
-    List<EmotionResult> emotionResults;
+    private List<EmotionResult> emotionResults;
 
     @Getter
-    @Setter
     @AllArgsConstructor
-    @NoArgsConstructor
     public static class EmotionResult {
         private EmotionType emotion;
-        private double percentage;
+        private int percentage;
     }
-
 }

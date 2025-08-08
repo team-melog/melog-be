@@ -11,6 +11,7 @@ import lombok.Setter;
 public class ClovaConfig {
     private SpeechProps speech;
     private StudioProps studio;
+    private StudioSpeechProps studioSpeech;
 
     @Getter @Setter
     public static class SpeechProps {
@@ -24,8 +25,14 @@ public class ClovaConfig {
     public static class StudioProps {
         private String baseUrl;
         private String apiKey;
-        private String apiKeyId;
         private String model;
+        private int timeoutMs = 8000;
+    }
+
+    @Getter @Setter
+    public static class StudioSpeechProps {
+        private String baseUrl;
+        private String apiKey;
         private int timeoutMs = 8000;
     }
 }

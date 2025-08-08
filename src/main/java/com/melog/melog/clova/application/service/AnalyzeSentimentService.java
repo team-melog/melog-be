@@ -1,6 +1,7 @@
 package com.melog.melog.clova.application.service;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import org.springframework.stereotype.Service;
@@ -33,17 +34,15 @@ public class AnalyzeSentimentService implements AnalyzeSentimentUseCase {
         final String nickname = request.getNickname();
         final String text = request.getText();
 
-        // 1) 프롬프트 prefix + USER 메시지
         List<PromptMessage> prompt = new ArrayList<>(buildPromptPrefix(objectMapper));
         prompt.add(new PromptMessage(MessangerType.USER, text));
 
         log.info("{}의 감정 분석 요청:", nickname);
         prompt.forEach(pm -> log.info(pm.toPrompt()));
 
-        // 2) 어댑터로 전달
         ClovaStudioRequest chatRequest = ClovaStudioRequest.builder()
                 .nickname(nickname)
-                .promptMessages(prompt) // 포트/어댑터에서 벤더 형식으로 변환
+                .promptMessages(prompt)
                 .build();
 
         ClovaStudioResponse studioRes = clovaStudioPort.sendRequest(chatRequest);
@@ -54,7 +53,6 @@ public class AnalyzeSentimentService implements AnalyzeSentimentUseCase {
     }
 
     /** ----- 프롬프트/샘플 관련 유틸 ----- */
-
     public static ClovaStudioResponse buildSampleResponse() {
         int size = EmotionType.values().length;
         int basePct = 100 / size;
@@ -63,10 +61,11 @@ public class AnalyzeSentimentService implements AnalyzeSentimentUseCase {
         List<ClovaStudioResponse.EmotionResult> results = new ArrayList<>();
         int idx = 0;
         for (EmotionType type : EmotionType.values()) {
-            int pct = basePct + (idx < remainder ? 1 : 0); // 합 100 유지
+            int pct = basePct + (idx < remainder ? 1 : 0);
             results.add(new ClovaStudioResponse.EmotionResult(type, pct));
             idx++;
         }
+
         return ClovaStudioResponse.builder()
                 .emotionResults(results)
                 .build();
@@ -74,30 +73,52 @@ public class AnalyzeSentimentService implements AnalyzeSentimentUseCase {
 
     private static String buildSampleJsonString(ObjectMapper om) {
         try {
+            EmotionType[] values = EmotionType.values();
+            int size = values.length;
+            int basePct = 100 / size;
+            int remainder = 100 % size;
+
+            List<ClovaStudioResponse.EmotionResult> sampleList = new ArrayList<>();
+            for (int i = 0; i < size; i++) {
+                int pct = basePct + (i < remainder ? 1 : 0);
+                sampleList.add(new ClovaStudioResponse.EmotionResult(values[i], pct));
+            }
+
+            ClovaStudioResponse sample = ClovaStudioResponse.builder()
+                    .emotionResults(sampleList)
+                    .build();
+
             return om.writerWithDefaultPrettyPrinter()
-                     .writeValueAsString(buildSampleResponse());
+                    .writeValueAsString(sample);
+
         } catch (JsonProcessingException e) {
-            // 실패 시 최소한의 예시라도 제공
             return """
-                   {"emotionResults":[{"emotion":"기쁨","percentage":50},{"emotion":"슬픔","percentage":50}]}
-                   """;
+                    {
+                      "emotionResults": [
+                        {"emotion": "JOY", "percentage": 50},
+                        {"emotion": "SADNESS", "percentage": 50}
+                      ]
+                    }
+                    """;
         }
     }
 
     private static List<PromptMessage> buildPromptPrefix(ObjectMapper om) {
-        String emotionsKorean = String.join(", ",
-                // EmotionType 이 @JsonValue로 한글을 내보내지 않는다면 toDisplayName() 등으로 바꿔주세요
-                List.of(EmotionType.values()).stream().map(Enum::name).toList()
+        String emotionsEnglish = String.join(", ",
+                Arrays.stream(EmotionType.values()).map(Enum::name).toList());
+
+        String systemContent = String.join("\n",
+                "You are an API that analyzes the user's emotion from text.",
+                "Classify the emotion into the following 6 categories: " + emotionsEnglish + ".",
+                "Return ONLY a raw JSON object with a key 'emotionResults'.",
+                "Each item must include an 'emotion' (uppercase string) and its 'percentage' (integer).",
+                "The sum of all percentages MUST equal exactly 100.",
+                "⚠️ DO NOT use markdown formatting. DO NOT wrap the JSON in triple backticks or label it with 'json'.",
+                "DO NOT include any commentary or explanation. Respond with pure JSON only.",
+                "Example response:",
+                buildSampleJsonString(om) // This already returns pure JSON string
         );
 
-        return List.of(
-            new PromptMessage(MessangerType.SYSTEM, "다음 사용자 텍스트의 감정을 이하 6가지 감정으로 분석하십시오."),
-            // 사람이 읽을 수 있게 한글/영문 중 원하는 표기 선택
-            new PromptMessage(MessangerType.SYSTEM, "감정 목록: " + emotionsKorean),
-            new PromptMessage(MessangerType.SYSTEM,
-                "반환 형식은 반드시 JSON만 출력하고, 각 감정의 percentage는 0~100 정수, 총합 100이 되도록 하세요."),
-            new PromptMessage(MessangerType.SYSTEM, "설명/부연 금지."),
-            new PromptMessage(MessangerType.SYSTEM, "예시 : " + buildSampleJsonString(om))
-        );
+        return List.of(new PromptMessage(MessangerType.SYSTEM, systemContent));
     }
 }
