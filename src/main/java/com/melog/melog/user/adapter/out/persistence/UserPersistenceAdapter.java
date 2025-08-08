@@ -1,6 +1,6 @@
 package com.melog.melog.user.adapter.user;
 
-import com.melog.melog.user.application.UserPersistencePort;
+import com.melog.melog.user.application.port.out.UserPersistencePort;
 import com.melog.melog.user.domain.User;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;

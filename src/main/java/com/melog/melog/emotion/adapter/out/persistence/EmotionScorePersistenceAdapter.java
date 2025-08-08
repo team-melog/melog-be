@@ -1,6 +1,6 @@
 package com.melog.melog.emotion.adapter.emotion;
 
-import com.melog.melog.emotion.application.EmotionScorePersistencePort;
+import com.melog.melog.emotion.application.port.out.*PersistencePort;
 import com.melog.melog.emotion.domain.EmotionRecord;
 import com.melog.melog.emotion.domain.EmotionScore;
 import com.melog.melog.emotion.domain.EmotionType;

@@ -1,6 +1,6 @@
 package com.melog.melog.emotion.adapter.emotion;
 
-import com.melog.melog.emotion.application.EmotionKeywordPersistencePort;
+import com.melog.melog.emotion.application.port.out.*PersistencePort;
 import com.melog.melog.emotion.domain.EmotionKeyword;
 import com.melog.melog.emotion.domain.EmotionRecord;
 import lombok.RequiredArgsConstructor;
