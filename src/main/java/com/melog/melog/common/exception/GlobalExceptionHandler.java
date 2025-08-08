@@ -1,4 +1,4 @@
-package com.melog.melog.adapter.in.web;
+package com.melog.melog.common.exception;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
