@@ -1,18 +1,31 @@
 package com.melog.melog.clova.domain.model.response;
 
-import lombok.Getter;
+import java.util.List;
 
-import java.util.Map;
+import com.melog.melog.common.model.EmotionType;
+
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.ToString;
 
 @Getter
+@Setter
+@ToString
+@Builder
 public class ClovaStudioResponse {
 
-    private Status status;
-    private Map<String, Object> result;
+    List<EmotionResult> emotionResults;
 
     @Getter
-    public static class Status {
-        private String code;
-        private String message;
+    @Setter
+    @AllArgsConstructor
+    @NoArgsConstructor
+    public static class EmotionResult {
+        private EmotionType emotion;
+        private double percentage;
     }
+
 }

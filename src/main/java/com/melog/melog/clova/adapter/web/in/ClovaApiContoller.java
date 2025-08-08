@@ -8,9 +8,9 @@ import org.springframework.web.bind.annotation.RestController;
 import com.melog.melog.clova.application.port.in.AnalyzeSentimentUseCase;
 import com.melog.melog.clova.application.port.in.SpeechSttUseCase;
 import com.melog.melog.clova.domain.model.request.AnalyzeSentimentRequest;
-import com.melog.melog.clova.domain.model.request.SpeechSttRequest;
+import com.melog.melog.clova.domain.model.request.SpeechToTextRequest;
 import com.melog.melog.clova.domain.model.response.AnalyzeSentimentResponse;
-import com.melog.melog.clova.domain.model.response.SpeechSttResponse;
+import com.melog.melog.clova.domain.model.response.SpeechToTextResponse;
 
 import lombok.RequiredArgsConstructor;
 
@@ -23,12 +23,16 @@ public class ClovaApiContoller {
     private final SpeechSttUseCase speechSttUseCase;
     
     @PostMapping("/analyze")
-    public AnalyzeSentimentResponse analyzeSentiment(@RequestBody AnalyzeSentimentRequest request) {
+    public AnalyzeSentimentResponse analyzeSentiment(
+        @RequestBody AnalyzeSentimentRequest request
+    ) {
         return analyzeSentimentUseCase.execute(request);
     }
 
     @PostMapping("/speech")
-    public SpeechSttResponse speechToText(@RequestBody SpeechSttRequest request) {
+    public SpeechToTextResponse speechToText(
+        @RequestBody SpeechToTextRequest request
+    ) {
         return speechSttUseCase.execute(request);
     }
 

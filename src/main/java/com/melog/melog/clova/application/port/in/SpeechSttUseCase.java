@@ -1,10 +1,10 @@
 package com.melog.melog.clova.application.port.in;
 
-import com.melog.melog.clova.domain.model.request.SpeechSttRequest;
-import com.melog.melog.clova.domain.model.response.SpeechSttResponse;
+import com.melog.melog.clova.domain.model.request.SpeechToTextRequest;
+import com.melog.melog.clova.domain.model.response.SpeechToTextResponse;
 
 public interface SpeechSttUseCase {
 
-    SpeechSttResponse execute(SpeechSttRequest request);
+    SpeechToTextResponse execute(SpeechToTextRequest request);
 
 }

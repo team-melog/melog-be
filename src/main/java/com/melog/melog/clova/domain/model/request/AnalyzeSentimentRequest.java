@@ -6,5 +6,6 @@ import lombok.Setter;
 @Getter
 @Setter
 public class AnalyzeSentimentRequest {
+    private String nickname;
     private String text;
 }

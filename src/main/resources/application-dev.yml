@@ -1,6 +1,6 @@
 spring:
   datasource:
-    url: jdbc:postgresql://postgres/melog
+    url: jdbc:postgresql://localhost:5431/melog
     username: melog
     password: melog
     driver-class-name: org.postgresql.Driver

@@ -1,37 +1,29 @@
 package com.melog.melog.clova.adapter.external.out;
 
+
 import org.springframework.stereotype.Component;
+import org.springframework.web.client.RestTemplate;
 
 import com.melog.melog.clova.application.port.out.ClovaSpeechPort;
-import com.melog.melog.clova.domain.model.ClovaEndpoint;
-import com.melog.melog.clova.domain.model.request.ClovaSpeechRequest;
-import com.melog.melog.clova.domain.model.response.ClovaSpeechResponse;
+import com.melog.melog.clova.config.ClovaConfig.SpeechProps;
+import com.melog.melog.clova.domain.model.request.ClovaSttRequest;
+import com.melog.melog.clova.domain.model.response.ClovaSttResponse;
 
 import lombok.RequiredArgsConstructor;
-
 @Component
 @RequiredArgsConstructor
 public class ClovaSpeechAdapter implements ClovaSpeechPort {
-
-    private final ClovaApiAdapter clovaApiAdapter;
+    private final RestTemplate restTemplate;
+    // private final SpeechProps speechProps;
 
     @Override
-    public ClovaSpeechResponse sendSpeechRequest(ClovaSpeechRequest request) {
-        return clovaApiAdapter.sendRequest(
-                ClovaEndpoint.SPEECH_STT,
-                request,
-                ClovaSpeechResponse.class
-        );
+    public ClovaSttResponse sendSpeechToTextRequest(ClovaSttRequest request) {
+
+
+        return ClovaSttResponse.builder()
+                .text("Sample Transcribed Text") // Placeholder for actual transcription result
+                .confidence(0.95) // Placeholder for confidence score
+                .build();
     }
 
-    /**
-     * 음성 합성 API 호출
-     */
-    public ClovaSpeechResponse sendTextToSpeechRequest(ClovaSpeechRequest request) {
-        return clovaApiAdapter.sendRequest(
-                ClovaEndpoint.SPEECH_TTS,
-                request,
-                ClovaSpeechResponse.class
-        );
-    }
 }
