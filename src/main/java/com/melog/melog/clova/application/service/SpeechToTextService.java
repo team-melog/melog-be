@@ -47,6 +47,12 @@ public class SpeechToTextService implements SpeechToTextUseCase {
         }
     }
     
+    @Override
+    public String recognizeToText(MultipartFile audio, String language) {
+        SttResponse response = recognize(audio, language);
+        return response.getText(); // SttResponse에서 텍스트 추출
+    }
+    
     
     private void validateAudioFile(MultipartFile audio) {
         if (audio == null || audio.isEmpty()) {

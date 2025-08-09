@@ -8,4 +8,9 @@ public interface SpeechToTextUseCase {
 
     SttResponse recognize(MultipartFile audio, String language);
     
+    /**
+     * 음성 파일을 텍스트로 변환 (간단 버전)
+     */
+    String recognizeToText(MultipartFile audio, String language);
+    
 }

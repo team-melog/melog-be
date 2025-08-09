@@ -1,10 +1,10 @@
 package com.melog.melog.clova.domain.model.request;
 
+import lombok.Builder;
 import lombok.Getter;
-import lombok.Setter;
 
 @Getter
-@Setter
+@Builder
 public class AnalyzeSentimentRequest {
     private String nickname;
     private String text;

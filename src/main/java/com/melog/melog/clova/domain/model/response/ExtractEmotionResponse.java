@@ -2,7 +2,7 @@ package com.melog.melog.clova.domain.model.response;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.melog.melog.common.model.EmotionType;
+import com.melog.melog.emotion.domain.EmotionType;
 
 import lombok.*;
 
@@ -14,6 +14,8 @@ import java.util.List;
 @AllArgsConstructor
 public class ExtractEmotionResponse {
     private List<EmotionResult> emotionResults;
+    private String summary;
+    private List<String> keywords;
 
     @Getter
     @AllArgsConstructor

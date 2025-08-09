@@ -12,5 +12,7 @@ import lombok.Getter;
 public class AnalyzeSentimentResponse {
     
     private List<EmotionResult> emotionResults;
+    private String summary;
+    private List<String> keywords;
 
 }

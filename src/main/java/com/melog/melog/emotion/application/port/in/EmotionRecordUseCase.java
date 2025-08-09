@@ -11,13 +11,19 @@ import com.melog.melog.emotion.domain.model.response.EmotionListResponse;
 
 import java.time.YearMonth;
 import java.util.List;
+import org.springframework.web.multipart.MultipartFile;
 
 public interface EmotionRecordUseCase {
     
     /**
-     * 감정 등록 및 분석 요청
+     * 감정 등록 및 분석 요청 (텍스트)
      */
     EmotionRecordResponse createEmotionRecord(String nickname, EmotionRecordCreateRequest request);
+    
+    /**
+     * 감정 등록 및 분석 요청 (음성 파일)
+     */
+    EmotionRecordResponse createEmotionRecordWithAudio(String nickname, MultipartFile audioFile, String userSelectedEmotionJson);
     
     /**
      * 감정 수정(최종 선택 확정)
