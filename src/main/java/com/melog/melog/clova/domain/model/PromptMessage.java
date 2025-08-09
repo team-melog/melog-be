@@ -12,7 +12,6 @@ public class PromptMessage {
     String content;
 
     public String toPrompt() {
-        // SYSTEM/USER/ASSISTANT를 명령어 형태로 변환
         return role.name().toLowerCase() + " >> " + (content == null ? "" : content.strip());
     }
 }

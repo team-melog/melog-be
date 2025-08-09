@@ -13,11 +13,11 @@ import org.springframework.web.client.RestTemplate;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.melog.melog.clova.application.port.out.ClovaSpeechPort;
+import com.melog.melog.clova.application.port.out.SpeechToTextPort;
 import com.melog.melog.clova.config.ClovaConfig;
 import com.melog.melog.clova.config.ClovaConfig.SpeechProps;
-import com.melog.melog.clova.domain.model.request.ClovaSttRequest;
-import com.melog.melog.clova.domain.model.response.ClovaSttResponse;
+import com.melog.melog.clova.domain.model.request.SttRequest;
+import com.melog.melog.clova.domain.model.response.SttResponse;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -25,14 +25,14 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class ClovaSpeechAdapter implements ClovaSpeechPort {
+public class SpeechToTextAdapter implements SpeechToTextPort {
     
     private final RestTemplate restTemplate;
     private final ClovaConfig clovaConfig;
     private final ObjectMapper objectMapper;
 
     @Override
-    public ClovaSttResponse sendSpeechToTextRequest(ClovaSttRequest request) {
+    public SttResponse sendSpeechToTextRequest(SttRequest request) {
         final SpeechProps props = clovaConfig.getSpeech();
         final String requestId = UUID.randomUUID().toString();
 
@@ -63,7 +63,7 @@ public class ClovaSpeechAdapter implements ClovaSpeechPort {
 
             log.info("[CSR] SUCCESS rid={} text={}", requestId, recognizedText);
 
-            return ClovaSttResponse.builder()
+            return SttResponse.builder()
                     .text(recognizedText)
                     .confidence(null) // CSR API doesn't provide confidence in response
                     .language(request.getLanguage())
@@ -79,7 +79,7 @@ public class ClovaSpeechAdapter implements ClovaSpeechPort {
         }
     }
 
-    private String buildUrl(ClovaSttRequest request) {
+    private String buildUrl(SttRequest request) {
         String language = mapLanguage(request.getLanguage());
         return "https://naveropenapi.apigw.ntruss.com/recog/v1/stt?lang=" + language;
     }

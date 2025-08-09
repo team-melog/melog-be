@@ -18,13 +18,13 @@ import org.springframework.web.client.RestTemplate;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.melog.melog.clova.application.port.out.ClovaStudioPort;
+import com.melog.melog.clova.application.port.out.ExtractEmotionPort;
 import com.melog.melog.clova.config.ClovaConfig;
 import com.melog.melog.clova.config.ClovaConfig.StudioProps;
 import com.melog.melog.clova.domain.model.PromptMessage;
-import com.melog.melog.clova.domain.model.request.ClovaStudioRequest;
-import com.melog.melog.clova.domain.model.response.ClovaStudioResponse;
-import com.melog.melog.clova.domain.model.response.ClovaStudioResponse.EmotionResult;
+import com.melog.melog.clova.domain.model.request.ExtractEmotionRequest;
+import com.melog.melog.clova.domain.model.response.ExtractEmotionResponse;
+import com.melog.melog.clova.domain.model.response.ExtractEmotionResponse.EmotionResult;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -32,14 +32,14 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class ClovaStudioAdapter implements ClovaStudioPort {
+public class ExtractEmotionAdapter implements ExtractEmotionPort {
 
     private final RestTemplate restTemplate;
     private final ClovaConfig clovaConfig;
     private final ObjectMapper objectMapper;
 
     @Override
-    public ClovaStudioResponse sendRequest(ClovaStudioRequest request) {
+    public ExtractEmotionResponse sendRequest(ExtractEmotionRequest request) {
         StudioProps props = clovaConfig.getStudio();
         String requestId = UUID.randomUUID().toString();
 
@@ -59,8 +59,6 @@ public class ClovaStudioAdapter implements ClovaStudioPort {
             JsonNode messageNode = root.path("result").path("message");
             String contentJson = messageNode.path("content").asText();
 
-            System.out.println("🔵 content JSON string: " + contentJson);
-
             // content는 JSON 문자열이므로 다시 파싱
             JsonNode contentNode = objectMapper.readTree(contentJson);
             JsonNode emotionNode = contentNode.path("emotionResults");
@@ -70,7 +68,7 @@ public class ClovaStudioAdapter implements ClovaStudioPort {
                     new TypeReference<>() {
                     });
 
-            return ClovaStudioResponse.builder()
+            return ExtractEmotionResponse.builder()
                     .emotionResults(parsed)
                     .build();
 
@@ -93,7 +91,7 @@ public class ClovaStudioAdapter implements ClovaStudioPort {
         return headers;
     }
 
-    private Map<String, Object> buildPayload(ClovaStudioRequest request) {
+    private Map<String, Object> buildPayload(ExtractEmotionRequest request) {
         Map<String, Object> payload = new HashMap<>();
         payload.put("messages", toV3Messages(request.getPromptMessages()));
         payload.put("thinking", Map.of("effort", "low"));

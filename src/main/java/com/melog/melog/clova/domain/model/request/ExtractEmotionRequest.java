@@ -14,7 +14,7 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class ClovaStudioRequest {
+public class ExtractEmotionRequest {
 
     private String nickname;
     private List<PromptMessage> promptMessages; // 사용자 메시지 목록

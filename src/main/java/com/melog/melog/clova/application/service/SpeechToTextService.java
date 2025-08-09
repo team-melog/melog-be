@@ -6,22 +6,18 @@ import java.util.List;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
-import com.melog.melog.clova.application.port.in.SpeechSttUseCase;
-import com.melog.melog.clova.application.port.out.ClovaSpeechPort;
-import com.melog.melog.clova.application.port.out.ClovaStudioSpeechPort;
-import com.melog.melog.clova.domain.model.request.ClovaSttRequest;
-import com.melog.melog.clova.domain.model.request.SpeechToTextRequest;
-import com.melog.melog.clova.domain.model.response.ClovaSttResponse;
-import com.melog.melog.clova.domain.model.response.SpeechToTextResponse;
+import com.melog.melog.clova.application.port.in.SpeechToTextUseCase;
+import com.melog.melog.clova.application.port.out.SpeechToTextPort;
+import com.melog.melog.clova.domain.model.request.SttRequest;
+import com.melog.melog.clova.domain.model.response.SttResponse;
 
 import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor
-public class SpeechToTextService implements SpeechSttUseCase {
+public class SpeechToTextService implements SpeechToTextUseCase {
 
-    private final ClovaSpeechPort clovaSpeechPort;
-    private final ClovaStudioSpeechPort clovaStudioSpeechPort;
+    private final SpeechToTextPort clovaSpeechPort;
     
     private static final long MAX_FILE_SIZE = 3 * 1024 * 1024; // 3MB in bytes
     private static final List<String> ALLOWED_CONTENT_TYPES = Arrays.asList(
@@ -30,20 +26,7 @@ public class SpeechToTextService implements SpeechSttUseCase {
     );
 
     @Override
-    public SpeechToTextResponse execute(SpeechToTextRequest request) {
-        ClovaSttRequest speechRequest = ClovaSttRequest.builder()
-                .build();
-
-        ClovaSttResponse response = clovaSpeechPort.sendSpeechToTextRequest(speechRequest);
-
-        return SpeechToTextResponse.builder()
-                .text(response.getText())
-                .language(response.getLanguage())
-                .build();
-    }
-    
-    @Override
-    public ClovaSttResponse recognize(MultipartFile audio, String language) {
+    public SttResponse recognize(MultipartFile audio, String language) {
         validateAudioFile(audio);
         
         try {
@@ -51,7 +34,7 @@ public class SpeechToTextService implements SpeechSttUseCase {
             byte[] audioBytes = audio.getBytes();
             
             // Create CSR request with binary data
-            ClovaSttRequest request = ClovaSttRequest.builder()
+            SttRequest request = SttRequest.builder()
                     .audioBinary(audioBytes)
                     .language(language)
                     .audioFormat(extractAudioFormat(audio))
@@ -64,27 +47,6 @@ public class SpeechToTextService implements SpeechSttUseCase {
         }
     }
     
-    @Override
-    public ClovaSttResponse recognizeShortSentence(MultipartFile audio, String language) {
-        validateAudioFile(audio);
-        
-        try {
-            // Get raw binary audio data for Clova Studio Speech API
-            byte[] audioBytes = audio.getBytes();
-            
-            // Create request with binary data for Clova Studio Speech
-            ClovaSttRequest request = ClovaSttRequest.builder()
-                    .audioBinary(audioBytes)
-                    .language(language)
-                    .audioFormat(extractAudioFormat(audio))
-                    .build();
-            
-            return clovaStudioSpeechPort.sendShortSentenceSttRequest(request);
-            
-        } catch (Exception e) {
-            throw new RuntimeException("Failed to process audio file for Clova Studio Speech: " + e.getMessage(), e);
-        }
-    }
     
     private void validateAudioFile(MultipartFile audio) {
         if (audio == null || audio.isEmpty()) {

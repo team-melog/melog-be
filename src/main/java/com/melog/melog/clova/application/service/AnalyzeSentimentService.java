@@ -9,13 +9,13 @@ import org.springframework.stereotype.Service;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.melog.melog.clova.application.port.in.AnalyzeSentimentUseCase;
-import com.melog.melog.clova.application.port.out.ClovaStudioPort;
+import com.melog.melog.clova.application.port.out.ExtractEmotionPort;
 import com.melog.melog.clova.domain.model.MessangerType;
 import com.melog.melog.clova.domain.model.PromptMessage;
 import com.melog.melog.clova.domain.model.request.AnalyzeSentimentRequest;
-import com.melog.melog.clova.domain.model.request.ClovaStudioRequest;
+import com.melog.melog.clova.domain.model.request.ExtractEmotionRequest;
 import com.melog.melog.clova.domain.model.response.AnalyzeSentimentResponse;
-import com.melog.melog.clova.domain.model.response.ClovaStudioResponse;
+import com.melog.melog.clova.domain.model.response.ExtractEmotionResponse;
 import com.melog.melog.common.model.EmotionType;
 
 import lombok.RequiredArgsConstructor;
@@ -26,7 +26,7 @@ import lombok.extern.slf4j.Slf4j;
 @RequiredArgsConstructor
 public class AnalyzeSentimentService implements AnalyzeSentimentUseCase {
 
-    private final ClovaStudioPort clovaStudioPort;
+    private final ExtractEmotionPort clovaStudioPort;
     private final ObjectMapper objectMapper;
 
     @Override
@@ -40,12 +40,12 @@ public class AnalyzeSentimentService implements AnalyzeSentimentUseCase {
         log.info("{}의 감정 분석 요청:", nickname);
         prompt.forEach(pm -> log.info(pm.toPrompt()));
 
-        ClovaStudioRequest chatRequest = ClovaStudioRequest.builder()
+        ExtractEmotionRequest chatRequest = ExtractEmotionRequest.builder()
                 .nickname(nickname)
                 .promptMessages(prompt)
                 .build();
 
-        ClovaStudioResponse studioRes = clovaStudioPort.sendRequest(chatRequest);
+        ExtractEmotionResponse studioRes = clovaStudioPort.sendRequest(chatRequest);
 
         return AnalyzeSentimentResponse.builder()
                 .emotionResults(studioRes.getEmotionResults())
@@ -53,20 +53,20 @@ public class AnalyzeSentimentService implements AnalyzeSentimentUseCase {
     }
 
     /** ----- 프롬프트/샘플 관련 유틸 ----- */
-    public static ClovaStudioResponse buildSampleResponse() {
+    public static ExtractEmotionResponse buildSampleResponse() {
         int size = EmotionType.values().length;
         int basePct = 100 / size;
         int remainder = 100 % size;
 
-        List<ClovaStudioResponse.EmotionResult> results = new ArrayList<>();
+        List<ExtractEmotionResponse.EmotionResult> results = new ArrayList<>();
         int idx = 0;
         for (EmotionType type : EmotionType.values()) {
             int pct = basePct + (idx < remainder ? 1 : 0);
-            results.add(new ClovaStudioResponse.EmotionResult(type, pct));
+            results.add(new ExtractEmotionResponse.EmotionResult(type, pct));
             idx++;
         }
 
-        return ClovaStudioResponse.builder()
+        return ExtractEmotionResponse.builder()
                 .emotionResults(results)
                 .build();
     }
@@ -78,13 +78,13 @@ public class AnalyzeSentimentService implements AnalyzeSentimentUseCase {
             int basePct = 100 / size;
             int remainder = 100 % size;
 
-            List<ClovaStudioResponse.EmotionResult> sampleList = new ArrayList<>();
+            List<ExtractEmotionResponse.EmotionResult> sampleList = new ArrayList<>();
             for (int i = 0; i < size; i++) {
                 int pct = basePct + (i < remainder ? 1 : 0);
-                sampleList.add(new ClovaStudioResponse.EmotionResult(values[i], pct));
+                sampleList.add(new ExtractEmotionResponse.EmotionResult(values[i], pct));
             }
 
-            ClovaStudioResponse sample = ClovaStudioResponse.builder()
+            ExtractEmotionResponse sample = ExtractEmotionResponse.builder()
                     .emotionResults(sampleList)
                     .build();
 

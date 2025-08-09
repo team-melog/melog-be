@@ -9,7 +9,7 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class ClovaSttRequest {
+public class SttRequest {
     private String audioData; // Base64 인코딩된 오디오 데이터 (deprecated)
     private byte[] audioBinary; // Raw binary audio data for CSR API
     private String audioFormat; // "wav", "mp3", "m4a" 등

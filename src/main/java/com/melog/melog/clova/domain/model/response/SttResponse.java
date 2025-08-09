@@ -11,7 +11,7 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class ClovaSttResponse {
+public class SttResponse {
     private String text;
     private List<Segment> segments;
     private Double confidence;
