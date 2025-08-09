@@ -8,11 +8,9 @@ spring:
 
   jpa:
     hibernate:
-      ddl-auto: update   # 또는 create, validate, none
+      ddl-auto: create-drop   # 기존 테이블을 삭제하고 새로 생성
 
     show-sql: true        # 콘솔에 SQL 출력
-    # properties:
-    #   hibernate:
-        # format_sql: true  # SQL 예쁘게 출력
-
-  # 필요 시 flyway나 liquibase도 여기에 추가 가능
+    properties:
+      hibernate:
+        format_sql: true  # SQL 예쁘게 출력
