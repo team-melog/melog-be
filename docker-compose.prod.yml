@@ -1,0 +1,58 @@
+version: "3.8"
+
+services:
+  postgres:
+    image: postgres:15.4
+    container_name: melog-postgres-prod
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-melog}
+      POSTGRES_USER: ${POSTGRES_USER:-melog}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-melog}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - melog-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-melog} -d ${POSTGRES_DB:-melog}"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  app:
+    # 여기에 Docker Hub 이미지 이름을 넣을 예정
+    # image: your-dockerhub-username/melog:latest
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: melog-app-prod
+    environment:
+      SPRING_PROFILES_ACTIVE: prod
+      POSTGRES_USER: ${POSTGRES_USER:-melog}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-melog}
+      POSTGRES_DB: ${POSTGRES_DB:-melog}
+    ports:
+      - "8080:8080"
+    networks:
+      - melog-network
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+volumes:
+  postgres_data:
+    name: melog_postgres_data
+
+networks:
+  melog-network:
+    name: melog_network
+    driver: bridge

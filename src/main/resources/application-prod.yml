@@ -1,0 +1,51 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://postgres:5432/melog
+    username: ${POSTGRES_USER:melog}
+    password: ${POSTGRES_PASSWORD:melog}
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      maximum-pool-size: 20
+      minimum-idle: 5
+      connection-timeout: 30000
+      idle-timeout: 600000
+      max-lifetime: 1800000
+
+  jpa:
+    hibernate:
+      ddl-auto: update   # Production에서는 update 사용
+    show-sql: false      # Production에서는 SQL 로그 비활성화
+    properties:
+      hibernate:
+        format_sql: false
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        jdbc:
+          batch_size: 20
+        order_inserts: true
+        order_updates: true
+
+  # Production 로깅 설정
+logging:
+  level:
+    com.melog.melog: INFO
+    org.springframework.web: WARN
+    org.hibernate: WARN
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+
+# Actuator 설정 (헬스체크용)
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health, info, metrics
+  endpoint:
+    health:
+      show-details: when-authorized
+
+# 서버 설정
+server:
+  port: 8080
+  error:
+    include-stacktrace: never
+    include-message: always
