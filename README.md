@@ -89,8 +89,14 @@ flowchart TD
 ```
 src/main/java/com/melog/melog/
 ├── user/                         # 사용자 도메인
-│   ├── domain/                  # 사용자 도메인 엔티티
-│   │   └── User.java
+│   ├── domain/                  # 사용자 도메인 엔티티 및 모델
+│   │   ├── model/              # DTO 모델
+│   │   │   ├── request/        # 요청 DTO
+│   │   │   │   ├── UserCreateRequest.java
+│   │   │   │   └── UserUpdateRequest.java
+│   │   │   └── response/       # 응답 DTO
+│   │   │       └── UserResponse.java
+│   │   └── User.java           # 사용자 엔티티
 │   ├── application/             # 사용자 애플리케이션 계층
 │   │   ├── port/
 │   │   │   ├── in/             # UseCase 인터페이스
@@ -108,12 +114,27 @@ src/main/java/com/melog/melog/
 │               ├── UserPersistenceAdapter.java
 │               └── UserJpaRepository.java
 ├── emotion/                     # 감정 도메인
-│   ├── domain/                  # 감정 도메인 엔티티
-│   │   ├── EmotionRecord.java
-│   │   ├── EmotionScore.java
-│   │   ├── UserSelectedEmotion.java
-│   │   ├── EmotionKeyword.java
-│   │   └── EmotionType.java
+│   ├── domain/                  # 감정 도메인 엔티티 및 모델
+│   │   ├── model/              # DTO 모델
+│   │   │   ├── request/        # 요청 DTO
+│   │   │   │   ├── EmotionRecordCreateRequest.java
+│   │   │   │   ├── EmotionRecordSelectRequest.java
+│   │   │   │   └── EmotionRecordTextUpdateRequest.java
+│   │   │   └── response/       # 응답 DTO
+│   │   │       ├── EmotionRecordResponse.java
+│   │   │       ├── EmotionScoreResponse.java
+│   │   │       ├── UserSelectedEmotionResponse.java
+│   │   │       ├── EmotionKeywordResponse.java
+│   │   │       ├── EmotionCalendarResponse.java
+│   │   │       ├── EmotionChartResponse.java
+│   │   │       ├── EmotionInsightResponse.java
+│   │   │       ├── EmotionListResponse.java
+│   │   │       └── EmotionRecordSummaryResponse.java
+│   │   ├── EmotionRecord.java  # 감정 기록 엔티티
+│   │   ├── EmotionScore.java   # 감정 점수 엔티티
+│   │   ├── UserSelectedEmotion.java # 사용자 선택 감정 엔티티
+│   │   ├── EmotionKeyword.java # 감정 키워드 엔티티
+│   │   └── EmotionType.java    # 감정 타입 enum
 │   ├── application/             # 감정 애플리케이션 계층
 │   │   ├── port/
 │   │   │   ├── in/             # UseCase 인터페이스
@@ -140,9 +161,6 @@ src/main/java/com/melog/melog/
 │               ├── EmotionKeywordPersistenceAdapter.java
 │               └── EmotionKeywordJpaRepository.java
 └── common/                      # 공통 모듈
-    ├── model/                   # DTO 모델
-    │   ├── request/             # 요청 DTO
-    │   └── response/            # 응답 DTO
     ├── exception/               # 예외 처리
     │   └── GlobalExceptionHandler.java
     └── config/                  # 설정
@@ -193,11 +211,4 @@ src/main/java/com/melog/melog/
 - `GET /api/users/{nickname}/emotions/summary/insight` - 인사이트
 - `GET /api/users/{nickname}/emotions` - 감정 기록 리스트
 
-### 6. 도메인 중심 아키텍처의 장점
-
-1. **도메인 독립성**: 각 도메인(user, emotion)이 독립적으로 관리되어 도메인 간 의존성이 최소화됩니다.
-2. **확장성**: 새로운 도메인 추가 시 기존 도메인에 영향을 주지 않고 독립적으로 개발할 수 있습니다.
-3. **유지보수성**: 도메인별로 명확한 경계가 있어 코드 이해와 수정이 용이합니다.
-4. **팀 협업**: 도메인별로 팀을 나누어 병렬 개발이 가능합니다.
-5. **테스트 용이성**: 도메인별로 독립적인 테스트가 가능합니다.
 

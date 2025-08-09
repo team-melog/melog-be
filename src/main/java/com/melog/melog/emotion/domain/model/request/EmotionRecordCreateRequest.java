@@ -1,4 +1,4 @@
-package com.melog.melog.common.model.request;
+package com.melog.melog.emotion.domain.model.request;
 
 import lombok.Getter;
 import lombok.NoArgsConstructor;

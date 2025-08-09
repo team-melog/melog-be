@@ -1,8 +1,8 @@
 package com.melog.melog.user.application.port.in;
 
-import com.melog.melog.common.model.request.UserCreateRequest;
-import com.melog.melog.common.model.request.UserUpdateRequest;
-import com.melog.melog.common.model.response.UserResponse;
+import com.melog.melog.user.domain.model.request.UserCreateRequest;
+import com.melog.melog.user.domain.model.request.UserUpdateRequest;
+import com.melog.melog.user.domain.model.response.UserResponse;
 
 public interface UserUseCase {
     

@@ -1,7 +1,8 @@
 package com.melog.melog.emotion.application.service;
 
-import com.melog.melog.common.model.request.*;
-import com.melog.melog.common.model.response.*;
+import com.melog.melog.emotion.domain.model.request.*;
+import com.melog.melog.emotion.domain.model.response.*;
+import com.melog.melog.user.domain.model.response.UserResponse;
 import com.melog.melog.emotion.application.port.in.EmotionRecordUseCase;
 import com.melog.melog.emotion.application.port.out.*;
 import com.melog.melog.emotion.domain.*;

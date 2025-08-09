@@ -1,4 +1,4 @@
-package com.melog.melog.user.adapter.user;
+package com.melog.melog.user.adapter.out.persistence;
 
 import com.melog.melog.user.application.port.out.UserPersistencePort;
 import com.melog.melog.user.domain.User;

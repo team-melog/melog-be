@@ -1,4 +1,4 @@
-package com.melog.melog.user.adapter.user;
+package com.melog.melog.user.adapter.out.persistence;
 
 import com.melog.melog.user.domain.User;
 import org.springframework.data.jpa.repository.JpaRepository;

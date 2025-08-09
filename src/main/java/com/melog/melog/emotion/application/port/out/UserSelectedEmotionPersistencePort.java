@@ -1,4 +1,4 @@
-package com.melog.melog.emotion.application.service;
+package com.melog.melog.emotion.application.port.out;
 
 import com.melog.melog.emotion.domain.EmotionRecord;
 import com.melog.melog.emotion.domain.UserSelectedEmotion;

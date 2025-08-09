@@ -1,5 +1,6 @@
-package com.melog.melog.common.model.response;
+package com.melog.melog.emotion.domain.model.response;
 
+import com.melog.melog.user.domain.model.response.UserResponse;
 import lombok.Builder;
 import lombok.Getter;
 

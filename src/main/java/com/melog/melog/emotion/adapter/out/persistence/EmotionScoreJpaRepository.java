@@ -1,4 +1,4 @@
-package com.melog.melog.emotion.adapter.emotion;
+package com.melog.melog.emotion.adapter.out.persistence;
 
 import com.melog.melog.emotion.domain.EmotionRecord;
 import com.melog.melog.emotion.domain.EmotionScore;

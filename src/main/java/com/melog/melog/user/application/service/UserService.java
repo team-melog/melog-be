@@ -1,8 +1,8 @@
 package com.melog.melog.user.application.service;
 
-import com.melog.melog.common.model.request.UserCreateRequest;
-import com.melog.melog.common.model.request.UserUpdateRequest;
-import com.melog.melog.common.model.response.UserResponse;
+import com.melog.melog.user.domain.model.request.UserCreateRequest;
+import com.melog.melog.user.domain.model.request.UserUpdateRequest;
+import com.melog.melog.user.domain.model.response.UserResponse;
 import com.melog.melog.user.application.port.in.UserUseCase;
 import com.melog.melog.user.application.port.out.UserPersistencePort;
 import com.melog.melog.user.domain.User;
@@ -33,6 +33,7 @@ public class UserService implements UserUseCase {
         User savedUser = userPersistencePort.save(user);
 
         return UserResponse.builder()
+                .id(savedUser.getId())
                 .nickname(savedUser.getNickname())
                 .createdAt(savedUser.getCreatedAt())
                 .build();
@@ -44,6 +45,7 @@ public class UserService implements UserUseCase {
                 .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다: " + nickname));
 
         return UserResponse.builder()
+                .id(user.getId())
                 .nickname(user.getNickname())
                 .createdAt(user.getCreatedAt())
                 .build();
@@ -64,7 +66,9 @@ public class UserService implements UserUseCase {
         User updatedUser = userPersistencePort.save(user);
 
         return UserResponse.builder()
+                .id(updatedUser.getId())
                 .nickname(updatedUser.getNickname())
+                .createdAt(updatedUser.getCreatedAt())
                 .build();
     }
 
