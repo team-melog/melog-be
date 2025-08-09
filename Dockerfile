@@ -1,7 +1,7 @@
 # 멀티스테이지 빌드를 사용한 Production용 Dockerfile
 
 # Stage 1: Build Stage
-FROM gradle:8.14.3-jdk17 AS builder
+FROM mcr.microsoft.com/devcontainers/java:17 AS builder
 
 WORKDIR /app
 
@@ -23,12 +23,9 @@ COPY src/ src/
 RUN ./gradlew --no-daemon clean bootJar -x test
 
 # Stage 2: Runtime Stage
-FROM openjdk:17-jre-slim
+FROM mcr.microsoft.com/devcontainers/java:17
 
-# 시스템 패키지 업데이트 및 필요한 도구 설치
-RUN apt-get update && apt-get install -y \
-    curl \
-    && rm -rf /var/lib/apt/lists/*
+# Microsoft devcontainer 이미지에는 curl과 필요한 도구들이 이미 포함되어 있음
 
 # 애플리케이션 실행을 위한 사용자 생성
 RUN addgroup --system spring && adduser --system spring --ingroup spring
