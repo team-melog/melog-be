@@ -50,6 +50,11 @@ management:
     health:
       show-details: when-authorized
 
+# Clova 설정 파일 import
+spring:
+  config:
+    import: optional:classpath:clova-properties.yml
+
 # 서버 설정
 server:
   port: 8080
