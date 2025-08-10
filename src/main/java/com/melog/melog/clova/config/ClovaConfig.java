@@ -3,6 +3,7 @@ package com.melog.melog.clova.config;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
@@ -32,25 +33,44 @@ public class ClovaConfig {
     @Getter @Setter
     public static class SpeechProps {
         private String url;
+        
+        @JsonProperty("client-id")
         private String clientId;
+        
+        @JsonProperty("client-secret")
         private String clientSecret;
+        
         private SttProps stt;
+        
+        @JsonProperty("timeout-ms")
         private int timeoutMs = 10000;
     }
 
     @Getter @Setter
     public static class SttProps {
         private String endpoint;
+        
+        @JsonProperty("default-lang")
         private String defaultLang;
+        
+        @JsonProperty("max-duration")
         private int maxDuration;
+        
+        @JsonProperty("supported-formats")
         private String[] supportedFormats;
     }
 
     @Getter @Setter
     public static class StudioProps {
+        @JsonProperty("base-url")
         private String baseUrl;
+        
+        @JsonProperty("api-key")
         private String apiKey;
+        
         private String model;
+        
+        @JsonProperty("timeout-ms")
         private int timeoutMs = 8000;
     }
 }
