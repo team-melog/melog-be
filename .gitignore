@@ -38,4 +38,4 @@ out/
 .vscode/
 
 *.yml
-!clova-properties.yml
+.env
