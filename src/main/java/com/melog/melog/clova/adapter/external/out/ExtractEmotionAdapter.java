@@ -25,6 +25,7 @@ import com.melog.melog.clova.domain.model.PromptMessage;
 import com.melog.melog.clova.domain.model.request.ExtractEmotionRequest;
 import com.melog.melog.clova.domain.model.response.ExtractEmotionResponse;
 import com.melog.melog.clova.domain.model.response.ExtractEmotionResponse.EmotionResult;
+import com.melog.melog.emotion.domain.EmotionType;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -63,10 +64,27 @@ public class ExtractEmotionAdapter implements ExtractEmotionPort {
             JsonNode contentNode = objectMapper.readTree(contentJson);
             JsonNode emotionNode = contentNode.path("emotionResults");
 
-            List<EmotionResult> parsed = objectMapper.readValue(
+            // JSON 응답을 Map으로 파싱
+            List<Map<String, Object>> rawEmotions = objectMapper.readValue(
                     emotionNode.traverse(),
                     new TypeReference<>() {
                     });
+
+            // Map을 EmotionResult로 변환하면서 emotionType 매핑
+            List<EmotionResult> parsed = rawEmotions.stream()
+                    .map(raw -> {
+                        String emotionTypeStr = (String) raw.get("type");
+                        int percentage = (Integer) raw.get("percentage");
+                        
+                        // 한글 감정명을 EmotionType enum으로 매핑
+                        EmotionType emotionType = mapEmotionType(emotionTypeStr);
+                        
+                        return EmotionResult.builder()
+                                .emotion(emotionType)
+                                .percentage(percentage)
+                                .build();
+                    })
+                    .collect(Collectors.toList());
 
             return ExtractEmotionResponse.builder()
                     .emotionResults(parsed)
@@ -113,5 +131,27 @@ public class ExtractEmotionAdapter implements ExtractEmotionPort {
 
     private String nullSafe(String s) {
         return s == null ? "" : s;
+    }
+
+    /**
+     * 한글 감정명을 EmotionType enum으로 매핑
+     */
+    private EmotionType mapEmotionType(String emotionTypeStr) {
+        if (emotionTypeStr == null) {
+            return EmotionType.CALMNESS; // 기본값
+        }
+        
+        return switch (emotionTypeStr.trim()) {
+            case "기쁨" -> EmotionType.JOY;
+            case "설렘" -> EmotionType.EXCITEMENT;
+            case "평온" -> EmotionType.CALMNESS;
+            case "분노" -> EmotionType.ANGER;
+            case "슬픔" -> EmotionType.SADNESS;
+            case "지침" -> EmotionType.GUIDANCE;
+            default -> {
+                log.warn("알 수 없는 감정 타입: {}, 기본값 CALMNESS 사용", emotionTypeStr);
+                yield EmotionType.CALMNESS;
+            }
+        };
     }
 }
