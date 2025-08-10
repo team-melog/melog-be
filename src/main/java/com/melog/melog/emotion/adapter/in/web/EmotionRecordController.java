@@ -37,10 +37,9 @@ public class EmotionRecordController {
     @PostMapping(consumes = "multipart/form-data")
     public ResponseEntity<EmotionRecordResponse> createEmotionRecordWithAudio(@PathVariable String nickname,
                                                                             @RequestParam("audioFile") MultipartFile audioFile,
-                                                                            @RequestParam("userSelectedEmotion") String userSelectedEmotionJson) {
-        // TODO: 음성 파일 처리 및 STT 변환 로직 구현
-        // TODO: JSON 파싱하여 EmotionRecordCreateRequest 생성
-        throw new UnsupportedOperationException("음성 파일 처리는 아직 구현되지 않았습니다.");
+                                                                            @RequestParam(value = "userSelectedEmotion", required = false) String userSelectedEmotionJson) {
+        EmotionRecordResponse response = emotionRecordUseCase.createEmotionRecordWithAudio(nickname, audioFile, userSelectedEmotionJson);
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
     /**
