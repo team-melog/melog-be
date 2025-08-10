@@ -24,6 +24,13 @@ spring:
         order_inserts: true
         order_updates: true
 
+  # Production에서도 파일 업로드 설정 필요
+  servlet:
+    multipart:
+      max-file-size: 3MB
+      max-request-size: 3MB
+      enabled: true
+
   # Production 로깅 설정
 logging:
   level:
