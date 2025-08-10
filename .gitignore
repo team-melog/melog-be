@@ -39,3 +39,6 @@ out/
 
 *.yml
 .env
+
+# Clova API 키 파일 (보안상 Git에서 제외)
+**/clova-properties.yml
