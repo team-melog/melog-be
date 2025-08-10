@@ -13,7 +13,7 @@ spring:
 
   jpa:
     hibernate:
-      ddl-auto: update   # Production에서는 update 사용
+      ddl-auto: validate   # Production에서는 validate 사용 (가장 안전)
     show-sql: false      # Production에서는 SQL 로그 비활성화
     properties:
       hibernate:
