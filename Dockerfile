@@ -19,23 +19,7 @@ RUN ./gradlew --no-daemon dependencies
 # 소스 코드 복사
 COPY src/ src/
 
-# clova-properties.yml 파일을 환경변수로부터 동적 생성
-RUN echo "clova:" > src/main/resources/clova-properties.yml && \
-    echo "  speech:" >> src/main/resources/clova-properties.yml && \
-    echo "    url: \${CLOVA_SPEECH_URL:-https://naveropenapi.apigw.ntruss.com}" >> src/main/resources/clova-properties.yml && \
-    echo "    client-id: \${CLOVA_SPEECH_CLIENT_ID}" >> src/main/resources/clova-properties.yml && \
-    echo "    client-secret: \${CLOVA_SPEECH_CLIENT_SECRET}" >> src/main/resources/clova-properties.yml && \
-    echo "    stt:" >> src/main/resources/clova-properties.yml && \
-    echo "      endpoint: \${CLOVA_SPEECH_STT_ENDPOINT:-/recog/v1/stt}" >> src/main/resources/clova-properties.yml && \
-    echo "      default-lang: \${CLOVA_SPEECH_DEFAULT_LANG:-Kor}" >> src/main/resources/clova-properties.yml && \
-    echo "      max-duration: \${CLOVA_SPEECH_MAX_DURATION:-60}" >> src/main/resources/clova-properties.yml && \
-    echo "      supported-formats: [\${CLOVA_SPEECH_SUPPORTED_FORMATS:-mp3, aac, ac3, ogg, flac, wav}]" >> src/main/resources/clova-properties.yml && \
-    echo "    timeout-ms: \${CLOVA_SPEECH_TIMEOUT_MS:-10000}" >> src/main/resources/clova-properties.yml && \
-    echo "  studio:" >> src/main/resources/clova-properties.yml && \
-    echo "    base-url: \${CLOVA_STUDIO_BASE_URL:-https://clovastudio.stream.ntruss.com}" >> src/main/resources/clova-properties.yml && \
-    echo "    api-key: \${CLOVA_STUDIO_API_KEY}" >> src/main/resources/clova-properties.yml && \
-    echo "    model: \${CLOVA_STUDIO_MODEL:-HCX-005}" >> src/main/resources/clova-properties.yml && \
-    echo "    timeout-ms: \${CLOVA_STUDIO_TIMEOUT_MS:-8000}" >> src/main/resources/clova-properties.yml
+
 
 # 애플리케이션 빌드 (테스트 제외)
 RUN ./gradlew --no-daemon clean bootJar -x test

@@ -5,7 +5,11 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.TestPropertySource;
 
 @SpringBootTest
-@TestPropertySource(properties = "spring.config.import=classpath:clova-properties.yml")
+@TestPropertySource(properties = {
+    "CLOVA_SPEECH_CLIENT_ID=test-client-id",
+    "CLOVA_SPEECH_CLIENT_SECRET=test-client-secret",
+    "CLOVA_STUDIO_API_KEY=test-api-key"
+})
 class MelogApplicationTests {
 
 	@Test

@@ -9,7 +9,7 @@ spring:
     profiles:
         active: dev
     config:
-        import: classpath:clova-properties.yml
+        # clova-properties.yml 대신 환경변수 사용
     servlet:
         multipart:
             max-file-size: 3MB
