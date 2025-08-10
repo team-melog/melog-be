@@ -4,6 +4,8 @@ import com.melog.melog.emotion.application.port.out.EmotionRecordPersistencePort
 import com.melog.melog.emotion.domain.EmotionRecord;
 import com.melog.melog.user.domain.User;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDate;
@@ -29,6 +31,11 @@ public class EmotionRecordPersistenceAdapter implements EmotionRecordPersistence
     @Override
     public List<EmotionRecord> findByUser(User user) {
         return emotionRecordJpaRepository.findByUser(user);
+    }
+
+    @Override
+    public Page<EmotionRecord> findByUser(User user, Pageable pageable) {
+        return emotionRecordJpaRepository.findByUser(user, pageable);
     }
 
     @Override

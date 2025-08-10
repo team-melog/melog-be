@@ -17,7 +17,7 @@ public class EmotionRecordResponse {
     private LocalDate date;
     private LocalDateTime createdAt;
     private UserResponse user;
-    private List<EmotionScoreResponse> emotionScores;
+    private List<EmotionScoreResponse> emotions; // emotionScores에서 emotions로 변경
     private UserSelectedEmotionResponse userSelectedEmotion;
     private List<EmotionKeywordResponse> emotionKeywords;
 } 

@@ -6,7 +6,7 @@ public enum EmotionType {
     CALMNESS("평온"),
     ANGER("분노"),
     SADNESS("슬픔"),
-    FATIGUE("지침");
+    GUIDANCE("지침");
 
     private final String description;
 

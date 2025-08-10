@@ -10,12 +10,11 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class SttRequest {
-    private String audioData; // Base64 인코딩된 오디오 데이터 (deprecated)
-    private byte[] audioBinary; // Raw binary audio data for CSR API
-    private String audioFormat; // "wav", "mp3", "m4a" 등
-    private String language; // "ko", "en", "ja", "zh" 등
-    private Boolean diarization; // 화자 분리 사용 여부
-    private String diarizationConfig; // 화자 분리 설정
-    private Boolean boost; // 인식 정확도 향상 옵션
-    private String boostConfig; // 인식 정확도 향상 설정
+    private byte[] audioBinary; // Raw binary audio data
+    private String audioFormat; // "mp3", "aac", "ac3", "ogg", "flac", "wav"
+    private String language; // "Kor", "Eng", "Jpn", "Chn"
+    private Boolean assessment; // 발음 평가 결과 반환 여부 (Kor, Eng만 지원)
+    private String utterance; // 발음 평가 대상 텍스트
+    private String boostings; // 음성 인식률 향상 키워드 (탭으로 구분, 한국어만 지원)
+    private Boolean graph; // 음성 파형 그래프 반환 여부
 }

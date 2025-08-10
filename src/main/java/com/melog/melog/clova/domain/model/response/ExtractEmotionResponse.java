@@ -20,7 +20,14 @@ public class ExtractEmotionResponse {
     @Getter
     @AllArgsConstructor
     public static class EmotionResult {
+        @JsonIgnore
         private EmotionType emotion;
         private int percentage;
+        
+        // API 응답에서 한글 감정명을 사용하기 위한 getter
+        @JsonProperty("type")
+        public String getType() {
+            return emotion != null ? emotion.getDescription() : null;
+        }
     }
 }

@@ -10,9 +10,13 @@ import com.melog.melog.user.application.port.out.UserPersistencePort;
 import com.melog.melog.user.domain.User;
 import com.melog.melog.clova.application.port.in.AnalyzeSentimentUseCase;
 import com.melog.melog.clova.application.port.in.SpeechToTextUseCase;
+import com.melog.melog.clova.application.port.in.EmotionAnalysisUseCase;
 import com.melog.melog.clova.domain.model.request.AnalyzeSentimentRequest;
 import com.melog.melog.clova.domain.model.response.AnalyzeSentimentResponse;
 import com.melog.melog.clova.domain.model.response.ExtractEmotionResponse;
+import com.melog.melog.clova.domain.model.request.EmotionAnalysisRequest;
+import com.melog.melog.clova.domain.model.response.EmotionAnalysisResponse;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -23,6 +27,11 @@ import java.time.LocalDate;
 import java.time.YearMonth;
 import java.util.List;
 import java.util.stream.Collectors;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import com.melog.melog.emotion.domain.model.response.EmotionRecordSummaryResponse;
 
 @Slf4j
 @Service
@@ -37,6 +46,8 @@ public class EmotionRecordService implements EmotionRecordUseCase {
     private final EmotionKeywordPersistencePort emotionKeywordPersistencePort;
     private final AnalyzeSentimentUseCase analyzeSentimentUseCase;
     private final SpeechToTextUseCase speechToTextUseCase;
+    private final EmotionAnalysisUseCase emotionAnalysisUseCase;
+    private final ObjectMapper objectMapper;
 
     @Override
     @Transactional
@@ -64,7 +75,7 @@ public class EmotionRecordService implements EmotionRecordUseCase {
 
         // 사용자 선택 감정 저장
         if (request.getUserSelectedEmotion() != null) {
-            EmotionType emotionType = convertToEmotionType(request.getUserSelectedEmotion().getType());
+            EmotionType emotionType = request.getUserSelectedEmotion().getEmotionType();
             UserSelectedEmotion userSelectedEmotion = UserSelectedEmotion.builder()
                     .record(savedRecord)
                     .emotionType(emotionType)
@@ -74,48 +85,37 @@ public class EmotionRecordService implements EmotionRecordUseCase {
             userSelectedEmotionPersistencePort.save(userSelectedEmotion);
         }
 
-        // Clova를 통한 감정 분석 수행
+        // Clova Studio를 통한 감정 분석 수행
         try {
-            AnalyzeSentimentRequest sentimentRequest = AnalyzeSentimentRequest.builder()
-                    .nickname(nickname)
+            EmotionAnalysisRequest emotionRequest = EmotionAnalysisRequest.builder()
                     .text(request.getText())
+                    .prompt("감정 요약과 감정 점수 분석")
                     .build();
             
-            AnalyzeSentimentResponse sentimentResponse = analyzeSentimentUseCase.execute(sentimentRequest);
+            EmotionAnalysisResponse emotionResponse = emotionAnalysisUseCase.analyzeEmotion(emotionRequest);
+            
+            // 감정 요약 저장
+            savedRecord.updateRecord(savedRecord.getText(), emotionResponse.getSummary());
             
             // 감정 분석 결과로 감정 점수 저장
-            if (sentimentResponse.getEmotionResults() != null) {
-                for (ExtractEmotionResponse.EmotionResult emotionResult : sentimentResponse.getEmotionResults()) {
-                    if (emotionResult.getPercentage() > 0) { // 0% 이상인 감정만 저장
-                        EmotionScore emotionScore = EmotionScore.builder()
-                                .record(savedRecord)
-                                .emotionType(emotionResult.getEmotion())
-                                .percentage(emotionResult.getPercentage())
-                                .step(1) // AI 분석 단계
-                                .build();
-                        emotionScorePersistencePort.save(emotionScore);
-                    }
-                }
-            }
-            
-            // 키워드 저장
-            if (sentimentResponse.getKeywords() != null) {
-                int weight = sentimentResponse.getKeywords().size();
-                for (String keyword : sentimentResponse.getKeywords()) {
-                    EmotionKeyword emotionKeyword = EmotionKeyword.builder()
+            if (emotionResponse.getEmotions() != null) {
+                for (EmotionAnalysisResponse.EmotionScore emotionScoreData : emotionResponse.getEmotions()) {
+                    // 한글 감정명을 EmotionType으로 변환
+                    EmotionType emotionType = convertToEmotionType(emotionScoreData.getType());
+                    
+                    EmotionScore emotionScore = EmotionScore.builder()
                             .record(savedRecord)
-                            .keyword(keyword)
-                            .weight(weight--) // 중요도 순으로 가중치 부여
+                            .emotionType(emotionType)
+                            .percentage(emotionScoreData.getPercentage())
+                            .step(emotionScoreData.getStep())
                             .build();
-                    emotionKeywordPersistencePort.save(emotionKeyword);
+                    emotionScorePersistencePort.save(emotionScore);
                 }
             }
             
             // 요약 정보로 기록 업데이트
-            if (sentimentResponse.getSummary() != null) {
-                savedRecord.updateRecord(savedRecord.getText(), sentimentResponse.getSummary());
-                savedRecord = emotionRecordPersistencePort.save(savedRecord);
-            }
+            savedRecord.updateRecord(savedRecord.getText(), emotionResponse.getSummary());
+            savedRecord = emotionRecordPersistencePort.save(savedRecord);
             
         } catch (Exception e) {
             // 감정 분석 실패 시 로그 남기고 계속 진행
@@ -133,8 +133,8 @@ public class EmotionRecordService implements EmotionRecordUseCase {
             String text = speechToTextUseCase.recognizeToText(audioFile, "ko-KR");
             log.info("STT 변환 결과: {}", text);
             
-            // 변환된 텍스트로 EmotionRecordCreateRequest 생성 (간단한 방법)
-            EmotionRecordCreateRequest request = createRequestFromText(text);
+            // 변환된 텍스트로 EmotionRecordCreateRequest 생성
+            EmotionRecordCreateRequest request = createRequestFromText(text, userSelectedEmotionJson);
             
             // 기존 텍스트 기반 메서드를 호출하여 재사용
             return createEmotionRecord(nickname, request);
@@ -145,17 +145,31 @@ public class EmotionRecordService implements EmotionRecordUseCase {
         }
     }
     
-    private EmotionRecordCreateRequest createRequestFromText(String text) {
-        EmotionRecordCreateRequest request = new EmotionRecordCreateRequest();
-        // 리플렉션을 사용해 text 필드 설정
-        try {
-            java.lang.reflect.Field textField = request.getClass().getDeclaredField("text");
-            textField.setAccessible(true);
-            textField.set(request, text);
-            return request;
-        } catch (Exception e) {
-            throw new RuntimeException("Request 생성에 실패했습니다", e);
+    private EmotionRecordCreateRequest createRequestFromText(String text, String userSelectedEmotionJson) {
+        EmotionRecordCreateRequest.UserSelectedEmotion userSelectedEmotion = null;
+        
+        if (userSelectedEmotionJson != null && !userSelectedEmotionJson.trim().isEmpty()) {
+            try {
+                // JSON 파싱하여 사용자 선택 감정 정보 추출
+                com.fasterxml.jackson.databind.JsonNode jsonNode = objectMapper.readTree(userSelectedEmotionJson);
+                String type = jsonNode.path("type").asText();
+                Integer percentage = jsonNode.path("percentage").asInt();
+                
+                if (type != null && !type.isEmpty() && percentage != null) {
+                    userSelectedEmotion = EmotionRecordCreateRequest.UserSelectedEmotion.builder()
+                            .type(type)
+                            .percentage(percentage)
+                            .build();
+                }
+            } catch (Exception e) {
+                log.warn("사용자 선택 감정 JSON 파싱 실패: {}", e.getMessage());
+            }
         }
+        
+        return EmotionRecordCreateRequest.builder()
+                .text(text)
+                .userSelectedEmotion(userSelectedEmotion)
+                .build();
     }
 
     @Override
@@ -252,8 +266,30 @@ public class EmotionRecordService implements EmotionRecordUseCase {
 
     @Override
     public EmotionListResponse getEmotionList(String nickname, int page, int size) {
-        // TODO: 감정 기록 리스트 조회 (페이징) 구현
-        throw new UnsupportedOperationException("아직 구현되지 않았습니다.");
+        // 사용자 존재 여부 확인
+        User user = userPersistencePort.findByNickname(nickname)
+                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다: " + nickname));
+
+        // 페이징 처리
+        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
+        
+        // 감정 기록 조회
+        Page<EmotionRecord> records = emotionRecordPersistencePort.findByUser(user, pageable);
+        
+        // 응답 DTO 변환 - EmotionRecordSummaryResponse로 변환
+        List<EmotionRecordSummaryResponse> summaryResponses = records.getContent().stream()
+                .map(this::buildEmotionRecordSummaryResponse)
+                .collect(Collectors.toList());
+        
+        return EmotionListResponse.builder()
+                .content(summaryResponses)
+                .totalElements(records.getTotalElements())
+                .totalPages(records.getTotalPages())
+                .page(page)
+                .size(size)
+                .hasNext(records.hasNext())
+                .hasPrevious(records.hasPrevious())
+                .build();
     }
 
     private EmotionRecordResponse buildEmotionRecordResponse(EmotionRecord record) {
@@ -301,21 +337,46 @@ public class EmotionRecordService implements EmotionRecordUseCase {
                 .date(record.getDate())
                 .createdAt(record.getCreatedAt())
                 .user(userResponse)
-                .emotionScores(emotionScoreResponses)
+                .emotions(emotionScoreResponses)
                 .userSelectedEmotion(userSelectedEmotionResponse)
                 .emotionKeywords(emotionKeywordResponses)
                 .build();
     }
 
-    private EmotionType convertToEmotionType(String type) {
-        switch (type) {
-            case "기쁨": return EmotionType.JOY;
-            case "설렘": return EmotionType.EXCITEMENT;
-            case "평온": return EmotionType.CALMNESS;
-            case "분노": return EmotionType.ANGER;
-            case "슬픔": return EmotionType.SADNESS;
-            case "지침": return EmotionType.FATIGUE;
-            default: throw new IllegalArgumentException("지원하지 않는 감정 타입입니다: " + type);
+    private EmotionRecordSummaryResponse buildEmotionRecordSummaryResponse(EmotionRecord record) {
+        // 감정 점수 목록
+        List<EmotionScoreResponse> emotionScoreResponses = emotionScorePersistencePort.findByRecord(record)
+                .stream()
+                .map(score -> EmotionScoreResponse.builder()
+                        .id(score.getId())
+                        .emotionType(score.getEmotionType())
+                        .percentage(score.getPercentage())
+                        .step(score.getStep())
+                        .build())
+                .collect(Collectors.toList());
+
+        return EmotionRecordSummaryResponse.builder()
+                .id(record.getId())
+                .date(record.getDate())
+                .summary(record.getSummary())
+                .emotions(emotionScoreResponses)
+                .build();
+    }
+
+    /**
+     * 한글 감정명을 EmotionType enum으로 변환합니다.
+     */
+    private EmotionType convertToEmotionType(String emotionName) {
+        if (emotionName == null) {
+            throw new IllegalArgumentException("감정명이 null입니다.");
         }
+        
+        for (EmotionType emotionType : EmotionType.values()) {
+            if (emotionType.getDescription().equals(emotionName)) {
+                return emotionType;
+            }
+        }
+        
+        throw new IllegalArgumentException("알 수 없는 감정 타입입니다: " + emotionName);
     }
 } 

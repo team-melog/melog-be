@@ -12,7 +12,9 @@ import com.melog.melog.clova.domain.model.request.SttRequest;
 import com.melog.melog.clova.domain.model.response.SttResponse;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class SpeechToTextService implements SpeechToTextUseCase {
@@ -22,7 +24,8 @@ public class SpeechToTextService implements SpeechToTextUseCase {
     private static final long MAX_FILE_SIZE = 3 * 1024 * 1024; // 3MB in bytes
     private static final List<String> ALLOWED_CONTENT_TYPES = Arrays.asList(
             "audio/mpeg", "audio/mp3", "audio/wav", "audio/x-wav", 
-            "audio/m4a", "audio/x-m4a", "audio/flac", "application/octet-stream"
+            "audio/m4a", "audio/x-m4a", "audio/flac", "audio/aac", "audio/ac3", "audio/ogg",
+            "application/octet-stream"
     );
 
     @Override
@@ -30,19 +33,28 @@ public class SpeechToTextService implements SpeechToTextUseCase {
         validateAudioFile(audio);
         
         try {
-            // Get raw binary audio data (no base64 encoding)
+            // Get raw binary audio data
             byte[] audioBytes = audio.getBytes();
             
-            // Create CSR request with binary data
+            // Map language to CLOVA Speech API format
+            String clovaLanguage = mapLanguageToClovaFormat(language);
+            
+            // Create CLOVA Speech API request
             SttRequest request = SttRequest.builder()
                     .audioBinary(audioBytes)
-                    .language(language)
+                    .language(clovaLanguage)
                     .audioFormat(extractAudioFormat(audio))
+                    .assessment(true) // 발음 평가 활성화 (Kor, Eng만 지원)
+                    .graph(true) // 음성 파형 그래프 반환
                     .build();
+            
+            log.info("Sending STT request: language={}, format={}, size={}bytes", 
+                    clovaLanguage, extractAudioFormat(audio), audioBytes.length);
             
             return clovaSpeechPort.sendSpeechToTextRequest(request);
             
         } catch (Exception e) {
+            log.error("Failed to process audio file: {}", e.getMessage(), e);
             throw new RuntimeException("Failed to process audio file: " + e.getMessage(), e);
         }
     }
@@ -50,9 +62,8 @@ public class SpeechToTextService implements SpeechToTextUseCase {
     @Override
     public String recognizeToText(MultipartFile audio, String language) {
         SttResponse response = recognize(audio, language);
-        return response.getText(); // SttResponse에서 텍스트 추출
+        return response.getText();
     }
-    
     
     private void validateAudioFile(MultipartFile audio) {
         if (audio == null || audio.isEmpty()) {
@@ -84,7 +95,22 @@ public class SpeechToTextService implements SpeechToTextUseCase {
             case "audio/wav", "audio/x-wav" -> "wav";
             case "audio/m4a", "audio/x-m4a" -> "m4a";
             case "audio/flac" -> "flac";
+            case "audio/aac" -> "aac";
+            case "audio/ac3" -> "ac3";
+            case "audio/ogg" -> "ogg";
             default -> "unknown";
+        };
+    }
+    
+    private String mapLanguageToClovaFormat(String language) {
+        if (language == null) return "Kor";
+        
+        return switch (language.toLowerCase()) {
+            case "ko", "korean", "kor" -> "Kor";
+            case "en", "english", "eng" -> "Eng";
+            case "ja", "japanese", "jpn" -> "Jpn";
+            case "zh", "chinese", "chn" -> "Chn";
+            default -> "Kor";
         };
     }
 }
