@@ -1,16 +1,16 @@
 clova:
   speech:
-    url: ${CLOVA_SPEECH_URL:https://naveropenapi.apigw.ntruss.com}
-    clientId: ${CLOVA_SPEECH_CLIENT_ID}
-    clientSecret: ${CLOVA_SPEECH_CLIENT_SECRET}
-    stt:
-      endpoint: ${CLOVA_SPEECH_STT_ENDPOINT:/recog/v1/stt}
-      defaultLang: ${CLOVA_SPEECH_DEFAULT_LANG:Kor}
-      maxDuration: ${CLOVA_SPEECH_MAX_DURATION:60}
-      supportedFormats: ${CLOVA_SPEECH_SUPPORTED_FORMATS:[mp3, aac, ac3, ogg, flac, wav]}
-    timeoutMs: ${CLOVA_SPEECH_TIMEOUT_MS:10000}
+    api:
+      key: ${CLOVA_SPEECH_API_KEY:nv-1154b10c5bc04ae5998f84507bb16309I4RE}
+      url: https://clovaspeech-gw.ncloud.com
+      stt:
+        endpoint: /recog/v1/stt
+        default-lang: Kor
+        max-duration: 60
+        supported-formats: [mp3, aac, ac3, ogg, flac, wav]
   studio:
-    baseUrl: ${CLOVA_STUDIO_BASE_URL:https://clovastudio.stream.ntruss.com}
-    apiKey: ${CLOVA_STUDIO_API_KEY}
-    model: ${CLOVA_STUDIO_MODEL:HCX-005}
-    timeoutMs: ${CLOVA_STUDIO_TIMEOUT_MS:8000}
+    api:
+      key: ${CLOVA_STUDIO_API_KEY:test-api-key-for-development}
+      url: https://clovastudio.stream.ntruss.com
+      model:
+        name: HCX-005
