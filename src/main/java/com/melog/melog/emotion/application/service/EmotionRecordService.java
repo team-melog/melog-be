@@ -113,6 +113,17 @@ public class EmotionRecordService implements EmotionRecordUseCase {
                 }
             }
             
+            // 키워드 저장
+            if (emotionResponse.getKeywords() != null && !emotionResponse.getKeywords().isEmpty()) {
+                for (String keywordText : emotionResponse.getKeywords()) {
+                    EmotionKeyword emotionKeyword = EmotionKeyword.builder()
+                            .record(savedRecord)
+                            .keyword(keywordText)
+                            .build();
+                    emotionKeywordPersistencePort.save(emotionKeyword);
+                }
+            }
+            
             // 요약 정보로 기록 업데이트
             savedRecord.updateRecord(savedRecord.getText(), emotionResponse.getSummary());
             savedRecord = emotionRecordPersistencePort.save(savedRecord);

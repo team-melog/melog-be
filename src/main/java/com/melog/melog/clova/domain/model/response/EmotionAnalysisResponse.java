@@ -23,6 +23,11 @@ public class EmotionAnalysisResponse {
      */
     private List<EmotionScore> emotions;
     
+    /**
+     * 키워드 (5개)
+     */
+    private List<String> keywords;
+    
     @Getter
     @Builder
     @NoArgsConstructor
@@ -39,8 +44,31 @@ public class EmotionAnalysisResponse {
         private Integer percentage;
         
         /**
-         * 감정 단계 (1-3)
+         * 감정 단계 (1-5)
+         * 0-20점: step1, 21-40점: step2, 41-60점: step3, 61-80점: step4, 81-100점: step5
          */
         private Integer step;
+        
+        /**
+         * 점수에 따른 스텝을 자동으로 계산합니다.
+         */
+        public void calculateStep() {
+            if (percentage == null) {
+                this.step = 1;
+                return;
+            }
+            
+            if (percentage <= 20) {
+                this.step = 1;
+            } else if (percentage <= 40) {
+                this.step = 2;
+            } else if (percentage <= 60) {
+                this.step = 3;
+            } else if (percentage <= 80) {
+                this.step = 4;
+            } else {
+                this.step = 5;
+            }
+        }
     }
 }

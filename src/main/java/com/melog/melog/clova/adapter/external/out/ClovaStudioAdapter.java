@@ -92,15 +92,22 @@ public class ClovaStudioAdapter {
                                     ),
                                     "step", Map.of(
                                         "type", "integer",
-                                        "enum", List.of(1, 2, 3),
-                                        "description", "감정 단계 (1: 약함, 2: 보통, 3: 강함)"
+                                        "enum", List.of(1, 2, 3, 4, 5),
+                                        "description", "감정 단계 (1: 0-20점, 2: 21-40점, 3: 41-60점, 4: 61-80점, 5: 81-100점)"
                                     )
                                 ),
                                 "required", List.of("type", "percentage", "step")
                             )
+                        ),
+                        "keywords", Map.of(
+                            "type", "array",
+                            "description", "텍스트에서 추출한 핵심 키워드 5개",
+                            "items", Map.of("type", "string"),
+                            "minItems", 5,
+                            "maxItems", 5
                         )
                     ),
-                    "required", List.of("summary", "emotions")
+                    "required", List.of("summary", "emotions", "keywords")
                 )
             )
         );
@@ -125,7 +132,7 @@ public class ClovaStudioAdapter {
      */
     private String createSystemPrompt() {
         return """
-            당신은 감정 분석 전문가입니다. 주어진 텍스트를 분석하여 다음 두 가지를 제공해야 합니다:
+            당신은 감정 분석 전문가입니다. 주어진 텍스트를 분석하여 다음 세 가지를 제공해야 합니다:
             
             1. 감정 요약: 텍스트의 내용을 2-3줄로 간결하게 요약하여 핵심 감정과 상황을 명확하게 표현
             2. 감정 점수: 다음 6가지 감정에 대해 100점 만점으로 점수를 매기고, 상위 3개를 백분율로 표시
@@ -135,6 +142,14 @@ public class ClovaStudioAdapter {
                - 분노: 화나고 격분한 감정
                - 슬픔: 우울하고 슬픈 감정
                - 지침: 막막하고 불안한 감정
+            3. 키워드 추출: 텍스트에서 가장 중요한 핵심 키워드 5개를 추출
+            
+            감정 점수에 따른 단계:
+            - 0-20점: step1 (매우 약함)
+            - 21-40점: step2 (약함)
+            - 41-60점: step3 (보통)
+            - 61-80점: step4 (강함)
+            - 81-100점: step5 (매우 강함)
             
             analyze_emotion 함수를 사용하여 구조화된 형태로 응답해주세요.
             """;
@@ -149,7 +164,7 @@ public class ClovaStudioAdapter {
             
             %s
             
-            위 텍스트에 대한 감정 요약과 감정 점수를 analyze_emotion 함수를 사용하여 응답해주세요.
+            위 텍스트에 대한 감정 요약, 감정 점수, 키워드를 analyze_emotion 함수를 사용하여 응답해주세요.
             """, text);
     }
 
@@ -171,7 +186,9 @@ public class ClovaStudioAdapter {
                 
                 String summary = (String) arguments.get("summary");
                 List<EmotionAnalysisResponse.EmotionScore> emotions = new ArrayList<>();
+                List<String> keywords = new ArrayList<>();
                 
+                // 감정 점수 처리
                 List<Map> emotionsList = (List<Map>) arguments.get("emotions");
                 for (Map emotionMap : emotionsList) {
                     EmotionAnalysisResponse.EmotionScore emotionScore = EmotionAnalysisResponse.EmotionScore.builder()
@@ -179,12 +196,29 @@ public class ClovaStudioAdapter {
                         .percentage((Integer) emotionMap.get("percentage"))
                         .step((Integer) emotionMap.get("step"))
                         .build();
+                    
+                    // 스텝이 없으면 자동으로 계산
+                    if (emotionScore.getStep() == null) {
+                        emotionScore.calculateStep();
+                    }
+                    
                     emotions.add(emotionScore);
+                }
+                
+                // 키워드 처리
+                List<Object> keywordsList = (List<Object>) arguments.get("keywords");
+                if (keywordsList != null) {
+                    for (Object keyword : keywordsList) {
+                        if (keyword instanceof String) {
+                            keywords.add((String) keyword);
+                        }
+                    }
                 }
                 
                 return EmotionAnalysisResponse.builder()
                     .summary(summary)
                     .emotions(emotions)
+                    .keywords(keywords)
                     .build();
             }
             
@@ -197,7 +231,9 @@ public class ClovaStudioAdapter {
                     
                     String summary = jsonNode.path("summary").asText();
                     List<EmotionAnalysisResponse.EmotionScore> emotions = new ArrayList<>();
+                    List<String> keywords = new ArrayList<>();
                     
+                    // 감정 점수 처리
                     JsonNode emotionsNode = jsonNode.path("emotions");
                     for (JsonNode emotionNode : emotionsNode) {
                         EmotionAnalysisResponse.EmotionScore emotionScore = EmotionAnalysisResponse.EmotionScore.builder()
@@ -205,12 +241,27 @@ public class ClovaStudioAdapter {
                             .percentage(emotionNode.path("percentage").asInt())
                             .step(emotionNode.path("step").asInt(2)) // 기본값 2
                             .build();
+                        
+                        // 스텝이 없으면 자동으로 계산
+                        if (emotionScore.getStep() == null) {
+                            emotionScore.calculateStep();
+                        }
+                        
                         emotions.add(emotionScore);
+                    }
+                    
+                    // 키워드 처리
+                    JsonNode keywordsNode = jsonNode.path("keywords");
+                    if (keywordsNode.isArray()) {
+                        for (JsonNode keywordNode : keywordsNode) {
+                            keywords.add(keywordNode.asText());
+                        }
                     }
                     
                     return EmotionAnalysisResponse.builder()
                         .summary(summary)
                         .emotions(emotions)
+                        .keywords(keywords)
                         .build();
                 } catch (Exception jsonException) {
                     log.warn("JSON 파싱 실패, 일반 텍스트로 처리: {}", jsonException.getMessage());
@@ -218,6 +269,7 @@ public class ClovaStudioAdapter {
                     return EmotionAnalysisResponse.builder()
                         .summary(content)
                         .emotions(new ArrayList<>())
+                        .keywords(new ArrayList<>())
                         .build();
                 }
             }
