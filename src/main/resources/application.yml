@@ -9,7 +9,7 @@ spring:
     profiles:
         active: dev
     config:
-        import: classpath:clova-properties.yml
+        import: optional:classpath:clova-properties.yml
     servlet:
         multipart:
             max-file-size: 3MB
