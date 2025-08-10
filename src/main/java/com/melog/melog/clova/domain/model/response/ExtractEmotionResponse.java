@@ -18,7 +18,9 @@ public class ExtractEmotionResponse {
     private List<String> keywords;
 
     @Getter
+    @Builder
     @AllArgsConstructor
+    @NoArgsConstructor
     public static class EmotionResult {
         @JsonIgnore
         private EmotionType emotion;
