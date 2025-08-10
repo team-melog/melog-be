@@ -115,10 +115,15 @@ public class EmotionRecordService implements EmotionRecordUseCase {
             
             // 키워드 저장
             if (emotionResponse.getKeywords() != null && !emotionResponse.getKeywords().isEmpty()) {
-                for (String keywordText : emotionResponse.getKeywords()) {
+                for (int i = 0; i < emotionResponse.getKeywords().size(); i++) {
+                    String keywordText = emotionResponse.getKeywords().get(i);
+                    // 키워드 순서에 따라 weight 부여 (첫 번째가 가장 중요)
+                    Integer weight = emotionResponse.getKeywords().size() - i;
+                    
                     EmotionKeyword emotionKeyword = EmotionKeyword.builder()
                             .record(savedRecord)
                             .keyword(keywordText)
+                            .weight(weight)
                             .build();
                     emotionKeywordPersistencePort.save(emotionKeyword);
                 }
