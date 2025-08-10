@@ -20,5 +20,7 @@ public interface EmotionRecordJpaRepository extends JpaRepository<EmotionRecord,
     
     Optional<EmotionRecord> findByUserAndDate(User user, LocalDate date);
     
+    List<EmotionRecord> findByUserAndDateBetween(User user, LocalDate startDate, LocalDate endDate);
+    
     boolean existsByUserAndDate(User user, LocalDate date);
 } 

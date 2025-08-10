@@ -37,6 +37,11 @@ public interface EmotionRecordPersistencePort {
     Optional<EmotionRecord> findByUserAndDate(User user, LocalDate date);
     
     /**
+     * 사용자의 특정 기간 감정 기록 조회
+     */
+    List<EmotionRecord> findByUserAndDateBetween(User user, LocalDate startDate, LocalDate endDate);
+    
+    /**
      * 감정 기록 삭제
      */
     void delete(EmotionRecord emotionRecord);

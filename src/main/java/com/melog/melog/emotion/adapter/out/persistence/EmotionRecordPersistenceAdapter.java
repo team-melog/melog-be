@@ -52,4 +52,9 @@ public class EmotionRecordPersistenceAdapter implements EmotionRecordPersistence
     public boolean existsByUserAndDate(User user, LocalDate date) {
         return emotionRecordJpaRepository.existsByUserAndDate(user, date);
     }
+
+    @Override
+    public List<EmotionRecord> findByUserAndDateBetween(User user, LocalDate startDate, LocalDate endDate) {
+        return emotionRecordJpaRepository.findByUserAndDateBetween(user, startDate, endDate);
+    }
 } 

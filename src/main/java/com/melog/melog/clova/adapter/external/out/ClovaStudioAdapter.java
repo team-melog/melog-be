@@ -280,5 +280,5 @@ public class ClovaStudioAdapter {
             log.error("Clova Studio 응답 파싱 중 오류 발생: {}", e.getMessage(), e);
             throw new RuntimeException("감정 분석 결과 파싱에 실패했습니다.", e);
         }
-    }
+    } 
 }

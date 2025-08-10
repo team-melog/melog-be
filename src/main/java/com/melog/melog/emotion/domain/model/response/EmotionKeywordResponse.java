@@ -8,5 +8,5 @@ import lombok.Getter;
 public class EmotionKeywordResponse {
     private Long id;
     private String keyword;
-    private Integer weight;
+    private Integer weight; // 키워드 중요도 (1-100)
 } 
