@@ -11,4 +11,8 @@ public class EmotionListResponse {
     private List<EmotionRecordSummaryResponse> content;
     private int page;
     private int size;
+    private long totalElements;
+    private int totalPages;
+    private boolean hasNext;
+    private boolean hasPrevious;
 } 

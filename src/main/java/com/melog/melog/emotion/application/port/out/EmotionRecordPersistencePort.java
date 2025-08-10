@@ -2,6 +2,8 @@ package com.melog.melog.emotion.application.port.out;
 
 import com.melog.melog.emotion.domain.EmotionRecord;
 import com.melog.melog.user.domain.User;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -25,9 +27,19 @@ public interface EmotionRecordPersistencePort {
     List<EmotionRecord> findByUser(User user);
     
     /**
+     * 사용자의 감정 기록을 페이징하여 조회
+     */
+    Page<EmotionRecord> findByUser(User user, Pageable pageable);
+    
+    /**
      * 사용자의 특정 날짜 감정 기록 조회
      */
     Optional<EmotionRecord> findByUserAndDate(User user, LocalDate date);
+    
+    /**
+     * 사용자의 특정 기간 감정 기록 조회
+     */
+    List<EmotionRecord> findByUserAndDateBetween(User user, LocalDate startDate, LocalDate endDate);
     
     /**
      * 감정 기록 삭제

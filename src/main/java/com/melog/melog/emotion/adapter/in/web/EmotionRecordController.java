@@ -1,5 +1,6 @@
 package com.melog.melog.emotion.adapter.in.web;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.melog.melog.emotion.domain.model.request.*;
 import com.melog.melog.emotion.domain.model.response.*;
 import com.melog.melog.emotion.application.port.in.EmotionRecordUseCase;
@@ -18,74 +19,41 @@ import java.util.List;
 public class EmotionRecordController {
 
     private final EmotionRecordUseCase emotionRecordUseCase;
+    private final ObjectMapper objectMapper;
 
     /**
-     * 감정 등록 및 분석 요청 (텍스트 방식)
-     * POST /api/users/{nickname}/emotions
+     * 감정 등록 및 분석 요청 (STT - 음성 파일)
+     * POST /api/users/{nickname}/emotions/stt
      */
-    @PostMapping
-    public ResponseEntity<EmotionRecordResponse> createEmotionRecord(@PathVariable String nickname,
-                                                                   @RequestBody EmotionRecordCreateRequest request) {
-        EmotionRecordResponse response = emotionRecordUseCase.createEmotionRecord(nickname, request);
-        return ResponseEntity.status(HttpStatus.CREATED).body(response);
+    @PostMapping("/stt")
+    public ResponseEntity<EmotionRecordResponse> createEmotionRecordWithSTT(
+            @PathVariable String nickname,
+            @RequestPart("audioFile") MultipartFile audioFile,
+            @RequestParam(value = "userSelectedEmotion", required = false) String userSelectedEmotionJson) {
+        
+        if (audioFile == null || audioFile.isEmpty()) {
+            throw new IllegalArgumentException("음성 파일은 필수입니다.");
+        }
+        
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(emotionRecordUseCase.createEmotionRecordWithAudio(nickname, audioFile, userSelectedEmotionJson));
     }
 
     /**
-     * 감정 등록 및 분석 요청 (음성 파일 방식)
-     * POST /api/users/{nickname}/emotions (multipart/form-data)
+     * 감정 등록 및 분석 요청 (텍스트)
+     * POST /api/users/{nickname}/emotions/text
      */
-    @PostMapping(consumes = "multipart/form-data")
-    public ResponseEntity<EmotionRecordResponse> createEmotionRecordWithAudio(@PathVariable String nickname,
-                                                                            @RequestParam("audioFile") MultipartFile audioFile,
-                                                                            @RequestParam(value = "userSelectedEmotion", required = false) String userSelectedEmotionJson) {
-        EmotionRecordResponse response = emotionRecordUseCase.createEmotionRecordWithAudio(nickname, audioFile, userSelectedEmotionJson);
-        return ResponseEntity.status(HttpStatus.CREATED).body(response);
-    }
-
-    /**
-     * 감정 수정(최종 선택 확정)
-     * PUT /api/users/{nickname}/emotions/{id}/select
-     */
-    @PutMapping("/{id}/select")
-    public ResponseEntity<EmotionRecordResponse> updateEmotionSelection(@PathVariable String nickname,
-                                                                      @PathVariable Long id,
-                                                                      @RequestBody EmotionRecordSelectRequest request) {
-        EmotionRecordResponse response = emotionRecordUseCase.updateEmotionSelection(nickname, id, request);
-        return ResponseEntity.ok(response);
-    }
-
-    /**
-     * 감정 수정(텍스트)
-     * PUT /api/users/{nickname}/emotions/{id}/text
-     */
-    @PutMapping("/{id}/text")
-    public ResponseEntity<EmotionRecordResponse> updateEmotionText(@PathVariable String nickname,
-                                                                 @PathVariable Long id,
-                                                                 @RequestBody EmotionRecordTextUpdateRequest request) {
-        EmotionRecordResponse response = emotionRecordUseCase.updateEmotionText(nickname, id, request);
-        return ResponseEntity.ok(response);
-    }
-
-    /**
-     * 감정 상세 조회
-     * GET /api/users/{nickname}/emotions/{id}
-     */
-    @GetMapping("/{id}")
-    public ResponseEntity<EmotionRecordResponse> getEmotionRecord(@PathVariable String nickname,
-                                                                @PathVariable Long id) {
-        EmotionRecordResponse response = emotionRecordUseCase.getEmotionRecord(nickname, id);
-        return ResponseEntity.ok(response);
-    }
-
-    /**
-     * 감정 기록 삭제
-     * DELETE /api/users/{nickname}/emotions/{id}
-     */
-    @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteEmotionRecord(@PathVariable String nickname,
-                                                  @PathVariable Long id) {
-        emotionRecordUseCase.deleteEmotionRecord(nickname, id);
-        return ResponseEntity.noContent().build();
+    @PostMapping("/text")
+    public ResponseEntity<EmotionRecordResponse> createEmotionRecordWithText(
+            @PathVariable String nickname,
+            @RequestBody EmotionRecordCreateRequest request) {
+        
+        if (request == null || request.getText() == null || request.getText().trim().isEmpty()) {
+            throw new IllegalArgumentException("텍스트는 필수입니다.");
+        }
+        
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(emotionRecordUseCase.createEmotionRecord(nickname, request));
     }
 
     /**
@@ -134,5 +102,80 @@ public class EmotionRecordController {
                                                             @RequestParam(defaultValue = "7") int size) {
         EmotionListResponse response = emotionRecordUseCase.getEmotionList(nickname, page, size);
         return ResponseEntity.ok(response);
+    }
+
+    /**
+     * 감정 등록 및 분석 요청 (통합 엔드포인트 - 하위 호환성)
+     * POST /api/users/{nickname}/emotions
+     * 
+     * Content-Type에 따라 자동으로 적절한 메서드로 라우팅
+     */
+    @PostMapping
+    public ResponseEntity<EmotionRecordResponse> createEmotionRecord(
+            @PathVariable String nickname,
+            @RequestParam(value = "audioFile", required = false) MultipartFile audioFile,
+            @RequestParam(value = "userSelectedEmotion", required = false) String userSelectedEmotionJson,
+            @RequestBody(required = false) EmotionRecordCreateRequest request) {
+        
+        // STT 요청인 경우 (audioFile이 제공된 경우)
+        if (audioFile != null && !audioFile.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.CREATED)
+                    .body(emotionRecordUseCase.createEmotionRecordWithAudio(nickname, audioFile, userSelectedEmotionJson));
+        }
+        
+        // 텍스트 요청인 경우 (JSON 바디가 제공된 경우)
+        if (request != null && request.getText() != null && !request.getText().trim().isEmpty()) {
+            return ResponseEntity.status(HttpStatus.CREATED)
+                    .body(emotionRecordUseCase.createEmotionRecord(nickname, request));
+        }
+        
+        // 둘 다 제공되지 않은 경우
+        throw new IllegalArgumentException("음성 파일 또는 텍스트 중 하나는 필수입니다.");
+    }
+
+    /**
+     * 감정 수정(최종 선택 확정)
+     * PUT /api/users/{nickname}/emotions/{id}/select
+     */
+    @PutMapping("/{id}/select")
+    public ResponseEntity<EmotionRecordResponse> updateEmotionSelection(@PathVariable String nickname,
+                                                                      @PathVariable Long id,
+                                                                      @RequestBody EmotionRecordSelectRequest request) {
+        EmotionRecordResponse response = emotionRecordUseCase.updateEmotionSelection(nickname, id, request);
+        return ResponseEntity.ok(response);
+    }
+
+    /**
+     * 감정 수정(텍스트)
+     * PUT /api/users/{nickname}/emotions/{id}/text
+     */
+    @PutMapping("/{id}/text")
+    public ResponseEntity<EmotionRecordResponse> updateEmotionText(@PathVariable String nickname,
+                                                                 @PathVariable Long id,
+                                                                 @RequestBody EmotionRecordTextUpdateRequest request) {
+        EmotionRecordResponse response = emotionRecordUseCase.updateEmotionText(nickname, id, request);
+        return ResponseEntity.ok(response);
+    }
+
+    /**
+     * 감정 상세 조회
+     * GET /api/users/{nickname}/emotions/{id}
+     */
+    @GetMapping("/{id}")
+    public ResponseEntity<EmotionRecordResponse> getEmotionRecord(@PathVariable String nickname,
+                                                                @PathVariable Long id) {
+        EmotionRecordResponse response = emotionRecordUseCase.getEmotionRecord(nickname, id);
+        return ResponseEntity.ok(response);
+    }
+
+    /**
+     * 감정 기록 삭제
+     * DELETE /api/users/{nickname}/emotions/{id}
+     */
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteEmotionRecord(@PathVariable String nickname,
+                                                  @PathVariable Long id) {
+        emotionRecordUseCase.deleteEmotionRecord(nickname, id);
+        return ResponseEntity.noContent().build();
     }
 } 

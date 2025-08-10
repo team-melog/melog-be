@@ -2,6 +2,8 @@ package com.melog.melog.emotion.adapter.out.persistence;
 
 import com.melog.melog.emotion.domain.EmotionRecord;
 import com.melog.melog.user.domain.User;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
@@ -14,7 +16,11 @@ public interface EmotionRecordJpaRepository extends JpaRepository<EmotionRecord,
     
     List<EmotionRecord> findByUser(User user);
     
+    Page<EmotionRecord> findByUser(User user, Pageable pageable);
+    
     Optional<EmotionRecord> findByUserAndDate(User user, LocalDate date);
+    
+    List<EmotionRecord> findByUserAndDateBetween(User user, LocalDate startDate, LocalDate endDate);
     
     boolean existsByUserAndDate(User user, LocalDate date);
 } 
