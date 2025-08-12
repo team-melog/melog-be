@@ -42,6 +42,7 @@ dependencies {
 	annotationProcessor 'org.projectlombok:lombok'
 	implementation 'org.postgresql:postgresql:42.6.0'
 	testRuntimeOnly 'com.h2database:h2'
+	implementation 'org.flywaydb:flyway-core'
 }
 
 tasks.named('test') {

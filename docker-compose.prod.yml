@@ -1,38 +1,20 @@
 version: "3.8"
 
 services:
-  postgres:
-    image: postgres:15.4
-    container_name: melog-postgres-prod
-    environment:
-      POSTGRES_DB: ${POSTGRES_DB}
-      POSTGRES_USER: ${POSTGRES_USER}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-    ports:
-      - "5432:5432"
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-    networks:
-      - melog-network
-    restart: unless-stopped
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
-      interval: 30s
-      timeout: 10s
-      retries: 5
-
   app:
-    # 여기에 Docker Hub 이미지 이름을 넣을 예정
-    # image: your-dockerhub-username/melog:latest
     build:
       context: .
       dockerfile: Dockerfile
     container_name: melog-app-prod
+    env_file:
+      - .env
     environment:
       SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE}
+      DB_HOST: ${DB_HOST}
+      DB_PORT: ${DB_PORT}
+      POSTGRES_DB: ${POSTGRES_DB}
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-      POSTGRES_DB: ${POSTGRES_DB}
       # Clova Speech API Configuration
       CLOVA_SPEECH_URL: ${CLOVA_SPEECH_URL:-https://naveropenapi.apigw.ntruss.com}
       CLOVA_SPEECH_CLIENT_ID: ${CLOVA_SPEECH_CLIENT_ID}
@@ -49,11 +31,6 @@ services:
       CLOVA_STUDIO_TIMEOUT_MS: ${CLOVA_STUDIO_TIMEOUT_MS:-8000}
     ports:
       - "8080:8080"
-    networks:
-      - melog-network
-    depends_on:
-      postgres:
-        condition: service_healthy
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8080/actuator/health"]
@@ -61,12 +38,3 @@ services:
       timeout: 10s
       retries: 3
       start_period: 60s
-
-volumes:
-  postgres_data:
-    name: melog_postgres_data
-
-networks:
-  melog-network:
-    name: melog_network
-    driver: bridge
