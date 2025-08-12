@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CORS 테스트 페이지</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #555;
+        }
+        input[type="text"] {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 16px;
+            box-sizing: border-box;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-right: 10px;
+            margin-bottom: 10px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        button:disabled {
+            background-color: #6c757d;
+            cursor: not-allowed;
+        }
+        .result {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 5px;
+            white-space: pre-wrap;
+            font-family: monospace;
+            font-size: 14px;
+        }
+        .success {
+            background-color: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+        .error {
+            background-color: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+        .info {
+            background-color: #d1ecf1;
+            border: 1px solid #bee5eb;
+            color: #0c5460;
+        }
+        .base-url-input {
+            background-color: #e9ecef;
+            font-weight: bold;
+        }
+        .test-section {
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        .test-section h3 {
+            margin-top: 0;
+            color: #495057;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚀 CORS 테스트 페이지</h1>
+        
+        <div class="form-group">
+            <label for="baseUrl">백엔드 서버 URL:</label>
+            <input type="text" id="baseUrl" class="base-url-input" 
+                   placeholder="http://localhost:8080 또는 https://your-domain.com" 
+                   value="http://localhost:8080">
+        </div>
+
+        <div class="test-section">
+            <h3>📝 사용자 생성 테스트 (POST)</h3>
+            <div class="form-group">
+                <label for="nickname">닉네임:</label>
+                <input type="text" id="nickname" placeholder="닉네임을 입력하세요" value="angrybird">
+            </div>
+            <button onclick="createUser()">사용자 생성 (POST)</button>
+            <div id="createResult" class="result" style="display: none;"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>🔍 사용자 조회 테스트 (GET)</h3>
+            <div class="form-group">
+                <label for="searchNickname">조회할 닉네임:</label>
+                <input type="text" id="searchNickname" placeholder="닉네임을 입력하세요" value="angrybird">
+            </div>
+            <button onclick="getUser()">사용자 조회 (GET)</button>
+            <div id="getResult" class="result" style="display: none;"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>📊 CORS 상태 확인</h3>
+            <button onclick="checkCorsStatus()">CORS 상태 체크</button>
+            <div id="corsStatus" class="result" style="display: none;"></div>
+        </div>
+    </div>
+
+    <script>
+        function getBaseUrl() {
+            return document.getElementById('baseUrl').value.trim();
+        }
+
+        function showResult(elementId, message, isSuccess = true) {
+            const element = document.getElementById(elementId);
+            element.style.display = 'block';
+            element.className = `result ${isSuccess ? 'success' : 'error'}`;
+            element.textContent = message;
+        }
+
+        function showInfo(elementId, message) {
+            const element = document.getElementById(elementId);
+            element.style.display = 'block';
+            element.className = 'result info';
+            element.textContent = message;
+        }
+
+        async function createUser() {
+            const baseUrl = getBaseUrl();
+            const nickname = document.getElementById('nickname').value.trim();
+            
+            if (!nickname) {
+                showResult('createResult', '닉네임을 입력해주세요.', false);
+                return;
+            }
+
+            const userData = {
+                nickname: nickname
+            };
+
+            try {
+                console.log(`POST 요청 시작: ${baseUrl}/api/users`);
+                console.log('요청 데이터:', userData);
+                
+                const response = await fetch(`${baseUrl}/api/users`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(userData)
+                });
+
+                console.log('응답 상태:', response.status);
+                console.log('응답 헤더:', Object.fromEntries(response.headers.entries()));
+
+                if (response.ok) {
+                    const result = await response.json();
+                    showResult('createResult', 
+                        `✅ 사용자 생성 성공!\n\n` +
+                        `상태 코드: ${response.status}\n` +
+                        `응답 데이터: ${JSON.stringify(result, null, 2)}\n\n` +
+                        `CORS 헤더 확인:\n` +
+                        `Access-Control-Allow-Origin: ${response.headers.get('Access-Control-Allow-Origin') || '없음'}\n` +
+                        `Access-Control-Allow-Methods: ${response.headers.get('Access-Control-Allow-Methods') || '없음'}\n` +
+                        `Access-Control-Allow-Headers: ${response.headers.get('Access-Control-Allow-Headers') || '없음'}`
+                    );
+                } else {
+                    const errorText = await response.text();
+                    showResult('createResult', 
+                        `❌ 사용자 생성 실패!\n\n` +
+                        `상태 코드: ${response.status}\n` +
+                        `에러 메시지: ${errorText}\n\n` +
+                        `CORS 헤더 확인:\n` +
+                        `Access-Control-Allow-Origin: ${response.headers.get('Access-Control-Allow-Origin') || '없음'}`
+                    , false);
+                }
+            } catch (error) {
+                console.error('에러 발생:', error);
+                showResult('createResult', 
+                    `❌ 네트워크 에러 발생!\n\n` +
+                    `에러 타입: ${error.name}\n` +
+                    `에러 메시지: ${error.message}\n\n` +
+                    `이는 CORS 정책 위반이나 네트워크 연결 문제일 가능성이 높습니다.`
+                , false);
+            }
+        }
+
+        async function getUser() {
+            const baseUrl = getBaseUrl();
+            const nickname = document.getElementById('searchNickname').value.trim();
+            
+            if (!nickname) {
+                showResult('getResult', '조회할 닉네임을 입력해주세요.', false);
+                return;
+            }
+
+            try {
+                console.log(`GET 요청 시작: ${baseUrl}/api/users/${nickname}`);
+                
+                const response = await fetch(`${baseUrl}/api/users/${nickname}`, {
+                    method: 'GET',
+                    headers: {
+                        'Accept': 'application/json',
+                    }
+                });
+
+                console.log('응답 상태:', response.status);
+                console.log('응답 헤더:', Object.fromEntries(response.headers.entries()));
+
+                if (response.ok) {
+                    const result = await response.json();
+                    showResult('getResult', 
+                        `✅ 사용자 조회 성공!\n\n` +
+                        `상태 코드: ${response.status}\n` +
+                        `응답 데이터: ${JSON.stringify(result, null, 2)}\n\n` +
+                        `CORS 헤더 확인:\n` +
+                        `Access-Control-Allow-Origin: ${response.headers.get('Access-Control-Allow-Origin') || '없음'}\n` +
+                        `Access-Control-Allow-Methods: ${response.headers.get('Access-Control-Allow-Methods') || '없음'}`
+                    );
+                } else {
+                    const errorText = await response.text();
+                    showResult('getResult', 
+                        `❌ 사용자 조회 실패!\n\n` +
+                        `상태 코드: ${response.status}\n` +
+                        `에러 메시지: ${errorText}\n\n` +
+                        `CORS 헤더 확인:\n` +
+                        `Access-Control-Allow-Origin: ${response.headers.get('Access-Control-Allow-Origin') || '없음'}`
+                    , false);
+                }
+            } catch (error) {
+                console.error('에러 발생:', error);
+                showResult('getResult', 
+                    `❌ 네트워크 에러 발생!\n\n` +
+                    `에러 타입: ${error.name}\n` +
+                    `에러 메시지: ${error.message}\n\n` +
+                    `이는 CORS 정책 위반이나 네트워크 연결 문제일 가능성이 높습니다.`
+                , false);
+            }
+        }
+
+        async function checkCorsStatus() {
+            const baseUrl = getBaseUrl();
+            
+            try {
+                // OPTIONS 요청으로 CORS preflight 테스트
+                const response = await fetch(`${baseUrl}/api/users`, {
+                    method: 'OPTIONS',
+                    headers: {
+                        'Origin': window.location.origin,
+                        'Access-Control-Request-Method': 'POST',
+                        'Access-Control-Request-Headers': 'Content-Type'
+                    }
+                });
+
+                const corsHeaders = {
+                    'Access-Control-Allow-Origin': response.headers.get('Access-Control-Allow-Origin'),
+                    'Access-Control-Allow-Methods': response.headers.get('Access-Control-Allow-Methods'),
+                    'Access-Control-Allow-Headers': response.headers.get('Access-Control-Allow-Headers'),
+                    'Access-Control-Allow-Credentials': response.headers.get('Access-Control-Allow-Credentials'),
+                    'Access-Control-Max-Age': response.headers.get('Access-Control-Max-Age')
+                };
+
+                showInfo('corsStatus', 
+                    `🔍 CORS Preflight 응답 분석\n\n` +
+                    `상태 코드: ${response.status}\n` +
+                    `응답 URL: ${response.url}\n\n` +
+                    `CORS 헤더:\n` +
+                    Object.entries(corsHeaders)
+                        .map(([key, value]) => `${key}: ${value || '없음'}`)
+                        .join('\n') +
+                    `\n\n` +
+                    `현재 페이지 Origin: ${window.location.origin}\n` +
+                    `테스트 대상 서버: ${baseUrl}`
+                );
+
+            } catch (error) {
+                showResult('corsStatus', 
+                    `❌ CORS 상태 확인 실패!\n\n` +
+                    `에러: ${error.message}\n\n` +
+                    `이는 서버 연결 문제이거나 CORS 설정이 제대로 되지 않았을 가능성이 높습니다.`
+                , false);
+            }
+        }
+
+        // 페이지 로드 시 기본값 설정
+        document.addEventListener('DOMContentLoaded', function() {
+            // 현재 페이지가 localhost에서 실행 중인지 확인
+            if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+                document.getElementById('baseUrl').value = 'http://localhost:8080';
+            }
+        });
+    </script>
+</body>
+</html>
