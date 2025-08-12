@@ -14,13 +14,23 @@ cd ~/melog
 echo "📥 최신 코드 가져오기..."
 git pull origin main
 
-# 환경변수 파일 생성 (초기에는 dev 프로필 사용 -> DB 분리 후 prod 프로필 사용)
-echo "🔧 환경변수 파일 생성..."
+echo "🔧 .env 생성 (managed DB)"
 cat > .env <<EOF
+SPRING_PROFILES_ACTIVE=prod
+DB_HOST=${DB_HOST}
+DB_PORT=${DB_PORT}
 POSTGRES_DB=${POSTGRES_DB}
 POSTGRES_USER=${POSTGRES_USER}
 POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
-SPRING_PROFILES_ACTIVE=dev
+
+# Spring Boot Configuration
+SPRING_PROFILES_ACTIVE=prod
+
+# Docker Hub Configuration
+DOCKERHUB_USERNAME=melog-be_devcontainer
+IMAGE_TAG=latest
+
+# Clova API Configuration
 CLOVA_SPEECH_CLIENT_ID=${CLOVA_SPEECH_CLIENT_ID}
 CLOVA_SPEECH_CLIENT_SECRET=${CLOVA_SPEECH_CLIENT_SECRET}
 CLOVA_STUDIO_API_KEY=${CLOVA_STUDIO_API_KEY}
@@ -30,8 +40,8 @@ EOF
 echo "🛑 기존 컨테이너 중지..."
 docker-compose -f docker-compose.prod.yml down
 
-# 새 이미지로 빌드 및 실행 (dev 프로필로 시작)
-echo "🔨 새 이미지 빌드 및 실행 (dev 프로필 - update 모드)..."
+# 새 이미지로 빌드 및 실행
+echo "🔨 새 이미지 빌드 및 실행..."
 docker-compose -f docker-compose.prod.yml up -d --build
 
 # 배포 상태 확인
@@ -47,24 +57,15 @@ echo "🏥 헬스체크 수행..."
 if curl -f http://localhost:8080/actuator/health; then
     echo "✅ 애플리케이션이 정상적으로 실행되고 있습니다!"
     
-    # 스키마가 생성되었는지 확인
-    echo "🔍 데이터베이스 스키마 확인 중..."
-    if docker exec melog-postgres-prod psql -U $POSTGRES_USER -d $POSTGRES_DB -c "\dt" | grep -q "users"; then
-        echo "✅ 데이터베이스 스키마가 정상적으로 생성되었습니다!"
-        echo "🔄 이제 prod 프로필로 전환합니다 (validate 모드)..."
-        
-        # 환경변수를 prod로 변경
-        sed -i 's/SPRING_PROFILES_ACTIVE=dev/SPRING_PROFILES_ACTIVE=prod/' .env
-        
-        # 애플리케이션 재시작 (prod 프로필로)
-        echo "🔄 애플리케이션 재시작 중 (prod 프로필)..."
-        docker-compose -f docker-compose.prod.yml down
-        docker-compose -f docker-compose.prod.yml up -d
-        
-        echo "✅ prod 프로필로 전환되었습니다 (validate 모드)!"
+    # Flyway 마이그레이션 상태 확인
+    echo "🔍 Flyway 마이그레이션 상태 확인..."
+    if docker exec melog-app-prod psql -h localhost -U $POSTGRES_USER -d $POSTGRES_DB -c "\dt" | grep -q "flyway_schema_history"; then
+        echo "✅ Flyway 마이그레이션이 정상적으로 실행되었습니다!"
     else
-        echo "⚠️ 데이터베이스 스키마가 아직 생성되지 않았습니다. dev 프로필(update 모드)로 유지합니다."
+        echo "⚠️ Flyway 마이그레이션이 아직 실행되지 않았습니다."
     fi
+    
+    echo "✅ 배포가 완료되었습니다!"
 else
     echo "❌ 헬스체크 실패. 로그를 확인해주세요."
     docker-compose -f docker-compose.prod.yml logs app
