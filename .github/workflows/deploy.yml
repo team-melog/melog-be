@@ -1,0 +1,53 @@
+name: Deploy to Production
+
+on:
+  push:
+    branches: [ main, develop ]
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Prepare SSH key
+      run: |
+        mkdir -p ~/.ssh
+        echo "${{ secrets.SERVER_SSH_KEY }}" > ~/.ssh/melog_ci.pem
+        chmod 600 ~/.ssh/melog_ci.pem
+        ssh-keyscan -H "${{ secrets.SERVER_HOST }}" >> ~/.ssh/known_hosts
+      
+    - name: Deploy to server
+      uses: appleboy/ssh-action@v1.0.3
+      with:
+        host: ${{ secrets.SERVER_HOST }}
+        username: ${{ secrets.SERVER_USER }}
+        key_path: ~/.ssh/melog_ci.pem
+        port: 22
+        envs: |
+          POSTGRES_DB=${{ secrets.POSTGRES_DB }}
+          POSTGRES_USER=${{ secrets.POSTGRES_USER }}
+          POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD }}
+          CLOVA_SPEECH_CLIENT_ID=${{ secrets.CLOVA_SPEECH_CLIENT_ID }}
+          CLOVA_SPEECH_CLIENT_SECRET=${{ secrets.CLOVA_SPEECH_CLIENT_SECRET }}
+          CLOVA_STUDIO_API_KEY=${{ secrets.CLOVA_STUDIO_API_KEY }}
+        script: |
+          # 애플리케이션 디렉토리로 이동
+          cd ~/melog
+          
+          # 최신 코드 가져오기
+          git pull origin main
+          
+          # 배포 스크립트 실행 권한 부여
+          chmod +x scripts/deploy.sh
+          
+          # 배포 스크립트 실행
+          ./scripts/deploy.sh
+          
+    - name: Deployment Status
+      run: |
+        echo "🚀 Deployment completed!"
+        echo "📱 Application should be available at: http://${{ secrets.SERVER_HOST }}:8080"

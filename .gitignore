@@ -37,8 +37,13 @@ out/
 ### VS Code ###
 .vscode/
 
-*.yml
+# 환경변수 파일
 .env
 
 # Clova API 키 파일 (보안상 Git에서 제외)
 **/clova-properties.yml
+
+# GitHub Actions 워크플로우는 포함
+!.github/
+!.github/workflows/
+!.github/workflows/*.yml
