@@ -57,6 +57,24 @@ docker-compose -f docker-compose.prod.yml ps
 echo "🏥 헬스체크 수행..."
 if curl -f http://localhost:8080/actuator/health; then
     echo "✅ 애플리케이션이 정상적으로 실행되고 있습니다!"
+    
+    # 스키마가 생성되었는지 확인
+    echo "🔍 데이터베이스 스키마 확인 중..."
+    if docker exec melog-postgres-prod psql -U $POSTGRES_USER -d $POSTGRES_DB -c "\dt" | grep -q "users"; then
+        echo "✅ 데이터베이스 스키마가 정상적으로 생성되었습니다!"
+        echo "🔄 이제 JPA 설정을 validate로 전환합니다..."
+        
+        # application.yml을 validate로 수정
+        sed -i 's/ddl-auto: update/ddl-auto: validate/' src/main/resources/application.yml
+        
+        # 애플리케이션 재시작
+        echo "🔄 애플리케이션 재시작 중..."
+        docker-compose -f docker-compose.prod.yml restart app
+        
+        echo "✅ JPA 설정이 validate로 전환되었습니다!"
+    else
+        echo "⚠️ 데이터베이스 스키마가 아직 생성되지 않았습니다. update 모드로 유지합니다."
+    fi
 else
     echo "❌ 헬스체크 실패. 로그를 확인해주세요."
     docker-compose -f docker-compose.prod.yml logs app
