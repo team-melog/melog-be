@@ -26,7 +26,7 @@ spring:
 
     # 데이터베이스 연결 설정
     datasource:
-        url: jdbc:postgresql://postgres:5432/${POSTGRES_DB}
+        url: jdbc:postgresql://postgres/melog
         username: ${POSTGRES_USER}
         password: ${POSTGRES_PASSWORD}
         driver-class-name: org.postgresql.Driver
