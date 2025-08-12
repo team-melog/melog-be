@@ -6,13 +6,13 @@
 set -e  # 에러 발생 시 스크립트 중단
 
 echo "🚀 Melog 배포 시작..."
-
-# 애플리케이션 디렉토리로 이동
+rm -rf ~/melog
+mkdir ~/melog
 cd ~/melog
 
 # 최신 코드 가져오기
 echo "📥 최신 코드 가져오기..."
-git pull origin main
+git clone https://github.com/team-melog/melog-be.git
 
 echo "🔧 .env 생성 (managed DB)"
 cat > .env <<EOF

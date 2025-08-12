@@ -1,46 +1,38 @@
 spring:
-    profiles:
-        active: prod
-    
-    # 프로덕션 JPA 설정 (Flyway 사용)
-    jpa:
-        hibernate:
-            ddl-auto: validate  # 운영에서는 validate 사용
-        show-sql: false
-        properties:
-            hibernate:
-                format_sql: false
-                dialect: org.hibernate.dialect.PostgreSQLDialect
-    
-    # 프로덕션 데이터베이스 설정
-    datasource:
-      url: jdbc:postgresql://${DB_HOST}:${DB_PORT}/${POSTGRES_DB}?sslmode=${DB_SSLMODE:}
-      username: ${POSTGRES_USER}
-      password: ${POSTGRES_PASSWORD}
-      driver-class-name: org.postgresql.Driver
-      hikari:
-          maximum-pool-size: 10
-          minimum-idle: 5
-          connection-timeout: 30000
-          idle-timeout: 600000
-          max-lifetime: 1800000
-    flyway:
-      enabled: true
-      locations: classpath:db/migration
-      baseline-on-migrate: true
-      baseline-version: 0
-      validate-on-migrate: true
-      out-of-order: false
-      table: flyway_schema_history
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: false
+    properties:
+      hibernate:
+        format_sql: false
+        dialect: org.hibernate.dialect.PostgreSQLDialect
 
-  # Production에서도 파일 업로드 설정 필요
+  datasource:
+    url: "jdbc:postgresql://${DB_HOST}:${DB_PORT}/${POSTGRES_DB}?sslmode=${DB_SSLMODE:}"
+    username: ${POSTGRES_USER}
+    password: ${POSTGRES_PASSWORD}
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      maximum-pool-size: 10
+      minimum-idle: 5
+      connection-timeout: 30000
+      idle-timeout: 600000
+      max-lifetime: 1800000
+
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+    validate-on-migrate: true
+    out-of-order: false
+    table: flyway_schema_history
+
   servlet:
     multipart:
       max-file-size: 3MB
       max-request-size: 3MB
       enabled: true
 
-  # Production 로깅 설정
 logging:
   level:
     com.melog.melog: INFO
@@ -49,7 +41,6 @@ logging:
   pattern:
     console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
 
-# Actuator 설정 (헬스체크용)
 management:
   endpoints:
     web:
@@ -59,9 +50,6 @@ management:
     health:
       show-details: when-authorized
 
-# Clova 설정은 환경변수로 관리 (docker-compose.prod.yml에서 설정)
-
-# 서버 설정
 server:
   port: 8080
   error:
