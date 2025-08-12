@@ -33,32 +33,28 @@ jobs:
           set -euo pipefail
 
           APP_DIR="$HOME/melog"
-          REPO_URL="https://github.com/team-melog/melog-be.git" 
+          REPO_URL="https://github.com/team-melog/melog-be.git"  # private이면 deploy key 또는 PAT 필요
 
-          # 1) 앱 디렉터리 생성
           mkdir -p "$APP_DIR"
-
           cd "$APP_DIR"
 
-          # 2) repo 초기화/갱신 (안전)
           if [ ! -d .git ]; then
             echo "[INIT] Cloning repository into $APP_DIR"
-            git clone "$REPO_URL" .    
+            git clone "$REPO_URL" .
+            git checkout main
           else
-            echo "[INFO] Repository exists. Fetching updates..."
+            echo "[INFO] Clean sync with origin/main"
             git fetch --all --prune
+            # 로컬 변경/추적안된 파일 제거 → 항상 깨끗한 상태 확보
+            git reset --hard origin/main
+            git clean -fdx
+            git checkout main
+            git pull --ff-only origin main
           fi
 
-          # 3) 배포 대상 브랜치로 체크아웃 (여기선 main)
-          git checkout main
-          git pull --ff-only origin main
-
-          # 4) 배포 스크립트 권한
           chmod +x scripts/deploy.sh
-
-          # 5) 원격 환경변수(Secrets) 주입 → deploy.sh 실행
           ./scripts/deploy.sh
-          
+
     - name: Deployment Status
       run: |
         echo "🚀 Deployment completed!"

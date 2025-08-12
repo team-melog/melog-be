@@ -14,24 +14,13 @@ cd ~/melog
 echo "📥 최신 코드 가져오기..."
 git pull origin main
 
-# 환경변수 파일 생성 (초기에는 dev 프로필 사용)
+# 환경변수 파일 생성 (초기에는 dev 프로필 사용 -> DB 분리 후 prod 프로필 사용)
 echo "🔧 환경변수 파일 생성..."
-cat > .env << 'EOF'
-# Production Environment Variables
-
-# PostgreSQL Database Configuration
+cat > .env <<EOF
 POSTGRES_DB=${POSTGRES_DB}
 POSTGRES_USER=${POSTGRES_USER}
 POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
-
-# Spring Boot Configuration (초기에는 dev 프로필 사용)
 SPRING_PROFILES_ACTIVE=dev
-
-# Docker Hub Configuration
-DOCKERHUB_USERNAME=melog-be_devcontainer
-IMAGE_TAG=latest
-
-# Clova API Configuration
 CLOVA_SPEECH_CLIENT_ID=${CLOVA_SPEECH_CLIENT_ID}
 CLOVA_SPEECH_CLIENT_SECRET=${CLOVA_SPEECH_CLIENT_SECRET}
 CLOVA_STUDIO_API_KEY=${CLOVA_STUDIO_API_KEY}
