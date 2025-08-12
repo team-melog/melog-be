@@ -14,7 +14,7 @@ spring:
     
     # 프로덕션 데이터베이스 설정
     datasource:
-        url: jdbc:postgresql://postgres/melog
+        url: jdbc:postgresql://postgres:5432/${POSTGRES_DB}
         username: ${POSTGRES_USER}
         password: ${POSTGRES_PASSWORD}
         driver-class-name: org.postgresql.Driver
@@ -25,12 +25,12 @@ spring:
             idle-timeout: 600000
             max-lifetime: 1800000
 
-  # Production에서도 파일 업로드 설정 필요
-  servlet:
-    multipart:
-      max-file-size: 3MB
-      max-request-size: 3MB
-      enabled: true
+    # Production에서도 파일 업로드 설정 필요
+    servlet:
+      multipart:
+        max-file-size: 3MB
+        max-request-size: 3MB
+        enabled: true
 
   # Production 로깅 설정
 logging:
