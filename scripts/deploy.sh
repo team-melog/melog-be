@@ -14,7 +14,7 @@ cd ~/melog
 echo "📥 최신 코드 가져오기..."
 git pull origin main
 
-# 환경변수 파일 생성
+# 환경변수 파일 생성 (초기에는 dev 프로필 사용)
 echo "🔧 환경변수 파일 생성..."
 cat > .env << 'EOF'
 # Production Environment Variables
@@ -24,8 +24,8 @@ POSTGRES_DB=${POSTGRES_DB}
 POSTGRES_USER=${POSTGRES_USER}
 POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
 
-# Spring Boot Configuration
-SPRING_PROFILES_ACTIVE=prod
+# Spring Boot Configuration (초기에는 dev 프로필 사용)
+SPRING_PROFILES_ACTIVE=dev
 
 # Docker Hub Configuration
 DOCKERHUB_USERNAME=melog-be_devcontainer
@@ -41,8 +41,8 @@ EOF
 echo "🛑 기존 컨테이너 중지..."
 docker-compose -f docker-compose.prod.yml down
 
-# 새 이미지로 빌드 및 실행
-echo "🔨 새 이미지 빌드 및 실행..."
+# 새 이미지로 빌드 및 실행 (dev 프로필로 시작)
+echo "🔨 새 이미지 빌드 및 실행 (dev 프로필 - update 모드)..."
 docker-compose -f docker-compose.prod.yml up -d --build
 
 # 배포 상태 확인
@@ -62,18 +62,19 @@ if curl -f http://localhost:8080/actuator/health; then
     echo "🔍 데이터베이스 스키마 확인 중..."
     if docker exec melog-postgres-prod psql -U $POSTGRES_USER -d $POSTGRES_DB -c "\dt" | grep -q "users"; then
         echo "✅ 데이터베이스 스키마가 정상적으로 생성되었습니다!"
-        echo "🔄 이제 JPA 설정을 validate로 전환합니다..."
+        echo "🔄 이제 prod 프로필로 전환합니다 (validate 모드)..."
         
-        # application.yml을 validate로 수정
-        sed -i 's/ddl-auto: update/ddl-auto: validate/' src/main/resources/application.yml
+        # 환경변수를 prod로 변경
+        sed -i 's/SPRING_PROFILES_ACTIVE=dev/SPRING_PROFILES_ACTIVE=prod/' .env
         
-        # 애플리케이션 재시작
-        echo "🔄 애플리케이션 재시작 중..."
-        docker-compose -f docker-compose.prod.yml restart app
+        # 애플리케이션 재시작 (prod 프로필로)
+        echo "🔄 애플리케이션 재시작 중 (prod 프로필)..."
+        docker-compose -f docker-compose.prod.yml down
+        docker-compose -f docker-compose.prod.yml up -d
         
-        echo "✅ JPA 설정이 validate로 전환되었습니다!"
+        echo "✅ prod 프로필로 전환되었습니다 (validate 모드)!"
     else
-        echo "⚠️ 데이터베이스 스키마가 아직 생성되지 않았습니다. update 모드로 유지합니다."
+        echo "⚠️ 데이터베이스 스키마가 아직 생성되지 않았습니다. dev 프로필(update 모드)로 유지합니다."
     fi
 else
     echo "❌ 헬스체크 실패. 로그를 확인해주세요."
