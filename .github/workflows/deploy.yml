@@ -26,6 +26,7 @@ jobs:
           POSTGRES_DB=${{ secrets.POSTGRES_DB }}
           POSTGRES_USER=${{ secrets.POSTGRES_USER }}
           POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD }}
+          DB_SSLMODE=${{ secrets.DB_SSLMODE }}
           CLOVA_SPEECH_CLIENT_ID=${{ secrets.CLOVA_SPEECH_CLIENT_ID }}
           CLOVA_SPEECH_CLIENT_SECRET=${{ secrets.CLOVA_SPEECH_CLIENT_SECRET }}
           CLOVA_STUDIO_API_KEY=${{ secrets.CLOVA_STUDIO_API_KEY }}
