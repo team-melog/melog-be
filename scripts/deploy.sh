@@ -17,12 +17,24 @@ echo "POSTGRES_DB: ${POSTGRES_DB:-'NOT SET'}"
 echo "POSTGRES_USER: ${POSTGRES_USER:-'NOT SET'}"
 echo "POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-'NOT SET'}"
 
+# 환경변수 파일 생성
+cat <<EOF > .env
+DB_HOST=${DB_HOST}
+DB_PORT=${DB_PORT}
+POSTGRES_DB=${POSTGRES_DB}
+POSTGRES_USER=${POSTGRES_USER}
+POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+CLOVA_SPEECH_CLIENT_ID=${CLOVA_SPEECH_CLIENT_ID}
+CLOVA_SPEECH_CLIENT_SECRET=${CLOVA_SPEECH_CLIENT_SECRET}
+CLOVA_STUDIO_API_KEY=${CLOVA_STUDIO_API_KEY}
+EOF
+
 # 혹시 남아있는 고아 컨테이너/네트워크 정리
 echo "🧹 고아 컨테이너/네트워크 정리..."
 $COMPOSE -f docker-compose.prod.yml down --remove-orphans || true
 
 echo "🔨 새 이미지 빌드 및 실행..."
-$COMPOSE -f docker-compose.prod.yml up -d --build
+$COMPOSE -f docker-compose.prod.yml --env-file .env up -d --build
 
 echo "⏳ 기동 대기..."
 sleep 10
