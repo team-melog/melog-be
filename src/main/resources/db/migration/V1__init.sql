@@ -47,6 +47,12 @@ CREATE TABLE melog.emotion_keyword (
     keyword character varying(255) NOT NULL
 );
 
+-- src/main/resources/db/migration/V1__init.sql
+CREATE TABLE IF NOT EXISTS emotion_keyword (
+    id BIGSERIAL PRIMARY KEY,
+    record_id BIGINT REFERENCES emotion_record(id),
+    keyword VARCHAR(255)
+);
 
 ALTER TABLE melog.emotion_keyword OWNER TO melog;
 
