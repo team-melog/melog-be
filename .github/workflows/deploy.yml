@@ -33,9 +33,9 @@ jobs:
           # 애플리케이션 디렉토리로 이동
           cd ~/melog/melog-be
 
-          # 👇 환경변수 직접 export해서 deploy.sh에 전달
+          # 환경변수 직접 export해서 deploy.sh에 전달
           export DB_HOST=${{ secrets.DB_HOST }}
-          export DB_PORT=5432
+          export DB_PORT=${{ secrets.DB_PORT }}
           export POSTGRES_DB=${{ secrets.POSTGRES_DB }}
           export POSTGRES_USER=${{ secrets.POSTGRES_USER }}
           export POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD }}
