@@ -39,6 +39,7 @@ jobs:
           export POSTGRES_DB=${{ secrets.POSTGRES_DB }}
           export POSTGRES_USER=${{ secrets.POSTGRES_USER }}
           export POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD }}
+          export DB_SSLMODE=${{ secrets.DB_SSLMODE }}
           export CLOVA_SPEECH_CLIENT_ID=${{ secrets.CLOVA_SPEECH_CLIENT_ID }}
           export CLOVA_SPEECH_CLIENT_SECRET=${{ secrets.CLOVA_SPEECH_CLIENT_SECRET }}
           export CLOVA_STUDIO_API_KEY=${{ secrets.CLOVA_STUDIO_API_KEY }}
