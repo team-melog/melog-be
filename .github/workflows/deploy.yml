@@ -30,31 +30,18 @@ jobs:
           CLOVA_SPEECH_CLIENT_SECRET=${{ secrets.CLOVA_SPEECH_CLIENT_SECRET }}
           CLOVA_STUDIO_API_KEY=${{ secrets.CLOVA_STUDIO_API_KEY }}
         script: |
-          set -euo pipefail
-
-          APP_DIR="$HOME/melog"
-          REPO_URL="https://github.com/team-melog/melog-be.git"  # private이면 deploy key 또는 PAT 필요
-
-          mkdir -p "$APP_DIR"
-          cd "$APP_DIR"
-
-          if [ ! -d .git ]; then
-            echo "[INIT] Cloning repository into $APP_DIR"
-            git clone "$REPO_URL" .
-            git checkout main
-          else
-            echo "[INFO] Clean sync with origin/main"
-            git fetch --all --prune
-            # 로컬 변경/추적안된 파일 제거 → 항상 깨끗한 상태 확보
-            git reset --hard origin/main
-            git clean -fdx
-            git checkout main
-            git pull --ff-only origin main
-          fi
-
+          # 애플리케이션 디렉토리로 이동
+          cd ~/melog/melog-be
+          
+          # 최신 코드 가져오기
+          git pull origin main
+          
+          # 배포 스크립트 실행 권한 부여
           chmod +x scripts/deploy.sh
+          
+          # 배포 스크립트 실행
           ./scripts/deploy.sh
-
+          
     - name: Deployment Status
       run: |
         echo "🚀 Deployment completed!"
