@@ -9,15 +9,6 @@ command -v docker-compose >/dev/null 2>&1 && COMPOSE="docker-compose"
 
 echo "🚀 Melog 배포 시작..."
 
-# 깨끗하게 재구성
-rm -rf "$APP_DIR"
-mkdir -p "$APP_DIR"
-cd "$APP_DIR"
-
-echo "📥 최신 코드 가져오기..."
-git clone "$REPO_URL" melog-be
-cd "$REPO_DIR"
-
 echo "🔧 .env 생성 (managed DB)"
 cat > .env <<EOF
 SPRING_PROFILES_ACTIVE=prod
@@ -39,7 +30,7 @@ echo "🔨 새 이미지 빌드 및 실행..."
 $COMPOSE -f docker-compose.prod.yml up -d --build
 
 echo "⏳ 기동 대기..."
-sleep 15
+sleep 10
 
 echo "📊 컨테이너 상태 확인..."
 $COMPOSE -f docker-compose.prod.yml ps

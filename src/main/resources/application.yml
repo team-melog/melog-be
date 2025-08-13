@@ -8,51 +8,11 @@ spring:
             enabled: true
     profiles:
         active: dev
-
-    servlet:
-        multipart:
-            max-file-size: 3MB
-            max-request-size: 3MB
-            enabled: true
-
-    # JPA 설정 (초기 배포용 - update로 설정)
-    jpa:
-        hibernate:
-            ddl-auto: validate  # Flyway 사용 시 validate로 변경
-        show-sql: false
-        properties:
-            hibernate:
-                format_sql: true
-                dialect: org.hibernate.dialect.PostgreSQLDialect
-
-    # 데이터베이스 연결 설정
-    datasource:
-        url: jdbc:postgresql://localhost:5432/${POSTGRES_DB}
-        username: ${POSTGRES_USER}
-        password: ${POSTGRES_PASSWORD}
-        driver-class-name: org.postgresql.Driver
-        hikari:
-            maximum-pool-size: 10
-            minimum-idle: 5
-            connection-timeout: 30000
-            idle-timeout: 600000
-            max-lifetime: 1800000
-
-    # Flyway 설정 (데이터베이스 마이그레이션)
-    flyway:
-        enabled: true
-        locations: classpath:db/migration
-        baseline-on-migrate: true
-        baseline-version: 0
-        validate-on-migrate: true
-        out-of-order: false
-        table: flyway_schema_history
-
 server:
     port: 8080
 
-# springdoc:
-#   api-docs:
-#     path: /api-docs
-#   swagger-ui:
-#     path: /swagger-ui.html
+springdoc:
+  api-docs:
+    path: /api-docs
+  swagger-ui:
+    path: /swagger-ui.html

@@ -5,7 +5,6 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: melog-app-prod
     env_file:
       - .env
     environment:
