@@ -24,24 +24,6 @@ if [ -z "${DB_SSLMODE:-}" ]; then
     export DB_SSLMODE="require"
 fi
 
-echo "🔧 .env 생성 (managed DB)"
-cat > .env <<EOF
-SPRING_PROFILES_ACTIVE=prod
-DB_HOST=${DB_HOST}
-DB_PORT=${DB_PORT}
-POSTGRES_DB=${POSTGRES_DB}
-POSTGRES_USER=${POSTGRES_USER}
-POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
-DB_SSLMODE=${DB_SSLMODE}
-CLOVA_SPEECH_CLIENT_ID=${CLOVA_SPEECH_CLIENT_ID}
-CLOVA_SPEECH_CLIENT_SECRET=${CLOVA_SPEECH_CLIENT_SECRET}
-CLOVA_STUDIO_API_KEY=${CLOVA_STUDIO_API_KEY}
-EOF
-
-# .env 파일 내용 확인
-echo "📄 생성된 .env 파일 내용:"
-cat .env
-
 # 혹시 남아있는 고아 컨테이너/네트워크 정리
 echo "🧹 고아 컨테이너/네트워크 정리..."
 $COMPOSE -f docker-compose.prod.yml down --remove-orphans || true
