@@ -17,22 +17,6 @@ SET client_min_messages = warning;
 SET row_security = off;
 
 --
--- Name: melog; Type: SCHEMA; Schema: -; Owner: pg_database_owner
---
-
-CREATE SCHEMA melog;
-
-
-ALTER SCHEMA melog OWNER TO pg_database_owner;
-
---
--- Name: SCHEMA melog; Type: COMMENT; Schema: -; Owner: pg_database_owner
---
-
-COMMENT ON SCHEMA melog IS 'standard melog schema';
-
-
---
 -- Name: emotion_type; Type: TYPE; Schema: melog; Owner: melog
 --
 
