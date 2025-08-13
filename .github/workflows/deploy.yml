@@ -32,6 +32,16 @@ jobs:
         script: |
           # 애플리케이션 디렉토리로 이동
           cd ~/melog/melog-be
+
+          # 👇 환경변수 직접 export해서 deploy.sh에 전달
+          export DB_HOST=${{ secrets.DB_HOST }}
+          export DB_PORT=5432
+          export POSTGRES_DB=${{ secrets.POSTGRES_DB }}
+          export POSTGRES_USER=${{ secrets.POSTGRES_USER }}
+          export POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD }}
+          export CLOVA_SPEECH_CLIENT_ID=${{ secrets.CLOVA_SPEECH_CLIENT_ID }}
+          export CLOVA_SPEECH_CLIENT_SECRET=${{ secrets.CLOVA_SPEECH_CLIENT_SECRET }}
+          export CLOVA_STUDIO_API_KEY=${{ secrets.CLOVA_STUDIO_API_KEY }}
           
           # 최신 코드 가져오기
           git pull origin main
