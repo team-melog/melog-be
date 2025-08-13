@@ -20,8 +20,8 @@ echo "DB_SSLMODE: ${DB_SSLMODE:-'NOT SET'}"
 
 # DB_SSLMODE 기본값 설정 (비어있을 경우)
 if [ -z "${DB_SSLMODE:-}" ]; then
-    echo "⚠️  DB_SSLMODE가 설정되지 않음. 기본값 'require'로 설정"
-    export DB_SSLMODE="require"
+    echo "⚠️  DB_SSLMODE가 설정되지 않음. 기본값 'disable'로 설정 (SSL 미지원 서버용)"
+    export DB_SSLMODE="disable"
 fi
 
 # 혹시 남아있는 고아 컨테이너/네트워크 정리
