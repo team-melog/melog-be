@@ -23,6 +23,8 @@ jobs:
         timeout: 60s
         command_timeout: 15m
         envs: |
+          DB_HOST=${{ secrets.DB_HOST }}
+          DB_PORT=${{ secrets.DB_PORT }}
           POSTGRES_DB=${{ secrets.POSTGRES_DB }}
           POSTGRES_USER=${{ secrets.POSTGRES_USER }}
           POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD }}
@@ -35,15 +37,15 @@ jobs:
           cd ~/melog/melog-be
 
           # 환경변수 직접 export해서 deploy.sh에 전달
-          export DB_HOST=${{ secrets.DB_HOST }}
-          export DB_PORT=${{ secrets.DB_PORT }}
-          export POSTGRES_DB=${{ secrets.POSTGRES_DB }}
-          export POSTGRES_USER=${{ secrets.POSTGRES_USER }}
-          export POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD }}
-          export DB_SSLMODE=${{ secrets.DB_SSLMODE }}
-          export CLOVA_SPEECH_CLIENT_ID=${{ secrets.CLOVA_SPEECH_CLIENT_ID }}
-          export CLOVA_SPEECH_CLIENT_SECRET=${{ secrets.CLOVA_SPEECH_CLIENT_SECRET }}
-          export CLOVA_STUDIO_API_KEY=${{ secrets.CLOVA_STUDIO_API_KEY }}
+          export DB_HOST="${{ secrets.DB_HOST }}"
+          export DB_PORT="${{ secrets.DB_PORT }}"
+          export POSTGRES_DB="${{ secrets.POSTGRES_DB }}"
+          export POSTGRES_USER="${{ secrets.POSTGRES_USER }}"
+          export POSTGRES_PASSWORD="${{ secrets.POSTGRES_PASSWORD }}"
+          export DB_SSLMODE="${{ secrets.DB_SSLMODE }}"
+          export CLOVA_SPEECH_CLIENT_ID="${{ secrets.CLOVA_SPEECH_CLIENT_ID }}"
+          export CLOVA_SPEECH_CLIENT_SECRET="${{ secrets.CLOVA_SPEECH_CLIENT_SECRET }}"
+          export CLOVA_STUDIO_API_KEY="${{ secrets.CLOVA_STUDIO_API_KEY }}"
           
           # 최신 코드 가져오기
           git pull origin main
