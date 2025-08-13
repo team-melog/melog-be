@@ -5,10 +5,8 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    env_file:
-      - .env
     environment:
-      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE}
+      SPRING_PROFILES_ACTIVE: prod
       DB_HOST: ${DB_HOST}
       DB_PORT: ${DB_PORT}
       POSTGRES_DB: ${POSTGRES_DB}
