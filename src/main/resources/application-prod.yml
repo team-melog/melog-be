@@ -1,13 +1,12 @@
 spring:
   jpa:
-    hibernate:
-      ddl-auto: validate
-    show-sql: false
     properties:
       hibernate:
+        ddl-auto: validate
         format_sql: true
         dialect: org.hibernate.dialect.PostgreSQLDialect
-        default_schema: public
+        default_schema: melog
+    show-sql: false
 
   datasource:
     url: jdbc:postgresql://${DB_HOST}:${DB_PORT}/${POSTGRES_DB}?currentSchema=melog
