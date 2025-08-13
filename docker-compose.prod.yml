@@ -10,7 +10,6 @@ services:
       POSTGRES_DB: ${POSTGRES_DB}
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-      DB_SSLMODE: ${DB_SSLMODE}
       # Clova Speech API Configuration
       CLOVA_SPEECH_URL: ${CLOVA_SPEECH_URL:-https://naveropenapi.apigw.ntruss.com}
       CLOVA_SPEECH_CLIENT_ID: ${CLOVA_SPEECH_CLIENT_ID}
