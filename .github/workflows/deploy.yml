@@ -47,7 +47,9 @@ jobs:
           export CLOVA_SPEECH_CLIENT_SECRET="${{ secrets.CLOVA_SPEECH_CLIENT_SECRET }}"
           export CLOVA_STUDIO_API_KEY="${{ secrets.CLOVA_STUDIO_API_KEY }}"
           
-          # 최신 코드 가져오기
+          # 로컬 변경사항 정리 후 최신 코드 가져오기
+          git reset --hard HEAD
+          git clean -fd
           git pull origin main
           
           # 배포 스크립트 실행 권한 부여
