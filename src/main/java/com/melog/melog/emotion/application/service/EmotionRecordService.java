@@ -820,6 +820,8 @@ public class EmotionRecordService implements EmotionRecordUseCase {
                 .createdAt(record.getCreatedAt())
                 .emotions(normalizedEmotions)
                 .userSelectedEmotion(userSelectedEmotionResponse)
+                .audioFilePath(record.getAudioFilePath())
+                .hasAudioFile(record.getAudioFilePath() != null && !record.getAudioFilePath().isEmpty())
                 .build();
     }
 
@@ -844,6 +846,8 @@ public class EmotionRecordService implements EmotionRecordUseCase {
                 .summary(record.getSummary())
                 .comment(record.getEmotionComment() != null ? record.getEmotionComment().getComment() : null)
                 .emotions(normalizedEmotions)
+                .audioFilePath(record.getAudioFilePath())
+                .hasAudioFile(record.getAudioFilePath() != null && !record.getAudioFilePath().isEmpty())
                 .build();
     }
 
@@ -950,22 +954,25 @@ public class EmotionRecordService implements EmotionRecordUseCase {
      */
     private String saveAudioFileLocally(MultipartFile audioFile, String originalFileName) {
         try {
-            // [S3 대체 시] 이 부분을 S3 업로드 로직으로 교체
-            // 저장할 디렉토리 경로 설정 (프로젝트 루트 기준)
-            String uploadDir = "uploads/audio";
-            
-            // 디렉토리가 존재하지 않으면 생성
-            File directory = new File(uploadDir);
-            if (!directory.exists()) {
-                boolean created = directory.mkdirs();
-                if (!created) {
-                    log.warn("디렉토리 생성 실패: {}", uploadDir);
-                    // 대체 경로 사용
-                    uploadDir = "temp/audio";
-                    directory = new File(uploadDir);
-                    directory.mkdirs();
+                    // [S3 대체 시] 이 부분을 S3 업로드 로직으로 교체
+        // 저장할 디렉토리 경로 설정 (프로젝트 루트 기준)
+        String uploadDir = "/Users/jaymon/Downloads/melog_audio";
+        
+        // 디렉토리가 존재하지 않으면 생성
+        File directory = new File(uploadDir);
+        if (!directory.exists()) {
+            boolean created = directory.mkdirs();
+            if (!created) {
+                log.warn("디렉토리 생성 실패: {}", uploadDir);
+                // 대체 경로 사용
+                uploadDir = "/Users/jaymon/Downloads/melog_audio";
+                directory = new File(uploadDir);
+                if (!directory.mkdirs()) {
+                    log.error("모든 디렉토리 생성 실패. 음성 파일 저장을 건너뜁니다.");
+                    return "경로 불일치로 저장되지 않음";
                 }
             }
+        }
 
             // [S3 대체 시] 파일명 생성 로직은 그대로 사용 가능
             // 파일 이름에 타임스탬프 추가하여 중복 방지
@@ -993,7 +1000,7 @@ public class EmotionRecordService implements EmotionRecordUseCase {
             return filePath;
         } catch (Exception e) {
             log.error("음성 파일 저장 중 오류 발생: {}", e.getMessage(), e);
-            throw new RuntimeException("음성 파일 저장에 실패했습니다: " + e.getMessage(), e);
+            return "경로 불일치로 저장되지 않음";
         }
     }
 } 

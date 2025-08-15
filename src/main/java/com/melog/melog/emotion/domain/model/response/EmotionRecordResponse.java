@@ -18,4 +18,6 @@ public class EmotionRecordResponse {
     private LocalDateTime createdAt;
     private List<EmotionScoreResponse> emotions; // 상위 3개 감정만 포함
     private UserSelectedEmotionResponse userSelectedEmotion;
+    private String audioFilePath;
+    private Boolean hasAudioFile;
 } 
