@@ -1,6 +1,5 @@
 package com.melog.melog.emotion.domain.model.response;
 
-import com.melog.melog.user.domain.model.response.UserResponse;
 import lombok.Builder;
 import lombok.Getter;
 
@@ -14,10 +13,9 @@ public class EmotionRecordResponse {
     private Long id;
     private String text;
     private String summary;
+    private String comment;
     private LocalDate date;
     private LocalDateTime createdAt;
-    private UserResponse user;
-    private List<EmotionScoreResponse> emotions; // emotionScores에서 emotions로 변경
+    private List<EmotionScoreResponse> emotions; // 상위 3개 감정만 포함
     private UserSelectedEmotionResponse userSelectedEmotion;
-    private List<EmotionKeywordResponse> emotionKeywords;
 } 
