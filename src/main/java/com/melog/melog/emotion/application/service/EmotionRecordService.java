@@ -6,6 +6,8 @@ import com.melog.melog.user.domain.model.response.UserResponse;
 import com.melog.melog.emotion.application.port.in.EmotionRecordUseCase;
 import com.melog.melog.emotion.application.port.out.*;
 import com.melog.melog.emotion.domain.*;
+import com.melog.melog.emotion.domain.EmotionComment;
+import com.melog.melog.emotion.domain.EmotionScore;
 import com.melog.melog.user.application.port.out.UserPersistencePort;
 import com.melog.melog.user.domain.User;
 import com.melog.melog.clova.application.port.in.AnalyzeSentimentUseCase;
@@ -35,6 +37,7 @@ import com.melog.melog.emotion.domain.model.response.EmotionRecordSummaryRespons
 import java.util.Map;
 import java.util.HashMap;
 import java.util.ArrayList;
+import java.io.File;
 
 @Slf4j
 @Service
@@ -47,6 +50,7 @@ public class EmotionRecordService implements EmotionRecordUseCase {
     private final EmotionScorePersistencePort emotionScorePersistencePort;
     private final UserSelectedEmotionPersistencePort userSelectedEmotionPersistencePort;
     private final EmotionKeywordPersistencePort emotionKeywordPersistencePort;
+    private final EmotionCommentPersistencePort emotionCommentPersistencePort;
     private final AnalyzeSentimentUseCase analyzeSentimentUseCase;
     private final SpeechToTextUseCase speechToTextUseCase;
     private final EmotionAnalysisUseCase emotionAnalysisUseCase;
@@ -112,7 +116,41 @@ public class EmotionRecordService implements EmotionRecordUseCase {
                             .percentage(emotionScoreData.getPercentage())
                             .step(emotionScoreData.getStep())
                             .build();
-                    emotionScorePersistencePort.save(emotionScore);
+                    
+                    // 감정 점수 저장
+                    emotionScore = emotionScorePersistencePort.save(emotionScore);
+                    
+                    // 해당 감정과 단계에 맞는 코멘트 자동 매핑
+                    try {
+                        EmotionComment emotionComment = emotionCommentPersistencePort
+                                .findByEmotionTypeAndStep(emotionType, emotionScoreData.getStep())
+                                .orElse(null);
+                        
+                        if (emotionComment != null) {
+                            emotionScore.updateEmotionComment(emotionComment);
+                            emotionScorePersistencePort.save(emotionScore);
+                        }
+                    } catch (Exception e) {
+                        log.warn("감정 코멘트 매핑 실패: emotionType={}, step={}, error={}", 
+                                emotionType, emotionScoreData.getStep(), e.getMessage());
+                    }
+                }
+                
+                // 가장 높은 감정 점수를 가진 감정의 코멘트를 EmotionRecord에 설정
+                try {
+                    EmotionScore primaryEmotion = savedRecord.getPrimaryEmotion();
+                    if (primaryEmotion != null) {
+                        EmotionComment primaryComment = emotionCommentPersistencePort
+                                .findByEmotionTypeAndStep(primaryEmotion.getEmotionType(), primaryEmotion.getStep())
+                                .orElse(null);
+                        
+                        if (primaryComment != null) {
+                            savedRecord.updateEmotionComment(primaryComment);
+                            emotionRecordPersistencePort.save(savedRecord);
+                        }
+                    }
+                } catch (Exception e) {
+                    log.warn("주요 감정 코멘트 매핑 실패: error={}", e.getMessage());
                 }
             }
             
@@ -155,8 +193,8 @@ public class EmotionRecordService implements EmotionRecordUseCase {
             // 변환된 텍스트로 EmotionRecordCreateRequest 생성
             EmotionRecordCreateRequest request = createRequestFromText(text, userSelectedEmotionJson);
             
-            // 기존 텍스트 기반 메서드를 호출하여 재사용
-            return createEmotionRecord(nickname, request);
+            // 음성 파일 정보를 포함하여 감정 기록 생성
+            return createEmotionRecordWithAudioInfo(nickname, request, audioFile);
             
         } catch (Exception e) {
             log.error("음성 파일 처리 중 오류 발생: {}", e.getMessage(), e);
@@ -191,6 +229,150 @@ public class EmotionRecordService implements EmotionRecordUseCase {
                 .build();
     }
 
+    /**
+     * 음성 파일 정보를 포함하여 감정 기록을 생성합니다.
+     */
+    @Transactional
+    private EmotionRecordResponse createEmotionRecordWithAudioInfo(String nickname, EmotionRecordCreateRequest request, MultipartFile audioFile) {
+        // 사용자 조회
+        User user = userPersistencePort.findByNickname(nickname)
+                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다: " + nickname));
+
+        // 오늘 날짜로 감정 기록 생성
+        LocalDate today = LocalDate.now();
+        
+        // 해당 날짜에 이미 기록이 있는지 확인
+        if (emotionRecordPersistencePort.existsByUserAndDate(user, today)) {
+            throw new IllegalArgumentException("오늘 이미 감정 기록이 존재합니다: " + today);
+        }
+
+        // 음성 파일 정보 추출
+        String audioFileName = audioFile.getOriginalFilename();
+        Long audioFileSize = audioFile.getSize();
+        String audioMimeType = audioFile.getContentType();
+        
+        // 로컬 파일 저장 (개발 환경용)
+        String audioFilePath = saveAudioFileLocally(audioFile, audioFileName);
+        
+        // 음성 길이 계산 (임시로 0 설정, 실제로는 오디오 파일 분석 필요)
+        Integer audioDuration = 0; // TODO: 오디오 파일 길이 분석 로직 구현 필요
+
+        // 감정 기록 생성 (음성 파일 정보 포함)
+        EmotionRecord emotionRecord = EmotionRecord.builder()
+                .user(user)
+                .text(request.getText())
+                .date(today)
+                .audioFilePath(audioFilePath)
+                .audioFileName(audioFileName)
+                .audioDuration(audioDuration)
+                .audioFileSize(audioFileSize)
+                .audioMimeType(audioMimeType)
+                .build();
+
+        EmotionRecord savedRecord = emotionRecordPersistencePort.save(emotionRecord);
+
+        // 사용자 선택 감정 저장
+        if (request.getUserSelectedEmotion() != null) {
+            EmotionType emotionType = request.getUserSelectedEmotion().getEmotionType();
+            UserSelectedEmotion userSelectedEmotion = UserSelectedEmotion.builder()
+                    .record(savedRecord)
+                    .emotionType(emotionType)
+                    .percentage(request.getUserSelectedEmotion().getPercentage())
+                    .step(2) // 기본값
+                    .build();
+            userSelectedEmotionPersistencePort.save(userSelectedEmotion);
+        }
+
+        // Clova Studio를 통한 감정 분석 수행
+        try {
+            EmotionAnalysisRequest emotionRequest = EmotionAnalysisRequest.builder()
+                    .text(request.getText())
+                    .prompt("감정 요약과 감정 점수 분석")
+                    .build();
+            
+            EmotionAnalysisResponse emotionResponse = emotionAnalysisUseCase.analyzeEmotion(emotionRequest);
+            
+            // 감정 요약 저장
+            savedRecord.updateRecord(savedRecord.getText(), emotionResponse.getSummary());
+            
+            // 감정 분석 결과로 감정 점수 저장 및 코멘트 매핑
+            if (emotionResponse.getEmotions() != null) {
+                for (EmotionAnalysisResponse.EmotionScore emotionScoreData : emotionResponse.getEmotions()) {
+                    // 한글 감정명을 EmotionType으로 변환
+                    EmotionType emotionType = convertToEmotionType(emotionScoreData.getType());
+                    
+                    EmotionScore emotionScore = EmotionScore.builder()
+                            .record(savedRecord)
+                            .emotionType(emotionType)
+                            .percentage(emotionScoreData.getPercentage())
+                            .step(emotionScoreData.getStep())
+                            .build();
+                    
+                    // 감정 점수 저장
+                    emotionScore = emotionScorePersistencePort.save(emotionScore);
+                    
+                    // 해당 감정과 단계에 맞는 코멘트 자동 매핑
+                    try {
+                        EmotionComment emotionComment = emotionCommentPersistencePort
+                                .findByEmotionTypeAndStep(emotionType, emotionScoreData.getStep())
+                                .orElse(null);
+                        
+                        if (emotionComment != null) {
+                            emotionScore.updateEmotionComment(emotionComment);
+                            emotionScorePersistencePort.save(emotionScore);
+                        }
+                    } catch (Exception e) {
+                        log.warn("감정 코멘트 매핑 실패: emotionType={}, step={}, error={}", 
+                                emotionType, emotionScoreData.getStep(), e.getMessage());
+                    }
+                }
+                
+                // 가장 높은 감정 점수를 가진 감정의 코멘트를 EmotionRecord에 설정
+                try {
+                    EmotionScore primaryEmotion = savedRecord.getPrimaryEmotion();
+                    if (primaryEmotion != null) {
+                        EmotionComment primaryComment = emotionCommentPersistencePort
+                                .findByEmotionTypeAndStep(primaryEmotion.getEmotionType(), primaryEmotion.getStep())
+                                .orElse(null);
+                        
+                        if (primaryComment != null) {
+                            savedRecord.updateEmotionComment(primaryComment);
+                            emotionRecordPersistencePort.save(savedRecord);
+                        }
+                    }
+                } catch (Exception e) {
+                    log.warn("주요 감정 코멘트 매핑 실패: error={}", e.getMessage());
+                }
+            }
+            
+            // 키워드 저장
+            if (emotionResponse.getKeywords() != null && !emotionResponse.getKeywords().isEmpty()) {
+                for (int i = 0; i < emotionResponse.getKeywords().size(); i++) {
+                    String keywordText = emotionResponse.getKeywords().get(i);
+                    // 키워드 순서에 따라 weight 부여 (첫 번째가 가장 중요)
+                    Integer weight = emotionResponse.getKeywords().size() - i;
+                    
+                    EmotionKeyword emotionKeyword = EmotionKeyword.builder()
+                            .record(savedRecord)
+                            .keyword(keywordText)
+                            .weight(weight)
+                            .build();
+                    emotionKeywordPersistencePort.save(emotionKeyword);
+                }
+            }
+            
+            // 요약 정보로 기록 업데이트
+            savedRecord.updateRecord(savedRecord.getText(), emotionResponse.getSummary());
+            savedRecord = emotionRecordPersistencePort.save(savedRecord);
+            
+        } catch (Exception e) {
+            // 감정 분석 실패 시 로그 남기고 계속 진행
+            log.error("감정 분석 중 오류 발생: {}", e.getMessage(), e);
+        }
+
+        return getEmotionRecord(nickname, savedRecord.getId());
+    }
+
     @Override
     @Transactional
     public EmotionRecordResponse updateEmotionSelection(String nickname, Long recordId, EmotionRecordSelectRequest request) {
@@ -204,7 +386,7 @@ public class EmotionRecordService implements EmotionRecordUseCase {
         // 기존 감정 점수 삭제
         emotionScorePersistencePort.deleteByRecord(record);
 
-        // 새로운 감정 점수 저장
+        // 새로운 감정 점수 저장 및 코멘트 매핑
         for (EmotionRecordSelectRequest.EmotionSelection selection : request.getEmotions()) {
             EmotionScore emotionScore = EmotionScore.builder()
                     .record(record)
@@ -212,7 +394,49 @@ public class EmotionRecordService implements EmotionRecordUseCase {
                     .percentage(selection.getPercentage())
                     .step(2) // 기본값
                     .build();
-            emotionScorePersistencePort.save(emotionScore);
+            
+            // 감정 점수 저장
+            emotionScore = emotionScorePersistencePort.save(emotionScore);
+            
+            // 해당 감정과 단계에 맞는 코멘트 자동 매핑
+            try {
+                EmotionComment emotionComment = emotionCommentPersistencePort
+                        .findByEmotionTypeAndStep(selection.getType(), 2) // 기본 step 2
+                        .orElse(null);
+                
+                if (emotionComment != null) {
+                    emotionScore.updateEmotionComment(emotionComment);
+                    emotionScorePersistencePort.save(emotionScore);
+                }
+            } catch (Exception e) {
+                log.warn("감정 코멘트 매핑 실패: emotionType={}, step={}, error={}", 
+                        selection.getType(), 2, e.getMessage());
+            }
+        }
+        
+        // 가장 높은 감정 점수를 가진 감정의 코멘트를 EmotionRecord에 설정
+        try {
+            // 업데이트된 감정 점수들을 다시 조회
+            List<EmotionScore> updatedScores = emotionScorePersistencePort.findByRecord(record);
+            if (!updatedScores.isEmpty()) {
+                // 가장 높은 퍼센트를 가진 감정 찾기
+                EmotionScore primaryEmotion = updatedScores.stream()
+                        .max((a, b) -> Integer.compare(a.getPercentage(), b.getPercentage()))
+                        .orElse(null);
+                
+                if (primaryEmotion != null) {
+                    EmotionComment primaryComment = emotionCommentPersistencePort
+                            .findByEmotionTypeAndStep(primaryEmotion.getEmotionType(), primaryEmotion.getStep())
+                            .orElse(null);
+                    
+                    if (primaryComment != null) {
+                        record.updateEmotionComment(primaryComment);
+                        emotionRecordPersistencePort.save(record);
+                    }
+                }
+            }
+        } catch (Exception e) {
+            log.warn("주요 감정 코멘트 매핑 실패: error={}", e.getMessage());
         }
 
         return getEmotionRecord(nickname, recordId);
@@ -249,20 +473,34 @@ public class EmotionRecordService implements EmotionRecordUseCase {
     @Override
     @Transactional
     public void deleteEmotionRecord(String nickname, Long recordId) {
-        // 사용자 및 기록 조회
-        User user = userPersistencePort.findByNickname(nickname)
-                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다: " + nickname));
-        
-        EmotionRecord record = emotionRecordPersistencePort.findById(recordId)
-                .orElseThrow(() -> new IllegalArgumentException("감정 기록을 찾을 수 없습니다: " + recordId));
+        try {
+            // 사용자 및 기록 조회
+            User user = userPersistencePort.findByNickname(nickname)
+                    .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다: " + nickname));
+            
+            EmotionRecord record = emotionRecordPersistencePort.findById(recordId)
+                    .orElseThrow(() -> new IllegalArgumentException("감정 기록을 찾을 수 없습니다: " + recordId));
 
-        // 연관 데이터 삭제
-        emotionScorePersistencePort.deleteByRecord(record);
-        userSelectedEmotionPersistencePort.deleteByRecord(record);
-        emotionKeywordPersistencePort.deleteByRecord(record);
+            // 사용자 권한 확인 (자신의 기록만 삭제 가능)
+            if (!record.getUser().getId().equals(user.getId())) {
+                throw new IllegalArgumentException("자신의 감정 기록만 삭제할 수 있습니다.");
+            }
 
-        // 감정 기록 삭제
-        emotionRecordPersistencePort.delete(record);
+            log.info("감정 기록 삭제 시작 - recordId: {}, nickname: {}", recordId, nickname);
+
+            // Cascade 설정으로 인해 EmotionRecord 삭제 시 연관된 모든 엔티티가 자동 삭제됨
+            // - emotionScores (CascadeType.ALL, orphanRemoval = true)
+            // - userSelectedEmotion (CascadeType.ALL, orphanRemoval = true)  
+            // - emotionKeywords (CascadeType.ALL, orphanRemoval = true)
+            emotionRecordPersistencePort.delete(record);
+            
+            log.info("감정 기록 삭제 완료 - recordId: {}, nickname: {}", recordId, nickname);
+            
+        } catch (Exception e) {
+            log.error("감정 기록 삭제 중 오류 발생 - recordId: {}, nickname: {}, error: {}", 
+                    recordId, nickname, e.getMessage(), e);
+            throw new RuntimeException("감정 기록 삭제에 실패했습니다: " + e.getMessage(), e);
+        }
     }
 
     @Override
@@ -291,7 +529,13 @@ public class EmotionRecordService implements EmotionRecordUseCase {
             
             // 해당 날짜의 감정 점수들을 수집
             List<EmotionScoreResponse> emotionScores = new ArrayList<>();
+            Long recordId = null; // 해당 날짜의 첫 번째 기록 ID
+            
             for (EmotionRecord record : recordsForDate) {
+                if (recordId == null) {
+                    recordId = record.getId(); // 첫 번째 기록의 ID 저장
+                }
+                
                 List<EmotionScore> scores = emotionScorePersistencePort.findByRecord(record);
                 for (EmotionScore score : scores) {
                     emotionScores.add(EmotionScoreResponse.builder()
@@ -304,6 +548,7 @@ public class EmotionRecordService implements EmotionRecordUseCase {
             }
             
             calendarResponses.add(EmotionCalendarResponse.builder()
+                    .id(recordId) // 해당 날짜의 첫 번째 기록 ID 또는 null
                     .date(currentDate)
                     .emotions(emotionScores)
                     .build());
@@ -384,7 +629,7 @@ public class EmotionRecordService implements EmotionRecordUseCase {
         if (monthlyRecords.isEmpty()) {
             return EmotionInsightResponse.builder()
                     .topKeywords(new ArrayList<>())
-                    .monthlySummary("이번 달에는 감정 기록이 없습니다.")
+                    .monthlyComment("이번 달에는 감정 기록이 없습니다.")
                     .build();
         }
 
@@ -400,7 +645,7 @@ public class EmotionRecordService implements EmotionRecordUseCase {
         if (combinedText.isEmpty()) {
             return EmotionInsightResponse.builder()
                     .topKeywords(new ArrayList<>())
-                    .monthlySummary("이번 달에는 분석할 텍스트가 없습니다.")
+                    .monthlyComment("이번 달에는 분석할 텍스트가 없습니다.")
                     .build();
         }
 
@@ -415,11 +660,11 @@ public class EmotionRecordService implements EmotionRecordUseCase {
             
             // 응답에서 키워드와 요약 추출
             List<EmotionKeywordResponse> topKeywords = extractKeywordsFromResponse(emotionResponse.getSummary());
-            String monthlySummary = extractSummaryFromResponse(emotionResponse.getSummary());
+            String monthlyComment = extractSummaryFromResponse(emotionResponse.getSummary());
             
             return EmotionInsightResponse.builder()
                     .topKeywords(topKeywords)
-                    .monthlySummary(monthlySummary)
+                    .monthlyComment(monthlyComment)
                     .build();
                     
         } catch (Exception e) {
@@ -428,7 +673,7 @@ public class EmotionRecordService implements EmotionRecordUseCase {
             // 오류 발생 시 기본 응답 반환
             return EmotionInsightResponse.builder()
                     .topKeywords(new ArrayList<>())
-                    .monthlySummary("감정 인사이트를 생성하는 중 오류가 발생했습니다.")
+                    .monthlyComment("감정 인사이트를 생성하는 중 오류가 발생했습니다.")
                     .build();
         }
     }
@@ -542,13 +787,7 @@ public class EmotionRecordService implements EmotionRecordUseCase {
     }
 
     private EmotionRecordResponse buildEmotionRecordResponse(EmotionRecord record) {
-        // 사용자 정보
-        UserResponse userResponse = UserResponse.builder()
-                .nickname(record.getUser().getNickname())
-                .createdAt(record.getUser().getCreatedAt())
-                .build();
-
-        // 감정 점수 목록
+        // 감정 점수 목록 (상위 3개만 반환)
         List<EmotionScoreResponse> emotionScoreResponses = emotionScorePersistencePort.findByRecord(record)
                 .stream()
                 .map(score -> EmotionScoreResponse.builder()
@@ -558,6 +797,9 @@ public class EmotionRecordService implements EmotionRecordUseCase {
                         .step(score.getStep())
                         .build())
                 .collect(Collectors.toList());
+        
+        // 상위 3개 감정을 선택하고 백분율을 정규화
+        List<EmotionScoreResponse> normalizedEmotions = normalizeTop3Emotions(emotionScoreResponses);
 
         // 사용자 선택 감정
         UserSelectedEmotionResponse userSelectedEmotionResponse = userSelectedEmotionPersistencePort.findByRecord(record)
@@ -569,31 +811,20 @@ public class EmotionRecordService implements EmotionRecordUseCase {
                         .build())
                 .orElse(null);
 
-        // 감정 키워드 목록
-        List<EmotionKeywordResponse> emotionKeywordResponses = emotionKeywordPersistencePort.findByRecord(record)
-                .stream()
-                .map(keyword -> EmotionKeywordResponse.builder()
-                        .id(keyword.getId())
-                        .keyword(keyword.getKeyword())
-                        .weight(keyword.getWeight())
-                        .build())
-                .collect(Collectors.toList());
-
         return EmotionRecordResponse.builder()
                 .id(record.getId())
                 .text(record.getText())
                 .summary(record.getSummary())
+                .comment(record.getEmotionComment() != null ? record.getEmotionComment().getComment() : null)
                 .date(record.getDate())
                 .createdAt(record.getCreatedAt())
-                .user(userResponse)
-                .emotions(emotionScoreResponses)
+                .emotions(normalizedEmotions)
                 .userSelectedEmotion(userSelectedEmotionResponse)
-                .emotionKeywords(emotionKeywordResponses)
                 .build();
     }
 
     private EmotionRecordSummaryResponse buildEmotionRecordSummaryResponse(EmotionRecord record) {
-        // 감정 점수 목록
+        // 감정 점수 목록 (상위 3개만 반환)
         List<EmotionScoreResponse> emotionScoreResponses = emotionScorePersistencePort.findByRecord(record)
                 .stream()
                 .map(score -> EmotionScoreResponse.builder()
@@ -603,12 +834,16 @@ public class EmotionRecordService implements EmotionRecordUseCase {
                         .step(score.getStep())
                         .build())
                 .collect(Collectors.toList());
+        
+        // 상위 3개 감정을 선택하고 백분율을 정규화
+        List<EmotionScoreResponse> normalizedEmotions = normalizeTop3Emotions(emotionScoreResponses);
 
         return EmotionRecordSummaryResponse.builder()
                 .id(record.getId())
                 .date(record.getDate())
                 .summary(record.getSummary())
-                .emotions(emotionScoreResponses)
+                .comment(record.getEmotionComment() != null ? record.getEmotionComment().getComment() : null)
+                .emotions(normalizedEmotions)
                 .build();
     }
 
@@ -627,5 +862,138 @@ public class EmotionRecordService implements EmotionRecordUseCase {
         }
         
         throw new IllegalArgumentException("알 수 없는 감정 타입입니다: " + emotionName);
+    }
+    
+    /**
+     * 상위 3개 감정의 백분율을 정규화하여 총합이 100%가 되도록 합니다.
+     * 예: 분노 30, 기쁨 30, 우울 25 → 분노 35, 기쁨 35, 우울 30
+     */
+    private List<EmotionScoreResponse> normalizeTop3Emotions(List<EmotionScoreResponse> emotions) {
+        if (emotions == null || emotions.isEmpty()) {
+            return emotions;
+        }
+        
+        // 상위 3개만 선택하고 퍼센트 내림차순 정렬
+        List<EmotionScoreResponse> top3Emotions = emotions.stream()
+                .sorted((a, b) -> Integer.compare(b.getPercentage(), a.getPercentage()))
+                .limit(3)
+                .collect(Collectors.toList());
+        
+        if (top3Emotions.size() < 3) {
+            return top3Emotions; // 3개 미만이면 그대로 반환
+        }
+        
+        // 상위 3개 감정의 총 퍼센트 계산
+        int totalPercentage = top3Emotions.stream()
+                .mapToInt(EmotionScoreResponse::getPercentage)
+                .sum();
+        
+        // 각 감정의 비율을 계산하여 새로운 퍼센트 할당
+        List<EmotionScoreResponse> normalizedEmotions = new ArrayList<>();
+        for (int i = 0; i < top3Emotions.size(); i++) {
+            EmotionScoreResponse original = top3Emotions.get(i);
+            
+            // 마지막 감정은 남은 퍼센트를 모두 할당 (반올림 오차 방지)
+            int newPercentage;
+            if (i == top3Emotions.size() - 1) {
+                newPercentage = 100 - normalizedEmotions.stream()
+                        .mapToInt(EmotionScoreResponse::getPercentage)
+                        .sum();
+            } else {
+                // 비율에 따라 새로운 퍼센트 계산
+                double ratio = (double) original.getPercentage() / totalPercentage;
+                newPercentage = (int) Math.round(ratio * 100);
+            }
+            
+            // 퍼센트가 0 이하가 되지 않도록 보정
+            newPercentage = Math.max(1, newPercentage);
+            
+            normalizedEmotions.add(EmotionScoreResponse.builder()
+                    .id(original.getId())
+                    .emotionType(original.getEmotionType())
+                    .percentage(newPercentage)
+                    .step(original.getStep())
+                    .build());
+        }
+        
+        // 총합이 100%가 되도록 마지막 감정 조정
+        int finalTotal = normalizedEmotions.stream()
+                .mapToInt(EmotionScoreResponse::getPercentage)
+                .sum();
+        
+        if (finalTotal != 100) {
+            EmotionScoreResponse lastEmotion = normalizedEmotions.get(normalizedEmotions.size() - 1);
+            int adjustment = 100 - finalTotal;
+            
+            normalizedEmotions.set(normalizedEmotions.size() - 1, EmotionScoreResponse.builder()
+                    .id(lastEmotion.getId())
+                    .emotionType(lastEmotion.getEmotionType())
+                    .percentage(lastEmotion.getPercentage() + adjustment)
+                    .step(lastEmotion.getStep())
+                    .build());
+        }
+        
+        return normalizedEmotions;
+    }
+
+    /**
+     * 음성 파일을 로컬에 저장합니다.
+     * 
+     * [S3 대체 시 수정 필요 부분]
+     * 1. 메서드명 변경: saveAudioFileLocally() → saveAudioFileToS3()
+     * 2. 파일 저장 방식: MultipartFile.transferTo() → S3 업로드 API 호출
+     * 3. 경로 반환: 로컬 파일 경로 → S3 URL
+     * 4. 의존성 추가: AWS SDK (aws-java-sdk-s3) 추가 필요
+     * 5. 설정 추가: application.yml에 S3 설정 (bucket, region, credentials) 추가
+     * 
+     * 예시 S3 URL 형식: https://{bucket}.s3.{region}.amazonaws.com/{key}
+     */
+    private String saveAudioFileLocally(MultipartFile audioFile, String originalFileName) {
+        try {
+            // [S3 대체 시] 이 부분을 S3 업로드 로직으로 교체
+            // 저장할 디렉토리 경로 설정 (프로젝트 루트 기준)
+            String uploadDir = "uploads/audio";
+            
+            // 디렉토리가 존재하지 않으면 생성
+            File directory = new File(uploadDir);
+            if (!directory.exists()) {
+                boolean created = directory.mkdirs();
+                if (!created) {
+                    log.warn("디렉토리 생성 실패: {}", uploadDir);
+                    // 대체 경로 사용
+                    uploadDir = "temp/audio";
+                    directory = new File(uploadDir);
+                    directory.mkdirs();
+                }
+            }
+
+            // [S3 대체 시] 파일명 생성 로직은 그대로 사용 가능
+            // 파일 이름에 타임스탬프 추가하여 중복 방지
+            String timestamp = String.valueOf(System.currentTimeMillis());
+            String fileName = timestamp + "_" + originalFileName;
+            String filePath = uploadDir + "/" + fileName;
+
+            // [S3 대체 시] 이 부분을 S3 업로드로 교체
+            // File destFile = new File(filePath);
+            // audioFile.transferTo(destFile);
+            // 
+            // S3 업로드 예시:
+            // String s3Key = "audio/" + fileName;
+            // s3Client.putObject(bucketName, s3Key, audioFile.getInputStream());
+            // String s3Url = s3Client.getUrl(bucketName, s3Key).toString();
+
+            // [S3 대체 시] 이 부분을 S3 URL 반환으로 교체
+            // 로컬 파일 저장 (임시)
+            File destFile = new File(filePath);
+            audioFile.transferTo(destFile);
+
+            log.info("음성 파일 저장 완료: {} (크기: {} bytes)", filePath, destFile.length());
+            
+            // [S3 대체 시] return s3Url; 로 변경
+            return filePath;
+        } catch (Exception e) {
+            log.error("음성 파일 저장 중 오류 발생: {}", e.getMessage(), e);
+            throw new RuntimeException("음성 파일 저장에 실패했습니다: " + e.getMessage(), e);
+        }
     }
 } 

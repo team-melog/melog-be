@@ -5,6 +5,7 @@ import com.melog.melog.emotion.domain.model.request.*;
 import com.melog.melog.emotion.domain.model.response.*;
 import com.melog.melog.emotion.application.port.in.EmotionRecordUseCase;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -13,6 +14,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.time.YearMonth;
 import java.util.List;
 
+@Slf4j
 @RestController
 @RequestMapping("/api/users/{nickname}/emotions")
 @RequiredArgsConstructor
@@ -24,16 +26,32 @@ public class EmotionRecordController {
     /**
      * 감정 등록 및 분석 요청 (STT - 음성 파일)
      * POST /api/users/{nickname}/emotions/stt
+     * 
+     * Postman 설정 방법:
+     * 1. Body 탭에서 "form-data" 선택
+     * 2. Key: "audioFile" (File 타입으로 설정)
+     * 3. Value: 음성 파일 선택
+     * 4. Key: "userSelectedEmotion" (Text 타입으로 설정, 선택사항)
+     * 5. Value: JSON 문자열 (예: {"type":"JOY","step":3})
      */
     @PostMapping("/stt")
     public ResponseEntity<EmotionRecordResponse> createEmotionRecordWithSTT(
             @PathVariable String nickname,
-            @RequestPart("audioFile") MultipartFile audioFile,
+            @RequestParam(value = "audioFile", required = false) MultipartFile audioFile,
             @RequestParam(value = "userSelectedEmotion", required = false) String userSelectedEmotionJson) {
         
+        log.info("STT 요청 수신 - nickname: {}, audioFile: {}, userSelectedEmotion: {}", 
+                nickname, 
+                audioFile != null ? audioFile.getOriginalFilename() : "null",
+                userSelectedEmotionJson);
+        
         if (audioFile == null || audioFile.isEmpty()) {
-            throw new IllegalArgumentException("음성 파일은 필수입니다.");
+            log.error("음성 파일이 제공되지 않음 - nickname: {}", nickname);
+            throw new IllegalArgumentException("음성 파일은 필수입니다. audioFile 파라미터를 확인해주세요.");
         }
+        
+        log.info("음성 파일 처리 시작 - filename: {}, size: {} bytes", 
+                audioFile.getOriginalFilename(), audioFile.getSize());
         
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(emotionRecordUseCase.createEmotionRecordWithAudio(nickname, audioFile, userSelectedEmotionJson));
