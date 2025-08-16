@@ -207,22 +207,33 @@ public class EmotionRecordCreationService {
             
             // 가장 높은 감정 점수를 가진 감정의 코멘트를 EmotionRecord에 설정
             try {
-                EmotionScore primaryEmotion = record.getPrimaryEmotion();
-                if (primaryEmotion != null) {
-                    EmotionComment primaryComment = emotionCommentPersistencePort
-                            .findByEmotionTypeAndStep(primaryEmotion.getEmotionType(), primaryEmotion.getStep())
+                // record.getPrimaryEmotion() 대신 직접 감정 점수들을 조회하여 최대값 찾기
+                List<EmotionScore> allScores = emotionScorePersistencePort.findByRecord(record);
+                if (!allScores.isEmpty()) {
+                    EmotionScore primaryEmotion = allScores.stream()
+                            .max((a, b) -> Integer.compare(a.getPercentage(), b.getPercentage()))
                             .orElse(null);
                     
-                    if (primaryComment != null) {
-                        record.updateEmotionComment(primaryComment);
-                        // EmotionRecord를 다시 저장하여 코멘트 정보를 DB에 반영
-                        emotionRecordPersistencePort.save(record);
-                        log.info("주요 감정 코멘트 매핑 완료: emotionType={}, step={}, commentId={}", 
-                                primaryEmotion.getEmotionType(), primaryEmotion.getStep(), primaryComment.getId());
+                    if (primaryEmotion != null) {
+                        EmotionComment primaryComment = emotionCommentPersistencePort
+                                .findByEmotionTypeAndStep(primaryEmotion.getEmotionType(), primaryEmotion.getStep())
+                                .orElse(null);
+                        
+                        if (primaryComment != null) {
+                            record.updateEmotionComment(primaryComment);
+                            // EmotionRecord를 다시 저장하여 코멘트 정보를 DB에 반영
+                            emotionRecordPersistencePort.save(record);
+                            log.info("주요 감정 코멘트 매핑 완료: emotionType={}, step={}, commentId={}", 
+                                    primaryEmotion.getEmotionType(), primaryEmotion.getStep(), primaryComment.getId());
+                        } else {
+                            log.warn("주요 감정에 해당하는 코멘트를 찾을 수 없음: emotionType={}, step={}", 
+                                    primaryEmotion.getEmotionType(), primaryEmotion.getStep());
+                        }
                     } else {
-                        log.warn("주요 감정에 해당하는 코멘트를 찾을 수 없음: emotionType={}, step={}", 
-                                primaryEmotion.getEmotionType(), primaryEmotion.getStep());
+                        log.warn("감정 점수가 비어있음");
                     }
+                } else {
+                    log.warn("감정 점수 목록이 비어있음");
                 }
             } catch (Exception e) {
                 log.error("주요 감정 코멘트 매핑 실패: error={}", e.getMessage(), e);
