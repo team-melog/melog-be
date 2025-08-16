@@ -165,59 +165,67 @@ public class EmotionRecordCreationService {
             record.updateRecord(record.getText(), emotionResponse.getSummary());
             
             // 감정 분석 결과로 감정 점수 저장 및 코멘트 매핑
-            if (emotionResponse.getEmotions() != null) {
-                for (EmotionAnalysisResponse.EmotionScore emotionScoreData : emotionResponse.getEmotions()) {
-                    // 한글 감정명을 EmotionType으로 변환
-                    EmotionType emotionType = convertToEmotionType(emotionScoreData.getType());
-                    
-                    EmotionScore emotionScore = EmotionScore.builder()
-                            .record(record)
-                            .emotionType(emotionType)
-                            .percentage(emotionScoreData.getPercentage())
-                            .step(emotionScoreData.getStep())
-                            .build();
-                    
-                    // 감정 점수 저장
-                    emotionScore = emotionScorePersistencePort.save(emotionScore);
-                    
-                    // 해당 감정과 단계에 맞는 코멘트 자동 매핑
-                    try {
-                        EmotionComment emotionComment = emotionCommentPersistencePort
-                                .findByEmotionTypeAndStep(emotionType, emotionScoreData.getStep())
-                                .orElse(null);
-                        
-                        if (emotionComment != null) {
-                            emotionScore.updateEmotionComment(emotionComment);
-                            emotionScorePersistencePort.save(emotionScore);
-                        }
-                    } catch (Exception e) {
-                        log.warn("감정 코멘트 매핑 실패: emotionType={}, step={}, error={}", 
-                                emotionType, emotionScoreData.getStep(), e.getMessage());
-                    }
+            for (EmotionAnalysisResponse.EmotionScore emotionScoreData : emotionResponse.getEmotions()) {
+                // 한글 감정명을 EmotionType으로 변환
+                EmotionType emotionType = convertToEmotionType(emotionScoreData.getType());
+                
+                // step이 null이면 percentage에 따라 계산
+                Integer step = emotionScoreData.getStep();
+                if (step == null) {
+                    step = calculateStepFromPercentage(emotionScoreData.getPercentage());
                 }
                 
-                // 가장 높은 감정 점수를 가진 감정의 코멘트를 EmotionRecord에 설정
+                EmotionScore emotionScore = EmotionScore.builder()
+                        .record(record)
+                        .emotionType(emotionType)
+                        .percentage(emotionScoreData.getPercentage())
+                        .step(step)
+                        .build();
+                
+                // 감정 점수 저장
+                emotionScore = emotionScorePersistencePort.save(emotionScore);
+                
+                // 해당 감정과 단계에 맞는 코멘트 자동 매핑
                 try {
-                    EmotionScore primaryEmotion = record.getPrimaryEmotion();
-                    if (primaryEmotion != null) {
-                        EmotionComment primaryComment = emotionCommentPersistencePort
-                                .findByEmotionTypeAndStep(primaryEmotion.getEmotionType(), primaryEmotion.getStep())
-                                .orElse(null);
-                        
-                        if (primaryComment != null) {
-                            record.updateEmotionComment(primaryComment);
-                            // EmotionRecord를 다시 저장하여 코멘트 정보를 DB에 반영
-                            emotionRecordPersistencePort.save(record);
-                            log.info("주요 감정 코멘트 매핑 완료: emotionType={}, step={}, commentId={}", 
-                                    primaryEmotion.getEmotionType(), primaryEmotion.getStep(), primaryComment.getId());
-                        } else {
-                            log.warn("주요 감정에 해당하는 코멘트를 찾을 수 없음: emotionType={}, step={}", 
-                                    primaryEmotion.getEmotionType(), primaryEmotion.getStep());
-                        }
+                    EmotionComment emotionComment = emotionCommentPersistencePort
+                            .findByEmotionTypeAndStep(emotionType, step)
+                            .orElse(null);
+                    
+                    if (emotionComment != null) {
+                        emotionScore.updateEmotionComment(emotionComment);
+                        emotionScorePersistencePort.save(emotionScore);
+                        log.info("감정 코멘트 매핑 완료: emotionType={}, step={}, commentId={}", 
+                                emotionType, step, emotionComment.getId());
+                    } else {
+                        log.warn("감정 코멘트를 찾을 수 없음: emotionType={}, step={}", emotionType, step);
                     }
                 } catch (Exception e) {
-                    log.error("주요 감정 코멘트 매핑 실패: error={}", e.getMessage(), e);
+                    log.warn("감정 코멘트 매핑 실패: emotionType={}, step={}, error={}", 
+                            emotionType, step, e.getMessage());
                 }
+            }
+            
+            // 가장 높은 감정 점수를 가진 감정의 코멘트를 EmotionRecord에 설정
+            try {
+                EmotionScore primaryEmotion = record.getPrimaryEmotion();
+                if (primaryEmotion != null) {
+                    EmotionComment primaryComment = emotionCommentPersistencePort
+                            .findByEmotionTypeAndStep(primaryEmotion.getEmotionType(), primaryEmotion.getStep())
+                            .orElse(null);
+                    
+                    if (primaryComment != null) {
+                        record.updateEmotionComment(primaryComment);
+                        // EmotionRecord를 다시 저장하여 코멘트 정보를 DB에 반영
+                        emotionRecordPersistencePort.save(record);
+                        log.info("주요 감정 코멘트 매핑 완료: emotionType={}, step={}, commentId={}", 
+                                primaryEmotion.getEmotionType(), primaryEmotion.getStep(), primaryComment.getId());
+                    } else {
+                        log.warn("주요 감정에 해당하는 코멘트를 찾을 수 없음: emotionType={}, step={}", 
+                                primaryEmotion.getEmotionType(), primaryEmotion.getStep());
+                    }
+                }
+            } catch (Exception e) {
+                log.error("주요 감정 코멘트 매핑 실패: error={}", e.getMessage(), e);
             }
             
             // 키워드 저장
@@ -309,5 +317,27 @@ public class EmotionRecordCreationService {
         }
         
         throw new IllegalArgumentException("알 수 없는 감정 타입입니다: " + emotionName);
+    }
+
+    /**
+     * percentage에 따라 step을 계산합니다.
+     * 0-20점: step1, 21-40점: step2, 41-60점: step3, 61-80점: step4, 81-100점: step5
+     */
+    private Integer calculateStepFromPercentage(Integer percentage) {
+        if (percentage == null) {
+            return 1;
+        }
+        
+        if (percentage <= 20) {
+            return 1;
+        } else if (percentage <= 40) {
+            return 2;
+        } else if (percentage <= 60) {
+            return 3;
+        } else if (percentage <= 80) {
+            return 4;
+        } else {
+            return 5;
+        }
     }
 }

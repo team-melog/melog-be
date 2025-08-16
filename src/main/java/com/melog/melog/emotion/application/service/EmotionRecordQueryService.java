@@ -206,8 +206,14 @@ public class EmotionRecordQueryService {
                         .build())
                 .collect(Collectors.toList());
         
+        log.info("감정 기록 응답 생성 - recordId: {}, 감정 점수 개수: {}", record.getId(), emotionScoreResponses.size());
+        
         // 상위 3개 감정을 선택하고 백분율을 정규화
         List<EmotionScoreResponse> normalizedEmotions = normalizeTop3Emotions(emotionScoreResponses);
+        
+        log.info("정규화된 감정 개수: {}, 코멘트 존재 여부: {}", 
+                normalizedEmotions.size(), 
+                record.getEmotionComment() != null ? "있음" : "없음");
 
         // 사용자 선택 감정
         UserSelectedEmotionResponse userSelectedEmotionResponse = userSelectedEmotionPersistencePort.findByRecord(record)
@@ -267,8 +273,11 @@ public class EmotionRecordQueryService {
      */
     private List<EmotionScoreResponse> normalizeTop3Emotions(List<EmotionScoreResponse> emotions) {
         if (emotions == null || emotions.isEmpty()) {
+            log.warn("감정 점수 목록이 비어있음");
             return emotions;
         }
+        
+        log.info("감정 정규화 시작 - 총 감정 개수: {}", emotions.size());
         
         // 상위 3개만 선택하고 퍼센트 내림차순 정렬
         List<EmotionScoreResponse> top3Emotions = emotions.stream()
@@ -276,7 +285,10 @@ public class EmotionRecordQueryService {
                 .limit(3)
                 .collect(Collectors.toList());
         
+        log.info("상위 3개 감정 선택 완료 - 선택된 감정 개수: {}", top3Emotions.size());
+        
         if (top3Emotions.size() < 3) {
+            log.info("3개 미만 감정만 존재 - 정규화 없이 반환");
             return top3Emotions; // 3개 미만이면 그대로 반환
         }
         
