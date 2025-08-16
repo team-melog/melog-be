@@ -11,6 +11,16 @@ import jakarta.annotation.PostConstruct;
 @Component
 @Getter
 public class ClovaConfig {
+
+    // Clova App API 설정
+    @Value("${CLOVA_APP_URL:https://naveropenapi.apigw.ntruss.com}")
+    private String clovaAppUrl;
+    
+    @Value("${CLOVA_APP_CLIENT_ID}")
+    private String clovaAppClientId;
+    
+    @Value("${CLOVA_APP_CLIENT_SECRET}")
+    private String clovaAppClientSecret;
     
     // Speech API 설정
     @Value("${CLOVA_SPEECH_URL:https://naveropenapi.apigw.ntruss.com}")
@@ -50,9 +60,22 @@ public class ClovaConfig {
     @Value("${CLOVA_STUDIO_TIMEOUT_MS:8000}")
     private int studioTimeoutMs;
 
+    // Voice API 설정
+    @Value("${CLOVA_VOICE_TTS_ENDPOINT}")
+    private String voiceTtsEndpoint;
+
+    @Value("${CLOVA_VOICE_SUPPORTED_FORMATS}")
+    private String voiceSupportedFormats;
+
+    @Value("${CLOVA_VOICE_TIMEOUT_MS:20000}")
+    private int voiceTimeoutMs;
+    
+
     @PostConstruct
     public void logConfig() {
         log.info("ClovaConfig loaded from environment variables");
+        log.info("Clova App URL: {}, Client ID: {}, Client Secret: {}", 
+                clovaAppUrl, clovaAppClientId, clovaAppClientSecret);
         log.info("Speech URL: {}, Client ID: {}, Client Secret: {}", 
                 speechUrl, speechClientId, speechClientSecret);
         log.info("Studio Base URL: {}, API Key: {}, Model: {}", 
@@ -66,6 +89,19 @@ public class ClovaConfig {
     
     public StudioProps getStudio() {
         return new StudioProps();
+    }
+
+    public ClovaAppProps getClovaApp(){
+        return new ClovaAppProps();
+    }
+
+    @Getter
+    public class ClovaAppProps {
+        public String getUrl() { return clovaAppUrl;}
+        public String getClientId() { return clovaAppClientId;}
+        public String getClientSecret() { return clovaAppClientSecret; }
+        public SttProps getStt() { return new SttProps(); }
+        public TtsProps getTts() { return new TtsProps(); }
     }
 
     @Getter
@@ -85,6 +121,18 @@ public class ClovaConfig {
         public String[] getSupportedFormats() { 
             return speechSupportedFormats.split(","); 
         }
+        public int getTimeoutMs() { return speechTimeoutMs; }
+
+    }
+
+    @Getter
+    public class TtsProps {
+        public String getEndpoint() { return voiceTtsEndpoint; }
+        public String[] getSupportedFormats() { 
+            return voiceSupportedFormats.split(","); 
+        }
+        public int getTimeoutMs() { return voiceTimeoutMs; }
+
     }
 
     @Getter

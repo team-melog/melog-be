@@ -31,6 +31,8 @@ jobs:
           CLOVA_SPEECH_CLIENT_ID=${{ secrets.CLOVA_SPEECH_CLIENT_ID }}
           CLOVA_SPEECH_CLIENT_SECRET=${{ secrets.CLOVA_SPEECH_CLIENT_SECRET }}
           CLOVA_STUDIO_API_KEY=${{ secrets.CLOVA_STUDIO_API_KEY }}
+          CLOVA_APP_CLIENT_ID=${{ secrets.CLOVA_APP_CLIENT_ID }}
+          CLOVA_APP_CLIENT_SECRET=${{ secrets.CLOVA_APP_CLIENT_SECRET }}
         script: |
           # 애플리케이션 디렉토리로 이동
           cd ~/melog/melog-be
@@ -44,6 +46,8 @@ jobs:
           export CLOVA_SPEECH_CLIENT_ID="${{ secrets.CLOVA_SPEECH_CLIENT_ID }}"
           export CLOVA_SPEECH_CLIENT_SECRET="${{ secrets.CLOVA_SPEECH_CLIENT_SECRET }}"
           export CLOVA_STUDIO_API_KEY="${{ secrets.CLOVA_STUDIO_API_KEY }}"
+          export CLOVA_APP_CLIENT_ID="${{ secrets.CLOVA_APP_CLIENT_ID }}"
+          export CLOVA_APP_CLIENT_SECRET="${{ secrets.CLOVA_APP_CLIENT_SECRET }}"
           
           # 로컬 변경사항 정리 후 최신 코드 가져오기
           git reset --hard HEAD
