@@ -13,5 +13,5 @@
     }
   },
   "postStartCommand": "./gradlew build --continuous --no-daemon --stacktrace",
-  "forwardPorts": [8080]
+  "forwardPorts": [8080, 5431]
 }
