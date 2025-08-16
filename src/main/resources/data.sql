@@ -1,50 +1,53 @@
--- V2 마이그레이션 후 실행되는 초기 데이터
--- 감정별 단계별 코멘트 데이터
+BEGIN;
 
--- 기쁨 (JOY) 감정 코멘트
-INSERT INTO melog.emotion_comments (emotion_type, step, comment, is_active, created_at, updated_at) VALUES
-('JOY', 1, '조금 기분이 좋은 하루네요. 더 밝은 에너지를 느껴보세요.', true, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
-('JOY', 2, '기분이 좋은 상태입니다. 이 기분을 유지해보세요.', true, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
-('JOY', 3, '매우 기쁜 하루를 보내고 계시네요!', true, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
-('JOY', 4, '완벽한 기쁨의 순간입니다!', true, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
-('JOY', 5, '최고의 행복을 경험하고 계시네요!', true, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP);
+-- 감정 코멘트 업서트: (emotion_type, step) 고유
+INSERT INTO melog.emotion_comments (emotion_type, step, comment, is_active)
+VALUES
+-- JOY (기쁨) : 1=조금, 2=조금많이, 3=적당히, 4=많이, 5=매우
+('JOY', 1, '오늘은 살짝 기쁜 기운이 스며드네요. 작은 행복을 놓치지 않고 마음에 담아두면, 하루가 훨씬 따뜻해질 거예요. 이 기분을 스스로도 충분히 느껴주세요.', true),
+('JOY', 2, '웃음이 조금 더 짙어졌어요. 이 좋은 에너지를 주변 사람과 나누면, 서로의 하루가 훨씬 환해질 거예요. 기쁨은 나눌수록 커지니까요.', true),
+('JOY', 3, '마음 한가득 기쁨이 채워진 하루네요. 스스로를 칭찬하며 잠시 여유를 즐겨보세요. 오늘은 좋은 일이 계속 이어질지도 몰라요.', true),
+('JOY', 4, '웃음이 저절로 번지는 날이에요. 이 기운을 모아 그동안 미뤄둔 일이나 새 계획을 시작해보는 것도 좋아요. 당신의 하루가 반짝일 거예요.', true),
+('JOY', 5, '마치 세상이 반짝이는 것 같아요. 오늘의 행복은 오래 기억될 순간이 될 거예요. 이 감정을 오래도록 간직하세요.', true),
 
--- 설렘 (EXCITEMENT) 감정 코멘트
-INSERT INTO melog.emotion_comments (emotion_type, step, comment, is_active, created_at, updated_at) VALUES
-('EXCITEMENT', 1, '조금 설레는 기분이군요. 기대감을 느껴보세요.', true, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
-('EXCITEMENT', 2, '설렘을 느끼고 계시네요. 긍정적인 에너지를 유지하세요.', true, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
-('EXCITEMENT', 3, '매우 설레는 순간입니다!', true, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
-('EXCITEMENT', 4, '완벽한 설렘의 순간이네요!', true, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
-('EXCITEMENT', 5, '최고의 설렘을 경험하고 계시네요!', true, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP);
+-- ANGER (분노)
+('ANGER', 1, '오늘은 마음 한켠에 살짝 화가 있네요. 가벼운 산책이나 깊은 호흡이 마음을 가라앉히는 데 도움이 돼요. 감정을 억누르지 말고 부드럽게 흘려보내세요.', true),
+('ANGER', 2, '마음이 조금 더 거칠어졌어요. 잠시 자리를 떠나 차분함을 되찾아보세요. 억지로 잊으려 하기보다, 차분히 감정을 관찰하는 것이 좋아요.', true),
+('ANGER', 3, '화가 제법 느껴지는 하루네요. 이런 날엔 대화를 잠시 미루고 나를 먼저 챙기는 게 필요해요. 마음을 정리할 시간을 스스로에게 허락하세요.', true),
+('ANGER', 4, '감정의 파도가 거세게 몰려오네요. 혼자만의 공간에서 마음을 내려놓는 시간을 가져보세요. 오늘은 휴식이 최선의 선택일지도 몰라요.', true),
+('ANGER', 5, '많이 힘든 마음이네요. 지금은 어떤 말보다도 충분히 멀리 떨어져 쉬는 게 먼저예요. 시간이 지나면 분노의 결도 조금씩 옅어질 거예요.', true),
 
--- 평온 (CALMNESS) 감정 코멘트
-INSERT INTO melog.emotion_comments (emotion_type, step, comment, is_active, created_at, updated_at) VALUES
-('CALMNESS', 1, '조금 평온한 기분이군요. 마음의 여유를 느껴보세요.', true, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
-('CALMNESS', 2, '평온한 상태입니다. 이 마음의 평화를 유지하세요.', true, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
-('CALMNESS', 3, '매우 평온한 하루를 보내고 계시네요!', true, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
-('CALMNESS', 4, '완벽한 평온의 순간입니다!', true, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
-('CALMNESS', 5, '최고의 평온을 경험하고 계시네요!', true, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP);
+-- SADNESS (슬픔)
+('SADNESS', 1, '오늘은 서늘한 기운의 슬픔이 스며드네요. 따뜻한 차 한 잔이 마음을 녹여줄 거예요. 가볍게라도 스스로를 감싸주세요.', true),
+('SADNESS', 2, '마음이 조금 더 무거워졌어요. 좋아하는 음악이나 익숙한 장소가 작은 위로가 될 수 있어요. 혼자가 아니라는 걸 기억하세요.', true),
+('SADNESS', 3, '깊은 슬픔이 느껴지는 하루네요. 오늘은 계획을 줄이고 스스로를 꼭 안아주세요. 그저 쉬어가는 것도 괜찮아요.', true),
+('SADNESS', 4, '눈물이 맺힐 듯한 하루예요. 가까운 사람에게 기대어도 돼요. 당신의 마음을 들어줄 누군가가 분명 있어요.', true),
+('SADNESS', 5, '많이 힘들군요. 지금은 그저 울어도 괜찮아요. 세상 모든 위로를 받아도 괜찮은 날이에요.', true),
 
--- 분노 (ANGER) 감정 코멘트
-INSERT INTO melog.emotion_comments (emotion_type, step, comment, is_active, created_at, updated_at) VALUES
-('ANGER', 1, '조금 화가 난 기분이군요. 심호흡을 해보세요.', true, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
-('ANGER', 2, '화가 난 상태입니다. 마음을 진정시켜보세요.', true, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
-('ANGER', 3, '매우 화가 난 상태네요. 잠시 휴식을 취해보세요.', true, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
-('ANGER', 4, '심한 분노를 느끼고 계시네요. 전문가와 상담을 고려해보세요.', true, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
-('ANGER', 5, '극도의 분노 상태입니다. 즉시 전문가의 도움을 받으세요.', true, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP);
+-- CALMNESS (평온)
+('CALMNESS', 1, '오늘은 은은한 평온이 스며드네요. 잠시 창밖을 바라보며 숨을 고르세요. 그 순간이 마음을 더 부드럽게 만들 거예요.', true),
+('CALMNESS', 2, '차분함이 조금 더 깊어졌어요. 이 고요를 오래 간직해보세요. 평온은 하루를 유연하게 만들어요.', true),
+('CALMNESS', 3, '마음이 고요하고 편안하네요. 생각도 부드럽게 흐르고 있어요. 오늘은 이 감정을 배경으로 하루를 채워보세요.', true),
+('CALMNESS', 4, '하루 전체가 잔잔한 호수처럼 느껴져요. 이 평온 속에서 작은 행복을 발견해보세요. 지금의 안정감이 큰 힘이 될 거예요.', true),
+('CALMNESS', 5, '세상이 멈춘 듯한 고요함이네요. 그 속에서 마음이 깊이 쉬고 있군요. 오늘 하루, 그 고요함을 온전히 느껴주세요.', true),
 
--- 슬픔 (SADNESS) 감정 코멘트
-INSERT INTO melog.emotion_comments (emotion_type, step, comment, is_active, created_at, updated_at) VALUES
-('SADNESS', 1, '조금 슬픈 기분이군요. 마음을 다독여주세요.', true, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
-('SADNESS', 2, '슬픈 상태입니다. 좋아하는 것을 해보세요.', true, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
-('SADNESS', 3, '매우 슬픈 상태네요. 주변 사람들과 이야기해보세요.', true, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
-('SADNESS', 4, '심한 슬픔을 느끼고 계시네요. 전문가와 상담을 고려해보세요.', true, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
-('SADNESS', 5, '극도의 슬픔 상태입니다. 즉시 전문가의 도움을 받으세요.', true, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP);
+-- EXCITEMENT (설렘)
+('EXCITEMENT', 1, '가벼운 두근거림이 찾아왔네요. 작은 변화가 반가운 하루예요. 설렘을 살짝 간직해도 좋겠어요.', true),
+('EXCITEMENT', 2, '설레는 기운이 조금 더 짙어졌어요. 기대되는 일이 다가오고 있는 걸지도 몰라요. 준비하는 순간조차도 즐겨보세요.', true),
+('EXCITEMENT', 3, '마음이 꽤 두근거리네요. 오늘은 새로운 시도를 해보기 좋은 날이에요. 모험이 좋은 추억이 될 거예요.', true),
+('EXCITEMENT', 4, '설렘이 크게 느껴져요. 이 감정이 당신을 더 멀리 이끌 거예요. 두근거림을 힘으로 바꿔보세요.', true),
+('EXCITEMENT', 5, '가슴이 터질 듯한 설렘이네요. 오늘이 평생 기억될 순간이 될 수 있어요. 마음껏 느끼고 즐기세요.', true),
 
--- 지침 (GUIDANCE) 감정 코멘트
-INSERT INTO melog.emotion_comments (emotion_type, step, comment, is_active, created_at, updated_at) VALUES
-('GUIDANCE', 1, '조금 지친 기분이군요. 휴식을 취해보세요.', true, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
-('GUIDANCE', 2, '지친 상태입니다. 마음의 여유를 가져보세요.', true, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
-('GUIDANCE', 3, '매우 지친 상태네요. 충분한 휴식이 필요합니다.', true, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
-('GUIDANCE', 4, '심한 피로를 느끼고 계시네요. 즉시 휴식을 취하세요.', true, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
-('GUIDANCE', 5, '극도의 피로 상태입니다. 전문의와 상담하세요.', true, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP);
+-- GUIDANCE (지침)
+('GUIDANCE', 1, '살짝 지친 하루예요. 따뜻한 음료와 함께 잠시 숨을 고르세요. 작게라도 쉬는 것이 도움이 돼요.', true),
+('GUIDANCE', 2, '피로가 조금 더 깊어졌어요. 지금은 잠시 쉬어가는 게 좋겠어요. 잠깐의 휴식이 생각보다 큰 힘이 돼요.', true),
+('GUIDANCE', 3, '꽤 지친 하루네요. 무리하지 말고 오늘은 일찍 몸을 눕혀주세요. 당신의 몸과 마음이 모두 회복을 기다리고 있어요.', true),
+('GUIDANCE', 4, '몸과 마음이 무겁네요. 하루를 과감히 비워내고 푹 쉬어주세요. 쉬는 것도 중요한 선택이에요.', true),
+('GUIDANCE', 5, '아주 많이 지쳤군요. 모든 걸 내려놓고, 당신만을 위한 회복 시간을 주세요. 아무것도 하지 않는 것이 오늘의 최선이에요.', true)
+ON CONFLICT (emotion_type, step)
+DO UPDATE SET
+    comment    = EXCLUDED.comment,
+    is_active  = EXCLUDED.is_active,
+    updated_at = CURRENT_TIMESTAMP;
+
+COMMIT;
