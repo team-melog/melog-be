@@ -206,11 +206,17 @@ public class EmotionRecordCreationService {
                         
                         if (primaryComment != null) {
                             record.updateEmotionComment(primaryComment);
+                            // EmotionRecord를 다시 저장하여 코멘트 정보를 DB에 반영
                             emotionRecordPersistencePort.save(record);
+                            log.info("주요 감정 코멘트 매핑 완료: emotionType={}, step={}, commentId={}", 
+                                    primaryEmotion.getEmotionType(), primaryEmotion.getStep(), primaryComment.getId());
+                        } else {
+                            log.warn("주요 감정에 해당하는 코멘트를 찾을 수 없음: emotionType={}, step={}", 
+                                    primaryEmotion.getEmotionType(), primaryEmotion.getStep());
                         }
                     }
                 } catch (Exception e) {
-                    log.warn("주요 감정 코멘트 매핑 실패: error={}", e.getMessage());
+                    log.error("주요 감정 코멘트 매핑 실패: error={}", e.getMessage(), e);
                 }
             }
             

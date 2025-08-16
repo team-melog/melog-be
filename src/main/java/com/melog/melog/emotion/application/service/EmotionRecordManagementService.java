@@ -41,11 +41,14 @@ public class EmotionRecordManagementService {
 
         // 새로운 감정 점수 저장 및 코멘트 매핑
         for (EmotionRecordSelectRequest.EmotionSelection selection : request.getEmotions()) {
+            // percentage에 따라 step 계산
+            int step = calculateStepFromPercentage(selection.getPercentage());
+            
             EmotionScore emotionScore = EmotionScore.builder()
                     .record(record)
                     .emotionType(selection.getType())
                     .percentage(selection.getPercentage())
-                    .step(2) // 기본값
+                    .step(step)
                     .build();
             
             // 감정 점수 저장
@@ -54,7 +57,7 @@ public class EmotionRecordManagementService {
             // 해당 감정과 단계에 맞는 코멘트 자동 매핑
             try {
                 EmotionComment emotionComment = emotionCommentPersistencePort
-                        .findByEmotionTypeAndStep(selection.getType(), 2) // 기본 step 2
+                        .findByEmotionTypeAndStep(selection.getType(), step)
                         .orElse(null);
                 
                 if (emotionComment != null) {
@@ -63,7 +66,7 @@ public class EmotionRecordManagementService {
                 }
             } catch (Exception e) {
                 log.warn("감정 코멘트 매핑 실패: emotionType={}, step={}, error={}", 
-                        selection.getType(), 2, e.getMessage());
+                        selection.getType(), step, e.getMessage());
             }
         }
         
@@ -85,11 +88,16 @@ public class EmotionRecordManagementService {
                     if (primaryComment != null) {
                         record.updateEmotionComment(primaryComment);
                         emotionRecordPersistencePort.save(record);
+                        log.info("주요 감정 코멘트 매핑 완료: emotionType={}, step={}, commentId={}", 
+                                primaryEmotion.getEmotionType(), primaryEmotion.getStep(), primaryComment.getId());
+                    } else {
+                        log.warn("주요 감정에 해당하는 코멘트를 찾을 수 없음: emotionType={}, step={}", 
+                                primaryEmotion.getEmotionType(), primaryEmotion.getStep());
                     }
                 }
             }
         } catch (Exception e) {
-            log.warn("주요 감정 코멘트 매핑 실패: error={}", e.getMessage());
+            log.error("주요 감정 코멘트 매핑 실패: error={}", e.getMessage(), e);
         }
 
         return null; // 실제로는 EmotionRecordResponse를 반환해야 하지만, 여기서는 null 반환
@@ -126,25 +134,35 @@ public class EmotionRecordManagementService {
             EmotionRecord record = emotionRecordPersistencePort.findById(recordId)
                     .orElseThrow(() -> new IllegalArgumentException("감정 기록을 찾을 수 없습니다: " + recordId));
 
-            // 사용자 권한 확인 (자신의 기록만 삭제 가능)
-            if (!record.getUser().getId().equals(user.getId())) {
-                throw new IllegalArgumentException("자신의 감정 기록만 삭제할 수 있습니다.");
-            }
-
-            log.info("감정 기록 삭제 시작 - recordId: {}, nickname: {}", recordId, nickname);
-
-            // Cascade 설정으로 인해 EmotionRecord 삭제 시 연관된 모든 엔티티가 자동 삭제됨
-            // - emotionScores (CascadeType.ALL, orphanRemoval = true)
-            // - userSelectedEmotion (CascadeType.ALL, orphanRemoval = true)  
-            // - emotionKeywords (CascadeType.ALL, orphanRemoval = true)
+            // 감정 기록 삭제
             emotionRecordPersistencePort.delete(record);
-            
-            log.info("감정 기록 삭제 완료 - recordId: {}, nickname: {}", recordId, nickname);
+            log.info("감정 기록 삭제 완료: recordId={}, nickname={}", recordId, nickname);
             
         } catch (Exception e) {
-            log.error("감정 기록 삭제 중 오류 발생 - recordId: {}, nickname: {}, error: {}", 
-                    recordId, nickname, e.getMessage(), e);
-            throw new RuntimeException("감정 기록 삭제에 실패했습니다: " + e.getMessage(), e);
+            log.error("감정 기록 삭제 실패: recordId={}, nickname={}, error={}", recordId, nickname, e.getMessage(), e);
+            throw new RuntimeException("감정 기록 삭제 중 오류가 발생했습니다.", e);
+        }
+    }
+    
+    /**
+     * percentage에 따라 step을 계산합니다.
+     * 0-20점: step1, 21-40점: step2, 41-60점: step3, 61-80점: step4, 81-100점: step5
+     */
+    private int calculateStepFromPercentage(Integer percentage) {
+        if (percentage == null) {
+            return 1;
+        }
+        
+        if (percentage <= 20) {
+            return 1;
+        } else if (percentage <= 40) {
+            return 2;
+        } else if (percentage <= 60) {
+            return 3;
+        } else if (percentage <= 80) {
+            return 4;
+        } else {
+            return 5;
         }
     }
 }
