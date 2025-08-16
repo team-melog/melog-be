@@ -2,7 +2,7 @@ package com.melog.melog.emotion.application.service;
 
 import com.melog.melog.emotion.domain.model.request.*;
 import com.melog.melog.emotion.domain.model.response.*;
-import com.melog.melog.user.domain.model.response.UserResponse;
+
 import com.melog.melog.emotion.application.port.in.EmotionRecordUseCase;
 import com.melog.melog.emotion.application.port.out.*;
 import com.melog.melog.emotion.domain.*;
@@ -10,12 +10,9 @@ import com.melog.melog.emotion.domain.EmotionComment;
 import com.melog.melog.emotion.domain.EmotionScore;
 import com.melog.melog.user.application.port.out.UserPersistencePort;
 import com.melog.melog.user.domain.User;
-import com.melog.melog.clova.application.port.in.AnalyzeSentimentUseCase;
+
 import com.melog.melog.clova.application.port.in.SpeechToTextUseCase;
 import com.melog.melog.clova.application.port.in.EmotionAnalysisUseCase;
-import com.melog.melog.clova.domain.model.request.AnalyzeSentimentRequest;
-import com.melog.melog.clova.domain.model.response.AnalyzeSentimentResponse;
-import com.melog.melog.clova.domain.model.response.ExtractEmotionResponse;
 import com.melog.melog.clova.domain.model.request.EmotionAnalysisRequest;
 import com.melog.melog.clova.domain.model.response.EmotionAnalysisResponse;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -51,7 +48,6 @@ public class EmotionRecordService implements EmotionRecordUseCase {
     private final UserSelectedEmotionPersistencePort userSelectedEmotionPersistencePort;
     private final EmotionKeywordPersistencePort emotionKeywordPersistencePort;
     private final EmotionCommentPersistencePort emotionCommentPersistencePort;
-    private final AnalyzeSentimentUseCase analyzeSentimentUseCase;
     private final SpeechToTextUseCase speechToTextUseCase;
     private final EmotionAnalysisUseCase emotionAnalysisUseCase;
     private final ObjectMapper objectMapper;
@@ -1003,4 +999,4 @@ public class EmotionRecordService implements EmotionRecordUseCase {
             return "경로 불일치로 저장되지 않음";
         }
     }
-} 
+}
