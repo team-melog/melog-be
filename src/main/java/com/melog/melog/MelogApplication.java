@@ -12,6 +12,6 @@ public class MelogApplication {
 
 	public static void main(String[] args) {
 		SpringApplication.run(MelogApplication.class, args);
-	}
+	} 
 
 }
