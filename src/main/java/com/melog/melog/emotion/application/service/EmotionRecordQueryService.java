@@ -148,47 +148,90 @@ public class EmotionRecordQueryService {
         // 해당 월의 감정 기록 조회
         List<EmotionRecord> monthlyRecords = emotionRecordPersistencePort.findByUserAndDateBetween(user, startDate, endDate);
 
-        // 이번 달 감정 분포 계산
-        Map<String, Integer> thisMonth = calculateEmotionDistribution(monthlyRecords);
+        // 이번 달 감정 분포 계산 (백분율)
+        Map<String, Double> thisMonth = calculateEmotionDistributionPercentage(monthlyRecords);
 
-        // 지난 달 감정 분포 계산 (비교용)
+        // 지난 달 감정 분포 계산 (백분율)
         YearMonth previousMonth = month.minusMonths(1);
         var previousMonthStart = previousMonth.atDay(1);
         var previousMonthEnd = previousMonth.atEndOfMonth();
         List<EmotionRecord> previousMonthRecords = emotionRecordPersistencePort.findByUserAndDateBetween(user, previousMonthStart, previousMonthEnd);
-        Map<String, Integer> previousMonthDistribution = calculateEmotionDistribution(previousMonthRecords);
+        Map<String, Double> previousMonthDistribution = calculateEmotionDistributionPercentage(previousMonthRecords);
+
+        // 지난달 대비 증감률 계산
+        Map<String, Double> compareWithLastMonth = calculateChangeRate(thisMonth, previousMonthDistribution);
 
         return EmotionChartResponse.builder()
                 .thisMonth(thisMonth)
-                .compareWithLastMonth(previousMonthDistribution)
+                .compareWithLastMonth(compareWithLastMonth)
                 .build();
     }
 
     /**
-     * 감정 기록 목록에서 감정 분포를 계산합니다.
+     * 감정 기록 목록에서 감정 분포를 백분율로 계산합니다.
      */
-    private Map<String, Integer> calculateEmotionDistribution(List<EmotionRecord> records) {
-        Map<String, Integer> distribution = new HashMap<>();
+    private Map<String, Double> calculateEmotionDistributionPercentage(List<EmotionRecord> records) {
+        Map<String, Double> distribution = new HashMap<>();
         
         // 모든 감정 타입을 0으로 초기화
         for (EmotionType emotionType : EmotionType.values()) {
-            distribution.put(emotionType.getDescription(), 0);
+            distribution.put(emotionType.getDescription(), 0.0);
         }
 
-        // 각 기록의 감정 점수를 합산
+        if (records.isEmpty()) {
+            return distribution;
+        }
+
+        // 각 기록의 감정 점수를 합산 (모든 감정 점수 포함)
         for (EmotionRecord record : records) {
             List<EmotionScore> scores = emotionScorePersistencePort.findByRecord(record);
             for (EmotionScore score : scores) {
                 String emotionName = score.getEmotionType().getDescription();
-                int currentCount = distribution.getOrDefault(emotionName, 0);
-                // 감정 점수가 50% 이상인 경우만 카운트 (주요 감정으로 간주)
-                if (score.getPercentage() >= 50) {
-                    distribution.put(emotionName, currentCount + 1);
-                }
+                double currentCount = distribution.getOrDefault(emotionName, 0.0);
+                // 모든 감정 점수를 합산 (백분율 기준)
+                distribution.put(emotionName, currentCount + score.getPercentage());
+            }
+        }
+
+        // 총 감정 점수 계산
+        double totalScore = distribution.values().stream().mapToDouble(Double::doubleValue).sum();
+        
+        // 백분율로 변환
+        if (totalScore > 0) {
+            for (Map.Entry<String, Double> entry : distribution.entrySet()) {
+                double percentage = (entry.getValue() / totalScore) * 100;
+                distribution.put(entry.getKey(), Math.round(percentage * 100.0) / 100.0); // 소수점 2자리 반올림
             }
         }
 
         return distribution;
+    }
+
+    /**
+     * 이번 달과 지난달의 감정 분포를 비교하여 증감률을 계산합니다.
+     */
+    private Map<String, Double> calculateChangeRate(Map<String, Double> thisMonth, Map<String, Double> lastMonth) {
+        Map<String, Double> changeRate = new HashMap<>();
+        
+        for (EmotionType emotionType : EmotionType.values()) {
+            String emotionName = emotionType.getDescription();
+            double thisMonthValue = thisMonth.getOrDefault(emotionName, 0.0);
+            double lastMonthValue = lastMonth.getOrDefault(emotionName, 0.0);
+            
+            // 증감률 계산: (이번달 - 지난달) / 지난달 * 100
+            double rate;
+            if (lastMonthValue == 0.0) {
+                // 지난달에 데이터가 없는 경우, 이번달 값이 있으면 100% 증가로 처리
+                rate = thisMonthValue > 0.0 ? 100.0 : 0.0;
+            } else {
+                rate = ((thisMonthValue - lastMonthValue) / lastMonthValue) * 100;
+            }
+            
+            // 소수점 2자리 반올림
+            changeRate.put(emotionName, Math.round(rate * 100.0) / 100.0);
+        }
+        
+        return changeRate;
     }
 
     /**
