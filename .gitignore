@@ -47,3 +47,5 @@ out/
 !.github/
 !.github/workflows/
 !.github/workflows/*.yml
+.DS_Store
+**/.DS_Store
