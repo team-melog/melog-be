@@ -50,4 +50,31 @@ public interface EmotionRecordPersistencePort {
      * 사용자의 특정 날짜 감정 기록 존재 여부 확인
      */
     boolean existsByUserAndDate(User user, LocalDate date);
+    
+    /**
+     * 사용자의 감정 기록 개수 조회
+     */
+    long countByUser(User user);
+    
+    // 음성 파일 관련 메서드들 추가
+    
+    /**
+     * 사용자의 음성 파일이 있는 감정 기록 조회
+     */
+    List<EmotionRecord> findByUserAndAudioFilePathIsNotNull(User user);
+    
+    /**
+     * 특정 음성 파일 경로로 감정 기록 조회
+     */
+    Optional<EmotionRecord> findByAudioFilePath(String audioFilePath);
+    
+    /**
+     * 사용자의 음성 파일 개수 조회
+     */
+    long countByUserAndAudioFilePathIsNotNull(User user);
+    
+    /**
+     * 음성 파일 크기별 감정 기록 조회 (AI 보이스 기능용)
+     */
+    List<EmotionRecord> findByUserAndAudioFileSizeGreaterThan(User user, Long minFileSize);
 } 

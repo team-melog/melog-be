@@ -1,0 +1,1144 @@
+{
+	"info": {
+		"_postman_id": "15bfd2b9-e1ed-41b2-ae88-eee49e16e043",
+		"name": "melog",
+		"description": "| 도메인 | 설명 |\n| --- | --- |\n\n| `emotion` | 감정 생성, 조회, 수정, 삭제 |\n\n| `feeds` | 월별 감정 피드 리스트 (요약 카드 형태) |\n\n| `calendar` | 월간 감정 대표 이미지 (캘린더 UI용) |\n\n| `analysis` | 감정 통계 요약, 사용자별 페이징 조회 |\n\n**API 목록**\n\n| 메서드 | 경로 | 설명 |\n| --- | --- | --- |\n| `POST` | `/api/emotions` | 감정 분석 등록 |\n| `GET` | `/api/emotions/{id}` | 감정 상세 정보 조회 |\n| `PUT` | `/api/emotions/{id}/text` | 감정 수정(STT 텍스트 수정) |\n| `DELETE` | `/api/emotions/{id}` | 감정 삭제(피드 삭제) |\n| `GET` | `/api/emotions/feeds?month=YYYY-MM` | 감정 피드 조회 (일자별 카드 리스트) |\n| `GET` | `/api/emotions/calendar?month=YYYY-MM` | 캘린더 대표 감정 이미지 조회 |\n| `GET` | `/api/users/me/emotions/summary?month=YYYY-MM` | 월별 감정 통계 |\n| `GET` | `/api/users/{nickname}/emotions?page=0&size=7` | 사용자별 감정 리스트 조회 (페이징) |",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "47353351",
+		"_collection_link": "https://melog-be-508-4441975.postman.co/workspace/melog's-Workspace~aef67b84-39d1-496e-86f6-4578ec87b4a6/collection/47353351-15bfd2b9-e1ed-41b2-ae88-eee49e16e043?action=share&source=collection_link&creator=47353351"
+	},
+	"item": [
+		{
+			"name": "/api",
+			"item": [
+				{
+					"name": "/users",
+					"item": [
+						{
+							"name": "/emotions",
+							"item": [
+								{
+									"name": "/summary",
+									"item": [
+										{
+											"name": "월별 감정 분포 통계 (차트)",
+											"request": {
+												"method": "GET",
+												"header": [],
+												"url": {
+													"raw": "http://{{base_url}}/api/users/{{nickname}}/emotions/summary/chart?month=YYYY-MM",
+													"protocol": "http",
+													"host": [
+														"{{base_url}}"
+													],
+													"path": [
+														"api",
+														"users",
+														"{{nickname}}",
+														"emotions",
+														"summary",
+														"chart"
+													],
+													"query": [
+														{
+															"key": "month",
+															"value": "YYYY-MM",
+															"description": "예: 2025-08"
+														}
+													]
+												}
+											},
+											"response": [
+												{
+													"name": "월별 감정 분포 통계 (차트)",
+													"originalRequest": {
+														"method": "GET",
+														"header": [],
+														"url": {
+															"raw": "http://{{base_url}}/api/users/angrybird/emotions/summary/chart?month=2025-08",
+															"protocol": "http",
+															"host": [
+																"{{base_url}}"
+															],
+															"path": [
+																"api",
+																"users",
+																"angrybird",
+																"emotions",
+																"summary",
+																"chart"
+															],
+															"query": [
+																{
+																	"key": "month",
+																	"value": "2025-08",
+																	"description": "예: 2025-08"
+																}
+															]
+														}
+													},
+													"_postman_previewlanguage": "json",
+													"header": [
+														{
+															"key": "Content-Type",
+															"value": "application/json",
+															"description": "",
+															"type": "text"
+														}
+													],
+													"cookie": [
+														{
+															"expires": "Invalid Date",
+															"domain": "",
+															"path": ""
+														}
+													],
+													"body": "{\n  \"thisMonth\": {\n    \"기쁨\": 30,\n    \"지침\": 25,\n    \"불안\": 20\n  },\n  \"compareWithLastMonth\": {\n    \"기쁨\": -5,\n    \"불안\": 10\n  }\n}"
+												}
+											]
+										},
+										{
+											"name": "월별 키워드 및 한줄 조언",
+											"request": {
+												"method": "GET",
+												"header": [],
+												"url": {
+													"raw": "http://{{base_url}}/api/users/{{nickname}}/emotions/summary/insight?month=YYYY-MM",
+													"protocol": "http",
+													"host": [
+														"{{base_url}}"
+													],
+													"path": [
+														"api",
+														"users",
+														"{{nickname}}",
+														"emotions",
+														"summary",
+														"insight"
+													],
+													"query": [
+														{
+															"key": "month",
+															"value": "YYYY-MM",
+															"description": "예: 2025-08"
+														}
+													]
+												}
+											},
+											"response": [
+												{
+													"name": "월별 키워드 및 한줄 조언",
+													"originalRequest": {
+														"method": "GET",
+														"header": [],
+														"url": {
+															"raw": "http://{{base_url}}/api/users/angrybird/emotions/summary/insight?month=2025-08",
+															"protocol": "http",
+															"host": [
+																"{{base_url}}"
+															],
+															"path": [
+																"api",
+																"users",
+																"angrybird",
+																"emotions",
+																"summary",
+																"insight"
+															],
+															"query": [
+																{
+																	"key": "month",
+																	"value": "2025-08",
+																	"description": "예: 2025-08"
+																}
+															]
+														}
+													},
+													"_postman_previewlanguage": "json",
+													"header": [
+														{
+															"key": "Content-Type",
+															"value": "application/json",
+															"description": "",
+															"type": "text"
+														}
+													],
+													"cookie": [
+														{
+															"expires": "Invalid Date",
+															"domain": "",
+															"path": ""
+														}
+													],
+													"body": "{\n  \"topKeywords\": [\n    { \"keyword\": \"피곤\", \"weight\": 38 },\n    { \"keyword\": \"긴장\", \"weight\": 22 },\n    { \"keyword\": \"혼란\", \"weight\": 18 }\n  ],\n  \"monthlyComment\": \"지침과 피곤이 반복되는 한 달이었습니다. 감정 기복이 큰 경향이 보입니다.\"\n}"
+												}
+											]
+										}
+									],
+									"description": "### 1\\. 월별 감정 분포 통계 (차트)\n\n### `GET /api/users/{nickname}/emotions/summary/chart?month=YYYY-MM`\n\n- 월별 감정 분포 데이터를 제공합니다. 감정별 퍼센트 및 전월 대비 증감을 반환합니다.\n    \n\n### 2\\. 월별 키워드 및 한줄 요약\n\n### `GET /api/users/{nickname}/emotions/summary/insight?month=YYYY-MM`\n\n- 해당 월에 기록된 감정 텍스트 기반으로 키워드 통계 및 한줄 평가를 제공합니다.\n    \n- 텍스트 분석 처리이므로 차트와 응답 속도를 분리 관리합니다."
+								},
+								{
+									"name": "감정 등록 및 분석 요청(음성)",
+									"request": {
+										"method": "POST",
+										"header": [
+											{
+												"key": "Content-Type",
+												"value": "multipart/form-data",
+												"description": "음성용(예시참고)",
+												"type": "text"
+											}
+										],
+										"body": {
+											"mode": "formdata",
+											"formdata": [
+												{
+													"key": "audioFile",
+													"description": "value에 오디오파일",
+													"type": "file",
+													"src": []
+												},
+												{
+													"key": "userSelectedEmotion",
+													"value": "JSON stringified 형태",
+													"description": "사용자 선택 감정",
+													"type": "text"
+												}
+											]
+										},
+										"url": {
+											"raw": "http://{{base_url}}/api/users/{{nickname}}/emotions",
+											"protocol": "http",
+											"host": [
+												"{{base_url}}"
+											],
+											"path": [
+												"api",
+												"users",
+												"{{nickname}}",
+												"emotions"
+											]
+										}
+									},
+									"response": [
+										{
+											"name": "감정 등록 및 분석 요청(음성)",
+											"originalRequest": {
+												"method": "POST",
+												"header": [
+													{
+														"key": "Content-Type",
+														"value": "multipart/form-data",
+														"type": "text"
+													}
+												],
+												"body": {
+													"mode": "formdata",
+													"formdata": [
+														{
+															"key": "audioFile",
+															"description": "value에 음성파일 넣기. 예시 - test.wav",
+															"type": "file",
+															"src": "/Users/jaymon/Downloads/test.mp3"
+														},
+														{
+															"key": "userSelectedEmotion",
+															"value": "{\"type\":\"설렘\",\"percentage\":10}",
+															"description": "JSON string",
+															"type": "text"
+														}
+													]
+												},
+												"url": {
+													"raw": "http://{{base_url}}/api/users/angrybird/emotions/stt",
+													"protocol": "http",
+													"host": [
+														"{{base_url}}"
+													],
+													"path": [
+														"api",
+														"users",
+														"angrybird",
+														"emotions",
+														"stt"
+													]
+												}
+											},
+											"_postman_previewlanguage": "json",
+											"header": [
+												{
+													"key": "Content-Type",
+													"value": "application/json",
+													"description": "",
+													"type": "text"
+												}
+											],
+											"cookie": [],
+											"body": "{\n  \"id\": 1,\n  \"text\": \"요즘 너무 지치고 잠이 안 와...\",\n  \"summary\": \"최근 불안과 지침이 반복되는 상태입니다.\",\n  \"comment\": \"힘내세요\",\n  \"emotions\": [\n    { \"type\": \"불안\", \"percentage\": 40, \"step\": 2 },\n    { \"type\": \"지침\", \"percentage\": 35, \"step\": 2} ,\n    { \"type\": \"설렘\", \"percentage\": 25, \"step\": 2 }\n  ],\n  \"userSelectedEmotion\": {\n    \"type\": \"설렘\",\n    \"percentage\": 30,\n    \"step\" : 2\n  }\n}"
+										}
+									]
+								},
+								{
+									"name": "감정 등록 및 분석 요청(텍스트)",
+									"request": {
+										"method": "POST",
+										"header": [
+											{
+												"key": "Content-Type",
+												"value": "application/json",
+												"type": "text"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n  \"text\": \"요즘 너무 지치고 잠이 안 와...\",\n  \"userSelectedEmotion\": {\n    \"type\": \"설렘\",\n    \"percentage\": 30\n  }\n}",
+											"options": {
+												"raw": {
+													"language": "json"
+												}
+											}
+										},
+										"url": {
+											"raw": "http://{{base_url}}/api/users/{{nickname}}/emotions/text",
+											"protocol": "http",
+											"host": [
+												"{{base_url}}"
+											],
+											"path": [
+												"api",
+												"users",
+												"{{nickname}}",
+												"emotions",
+												"text"
+											]
+										}
+									},
+									"response": [
+										{
+											"name": "감정 등록 및 분석 요청(텍스트)",
+											"originalRequest": {
+												"method": "POST",
+												"header": [
+													{
+														"key": "Content-Type",
+														"value": "application/json",
+														"type": "text"
+													}
+												],
+												"body": {
+													"mode": "raw",
+													"raw": "{\n  \"text\": \"요즘 너무 지치고 잠이 안 와...\",\n  \"userSelectedEmotion\": {\n    \"type\": \"설렘\",\n    \"percentage\": 30 \n  }\n}",
+													"options": {
+														"raw": {
+															"language": "json"
+														}
+													}
+												},
+												"url": {
+													"raw": "http://{{base_url}}/api/users/angrybird/emotions/text",
+													"protocol": "http",
+													"host": [
+														"{{base_url}}"
+													],
+													"path": [
+														"api",
+														"users",
+														"angrybird",
+														"emotions",
+														"text"
+													]
+												}
+											},
+											"_postman_previewlanguage": "json",
+											"header": [
+												{
+													"key": "Content-Type",
+													"value": "application/json",
+													"description": "",
+													"type": "text"
+												}
+											],
+											"cookie": [
+												{
+													"expires": "Invalid Date",
+													"domain": "",
+													"path": ""
+												}
+											],
+											"body": "{\n  \"id\": 1,\n  \"text\": \"요즘 너무 지치고 잠이 안 와...\",\n  \"summary\": \"최근 불안과 지침이 반복되는 상태입니다.\",\n  \"comment\": \"힘내세요\",\n  \"emotions\": [\n    { \"type\": \"불안\", \"percentage\": 40, \"step\": 2 },\n    { \"type\": \"지침\", \"percentage\": 35, \"step\": 2} ,\n    { \"type\": \"설렘\", \"percentage\": 25, \"step\": 2 }\n  ],\n  \"userSelectedEmotion\": {\n    \"type\": \"설렘\",\n    \"percentage\": 30,\n    \"step\" : 2\n  }\n}"
+										}
+									]
+								},
+								{
+									"name": "감정 수정(최종 선택 확정)",
+									"request": {
+										"method": "PUT",
+										"header": [
+											{
+												"key": "Content-Type",
+												"value": "application/json",
+												"type": "text"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n  \"emotions\": [\n    { \"type\": \"지침\", \"percentage\": 80 }\n  ]\n}",
+											"options": {
+												"raw": {
+													"language": "json"
+												}
+											}
+										},
+										"url": {
+											"raw": "http://{{base_url}}/api/users/{{nickname}}/emotions/{id}/select",
+											"protocol": "http",
+											"host": [
+												"{{base_url}}"
+											],
+											"path": [
+												"api",
+												"users",
+												"{{nickname}}",
+												"emotions",
+												"{id}",
+												"select"
+											]
+										}
+									},
+									"response": [
+										{
+											"name": "감정 수정(최종 선택 확정)",
+											"originalRequest": {
+												"method": "PUT",
+												"header": [
+													{
+														"key": "Content-Type",
+														"value": "application/json",
+														"type": "text"
+													}
+												],
+												"body": {
+													"mode": "raw",
+													"raw": "{\n  \"emotions\": [\n    { \"type\": \"지침\", \"percentage\": 40 },\n    { \"type\": \"슬픔\", \"percentage\": 30 },\n    { \"type\": \"분노\", \"percentage\": 30 }\n  ]\n}",
+													"options": {
+														"raw": {
+															"language": "json"
+														}
+													}
+												},
+												"url": {
+													"raw": "http://{{base_url}}/api/users/angrybird/emotions/1/select",
+													"protocol": "http",
+													"host": [
+														"{{base_url}}"
+													],
+													"path": [
+														"api",
+														"users",
+														"angrybird",
+														"emotions",
+														"1",
+														"select"
+													]
+												}
+											},
+											"_postman_previewlanguage": "json",
+											"header": [
+												{
+													"key": "Content-Type",
+													"value": "application/json",
+													"description": "",
+													"type": "text"
+												}
+											],
+											"cookie": [
+												{
+													"expires": "Invalid Date",
+													"domain": "",
+													"path": ""
+												}
+											],
+											"body": "{\n  \"id\": 1,\n  \"text\": \"요즘 너무 지치고 잠이 안 와...\",\n  \"summary\": \"최근 불안과 지침이 반복되는 상태입니다.\",\n  \"comment\": \"힘내세요\",\n  \"emotions\": [\n    { \"type\": \"지침\", \"percentage\": 40 ,\"step\": 2},\n    { \"type\": \"슬픔\", \"percentage\": 30 ,\"step\": 2},\n    { \"type\": \"분노\", \"percentage\": 30 ,\"step\": 2}\n  ],\n  \"userSelectedEmotion\": {\n    \"type\": \"설렘\",\n    \"percentage\": 30,\n    \"step\" : 2\n  }\n}"
+										}
+									]
+								},
+								{
+									"name": "감정 수정(텍스트)",
+									"request": {
+										"method": "PUT",
+										"header": [
+											{
+												"key": "Content-Type",
+												"value": "application/json",
+												"type": "text"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n  \"text\": \"수정된 텍스트 내용입니다.\"\n}",
+											"options": {
+												"raw": {
+													"language": "json"
+												}
+											}
+										},
+										"url": {
+											"raw": "http://{{base_url}}/api/users/{{nickname}}/emotions/{id}/text",
+											"protocol": "http",
+											"host": [
+												"{{base_url}}"
+											],
+											"path": [
+												"api",
+												"users",
+												"{{nickname}}",
+												"emotions",
+												"{id}",
+												"text"
+											]
+										}
+									},
+									"response": [
+										{
+											"name": "감정 수정",
+											"originalRequest": {
+												"method": "PUT",
+												"header": [
+													{
+														"key": "Content-Type",
+														"value": "application/json",
+														"type": "text"
+													}
+												],
+												"body": {
+													"mode": "raw",
+													"raw": "{\n  \"text\": \"수정된 텍스트 내용입니다.\"\n}",
+													"options": {
+														"raw": {
+															"language": "json"
+														}
+													}
+												},
+												"url": {
+													"raw": "http://{{base_url}}/api/users/angrybird/emotions/1/text",
+													"protocol": "http",
+													"host": [
+														"{{base_url}}"
+													],
+													"path": [
+														"api",
+														"users",
+														"angrybird",
+														"emotions",
+														"1",
+														"text"
+													]
+												}
+											},
+											"_postman_previewlanguage": "json",
+											"header": [
+												{
+													"key": "Content-Type",
+													"value": "application/json",
+													"description": "",
+													"type": "text"
+												}
+											],
+											"cookie": [
+												{
+													"expires": "Invalid Date",
+													"domain": "",
+													"path": ""
+												}
+											],
+											"body": "{\n  \"id\": 1,\n  \"text\": \"수정된 텍스트 내용입니다.\"\n}"
+										}
+									]
+								},
+								{
+									"name": "감정 상세 조회",
+									"request": {
+										"method": "GET",
+										"header": [],
+										"url": {
+											"raw": "http://{{base_url}}/api/users/{{nickname}}/emotions/{id}",
+											"protocol": "http",
+											"host": [
+												"{{base_url}}"
+											],
+											"path": [
+												"api",
+												"users",
+												"{{nickname}}",
+												"emotions",
+												"{id}"
+											]
+										}
+									},
+									"response": [
+										{
+											"name": "감정 상세 조회",
+											"originalRequest": {
+												"method": "GET",
+												"header": [],
+												"url": {
+													"raw": "http://{{base_url}}/api/users/angrybird/emotions/1",
+													"protocol": "http",
+													"host": [
+														"{{base_url}}"
+													],
+													"path": [
+														"api",
+														"users",
+														"angrybird",
+														"emotions",
+														"1"
+													]
+												}
+											},
+											"_postman_previewlanguage": "json",
+											"header": [
+												{
+													"key": "Content-Type",
+													"value": "application/json",
+													"description": "",
+													"type": "text"
+												}
+											],
+											"cookie": [
+												{
+													"expires": "Invalid Date",
+													"domain": "",
+													"path": ""
+												}
+											],
+											"body": "{\n  \"id\": 1,\n  \"text\": \"요즘 너무 지치고 잠이 안 와...\",\n  \"summary\": \"최근 불안과 지침이 반복되는 상태입니다.\",\n  \"comment\": \"힘내세요\",\n  \"emotions\": [\n    { \"type\": \"불안\", \"percentage\": 40, \"step\": 2 },\n    { \"type\": \"지침\", \"percentage\": 35, \"step\": 2} ,\n    { \"type\": \"설렘\", \"percentage\": 25, \"step\": 2 }\n  ],\n  \"userSelectedEmotion\": {\n    \"type\": \"설렘\",\n    \"percentage\": 30,\n    \"step\" : 2\n  }\n}"
+										}
+									]
+								},
+								{
+									"name": "감정 기록 리스트 조회 (홈탭 및 무한스크롤용)",
+									"request": {
+										"method": "GET",
+										"header": [],
+										"url": {
+											"raw": "http://{{base_url}}/api/users/{nickname}/emotions?page=0&size=7",
+											"protocol": "http",
+											"host": [
+												"{{base_url}}"
+											],
+											"path": [
+												"api",
+												"users",
+												"{nickname}",
+												"emotions"
+											],
+											"query": [
+												{
+													"key": "page",
+													"value": "0"
+												},
+												{
+													"key": "size",
+													"value": "7"
+												}
+											]
+										}
+									},
+									"response": [
+										{
+											"name": "감정 기록 리스트 조회 (홈탭 및 무한스크롤용)",
+											"originalRequest": {
+												"method": "GET",
+												"header": [],
+												"url": {
+													"raw": "http://{{base_url}}/api/users/angrybird/emotions?page=0&size=7",
+													"protocol": "http",
+													"host": [
+														"{{base_url}}"
+													],
+													"path": [
+														"api",
+														"users",
+														"angrybird",
+														"emotions"
+													],
+													"query": [
+														{
+															"key": "page",
+															"value": "0"
+														},
+														{
+															"key": "size",
+															"value": "7"
+														}
+													]
+												}
+											},
+											"_postman_previewlanguage": "json",
+											"header": [
+												{
+													"key": "Content-Type",
+													"value": "application/json",
+													"description": "",
+													"type": "text"
+												}
+											],
+											"cookie": [
+												{
+													"expires": "Invalid Date",
+													"domain": "",
+													"path": ""
+												}
+											],
+											"body": "{\n  \"content\": [\n    {\n      \"id\": 21,\n      \"date\": \"2025-08-04\",\n      \"summary\": \"지침과 분노가 반복됨\",\n      \"comment\": \"힘내세요\",\n      \"emotions\": [\n        { \"type\": \"지침\", \"percentage\": 40, \"step\": 2 },\n        { \"type\": \"분노\", \"percentage\": 35, \"step\": 2 },\n        { \"type\": \"불안\", \"percentage\": 25, \"step\": 2 }\n      ]\n    },\n    {\n      \"id\": 20,\n      \"date\": \"2025-08-03\",\n      \"summary\": \"매우 긍정적인 변화가 나타남\",\n      \"comment\": \"힘내세요\",\n      \"emotions\": [\n        { \"type\": \"기쁨\", \"percentage\": 70, \"step\": 4 },\n        { \"type\": \"설렘\", \"percentage\": 20, \"step\": 1 },\n        { \"type\": \"여유\", \"percentage\": 10, \"step\": 1 }\n      ]\n    }\n  ],\n  \"page\": 0,\n  \"size\": 7\n}"
+										}
+									]
+								},
+								{
+									"name": "감정 삭제",
+									"request": {
+										"method": "DELETE",
+										"header": [],
+										"url": {
+											"raw": "http://{{base_url}}/api/users/{{nickname}}/emotions/{id}",
+											"protocol": "http",
+											"host": [
+												"{{base_url}}"
+											],
+											"path": [
+												"api",
+												"users",
+												"{{nickname}}",
+												"emotions",
+												"{id}"
+											]
+										}
+									},
+									"response": [
+										{
+											"name": "감정 삭제",
+											"originalRequest": {
+												"method": "DELETE",
+												"header": [],
+												"url": {
+													"raw": "http://{{base_url}}/api/users/angrybird/emotions/1",
+													"protocol": "http",
+													"host": [
+														"{{base_url}}"
+													],
+													"path": [
+														"api",
+														"users",
+														"angrybird",
+														"emotions",
+														"1"
+													]
+												}
+											},
+											"status": "OK",
+											"code": 200,
+											"_postman_previewlanguage": "Text",
+											"header": [],
+											"cookie": [
+												{
+													"expires": "Invalid Date",
+													"domain": "",
+													"path": ""
+												}
+											],
+											"body": ""
+										}
+									]
+								},
+								{
+									"name": "캘린더 감정 리스트 조회",
+									"request": {
+										"method": "GET",
+										"header": [],
+										"url": {
+											"raw": "http://{{base_url}}/api/users/{{nickname}}/emotions/calendar?month=YYYY-MM",
+											"protocol": "http",
+											"host": [
+												"{{base_url}}"
+											],
+											"path": [
+												"api",
+												"users",
+												"{{nickname}}",
+												"emotions",
+												"calendar"
+											],
+											"query": [
+												{
+													"key": "month",
+													"value": "YYYY-MM"
+												}
+											]
+										}
+									},
+									"response": [
+										{
+											"name": "캘린더 감정 리스트 조회",
+											"originalRequest": {
+												"method": "GET",
+												"header": [],
+												"url": {
+													"raw": "http://{{base_url}}/api/users/angrybird/emotions/calendar?month=2025-08",
+													"protocol": "http",
+													"host": [
+														"{{base_url}}"
+													],
+													"path": [
+														"api",
+														"users",
+														"angrybird",
+														"emotions",
+														"calendar"
+													],
+													"query": [
+														{
+															"key": "month",
+															"value": "2025-08",
+															"description": "조회할 연월"
+														}
+													]
+												}
+											},
+											"_postman_previewlanguage": "json",
+											"header": [
+												{
+													"key": "Content-Type",
+													"value": "application/json",
+													"description": "",
+													"type": "text"
+												}
+											],
+											"cookie": [
+												{
+													"expires": "Invalid Date",
+													"domain": "",
+													"path": ""
+												}
+											],
+											"body": "[\n  {\n    \"id\" : 1,\n    \"date\": \"2025-08-01\",\n    \"emotions\": [\n      { \"type\": \"지침\", \"percentage\": 70, \"step\": 4 },\n      { \"type\": \"불안\", \"percentage\": 20, \"step\": 1 },\n      { \"type\": \"분노\", \"percentage\": 10, \"step\": 1 }\n    ]\n  },\n  {\n    \"id\" : 1,\n    \"date\": \"2025-08-02\",\n    \"emotions\": [\n      { \"type\": \"불안\", \"percentage\": 60, \"step\": 3 },\n      { \"type\": \"설렘\", \"percentage\": 30, \"step\": 2 },\n      { \"type\": \"기쁨\", \"percentage\": 10, \"step\": 1 }\n    ]\n  }\n]"
+										}
+									]
+								}
+							],
+							"description": "### 1-1. 감정 등록 및 분석 요청\n\n**`POST /api/users/{nickname}/emotions`**\n\n- 사용자가 감정을 1개 선택한 뒤, 텍스트 또는 음성 중 1가지 방식으로 감정 분석 요청\n    \n- 분석 결과(emotions 3개)와 선택 감정(userSelectedEmotion 1개)를 함께 응답\n    \n- **감정 선택은 저장되지 않음** → 추후 확정 시 `PUT` 호출\n    \n\n### 1-2. 감정 수정(최종 선택 확정)\n\n**`PUT /api/users/{nickname}/emotions/{id}/select`**\n\n- 사용자 감정 분석 결과를 수정하거나, 기존 분석을 교체\n    \n- 기존 감정(emotions) 배열을 새로 덮어씌움\n    \n- 감정은 1개 또는 3개까지 유연하게 입력 가능\n    \n\n### 3\\. 감정 수정(텍스트)\n\n### `PUT /api/users/{nickname}/emotions/{id}/text`\n\n- STT로 변환된 텍스트를 수동 수정\n    \n\n### 4\\. 감정 상세 조회\n\n**`GET /api/users/{nickname}/emotions/{id}`**\n\n- 감정 상세 정보 조회\n    \n- 최종 확정 감정(emotions 1개)과 최초 선택 감정(userSelectedEmotion)을 함께 반환\n    \n\n### 5\\. 감정 기록 리스트 조회 (홈탭 및 무한스크롤용)\n\n### `GET /api/users/{nickname}/emotions?page=0&size=7`\n\n- 사용자 감정 기록을 페이징 형태로 조회합니다.\n    \n- 각 감정 기록마다 감정 3종을 포함하며, 프론트는 가장 높은 감정만 표시하면 됩니다.\n    \n\n### 6\\. 캘린더 감정 리스트 조회\n\n### `GET /api/users/{nickname}/emotions/calendar?month=YYYY-MM`\n\n- 달력에 표기할 날짜별 감정을 조회합니다.\n    \n- 감정 이미지 파일명 없이 감정 데이터만 반환됩니다.\n    \n\n### 7\\. 감정 삭제\n\n### `DELETE /api/users/{nickname}/emotions/{id}`\n\n- 감정 피드를 포함한 감정 기록 전체 삭제"
+						},
+						{
+							"name": "사용자 수정",
+							"request": {
+								"method": "PUT",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"newNickname\": \"happyduck\"\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "http://{{base_url}}/api/users/{nickname}",
+									"protocol": "http",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"api",
+										"users",
+										"{nickname}"
+									]
+								}
+							},
+							"response": [
+								{
+									"name": "사용자 수정",
+									"originalRequest": {
+										"method": "PUT",
+										"header": [
+											{
+												"key": "Content-Type",
+												"value": "application/json",
+												"type": "text"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n  \"newNickname\": \"happyduck\"\n}",
+											"options": {
+												"raw": {
+													"language": "json"
+												}
+											}
+										},
+										"url": {
+											"raw": "http://{{base_url}}/api/users/angrybird",
+											"protocol": "http",
+											"host": [
+												"{{base_url}}"
+											],
+											"path": [
+												"api",
+												"users",
+												"angrybird"
+											]
+										}
+									},
+									"_postman_previewlanguage": "json",
+									"header": [
+										{
+											"key": "Content-Type",
+											"value": "application/json",
+											"description": "",
+											"type": "text"
+										}
+									],
+									"cookie": [
+										{
+											"expires": "Invalid Date",
+											"domain": "",
+											"path": ""
+										}
+									],
+									"body": "{\n  \"nickname\": \"happyduck\",\n  \"createdAt\": \"2025-08-07T14:33:00\"\n}"
+								}
+							]
+						},
+						{
+							"name": "사용자 삭제",
+							"request": {
+								"method": "DELETE",
+								"header": [],
+								"url": {
+									"raw": "http://{{base_url}}/api/users/{nickname}",
+									"protocol": "http",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"api",
+										"users",
+										"{nickname}"
+									]
+								}
+							},
+							"response": [
+								{
+									"name": "사용자 삭제",
+									"originalRequest": {
+										"method": "DELETE",
+										"header": [],
+										"url": {
+											"raw": "http://{{base_url}}/api/users/angrybird",
+											"protocol": "http",
+											"host": [
+												"{{base_url}}"
+											],
+											"path": [
+												"api",
+												"users",
+												"angrybird"
+											]
+										}
+									},
+									"status": "OK",
+									"code": 200,
+									"_postman_previewlanguage": "text",
+									"header": [
+										{
+											"key": "Content-Type",
+											"value": "application/json",
+											"description": "",
+											"type": "text"
+										}
+									],
+									"cookie": [
+										{
+											"expires": "Invalid Date",
+											"domain": "",
+											"path": ""
+										}
+									],
+									"body": ""
+								}
+							]
+						},
+						{
+							"name": "사용자 조회",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "http://{{base_url}}/api/users/{nickname}",
+									"protocol": "http",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"api",
+										"users",
+										"{nickname}"
+									]
+								}
+							},
+							"response": [
+								{
+									"name": "사용자 조회",
+									"originalRequest": {
+										"method": "GET",
+										"header": [],
+										"url": {
+											"raw": "http://{{base_url}}/api/users/angrybird",
+											"protocol": "http",
+											"host": [
+												"{{base_url}}"
+											],
+											"path": [
+												"api",
+												"users",
+												"angrybird"
+											]
+										}
+									},
+									"_postman_previewlanguage": "json",
+									"header": [
+										{
+											"key": "Content-Type",
+											"value": "application/json",
+											"description": "",
+											"type": "text"
+										}
+									],
+									"cookie": [
+										{
+											"expires": "Invalid Date",
+											"domain": "",
+											"path": ""
+										}
+									],
+									"body": "{\n    \"nickname\": \"angrybird\",\n    \"createdAt\": \"2025-08-07T14:33:00\",\n    \"emotionCount\": 12,\n    \"audioCount\": 9,\n    \"representativeEmotion\": {\n    \"type\": \"불안\",\n    \"step\": 2\n  }\n}"
+								}
+							]
+						},
+						{
+							"name": "사용자 등록",
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"nickname\": \"angrybird\"\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "http://{{base_url}}/api/users",
+									"protocol": "http",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"api",
+										"users"
+									]
+								}
+							},
+							"response": [
+								{
+									"name": "사용자 등록",
+									"originalRequest": {
+										"method": "POST",
+										"header": [
+											{
+												"key": "Content-Type",
+												"value": "application/json",
+												"type": "text"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n  \"nickname\": \"angrybird\"\n}",
+											"options": {
+												"raw": {
+													"language": "json"
+												}
+											}
+										},
+										"url": {
+											"raw": "http://{{base_url}}/api/users",
+											"protocol": "http",
+											"host": [
+												"{{base_url}}"
+											],
+											"path": [
+												"api",
+												"users"
+											]
+										}
+									},
+									"_postman_previewlanguage": "json",
+									"header": [
+										{
+											"key": "Content-Type",
+											"value": "application/json",
+											"description": "",
+											"type": "text"
+										}
+									],
+									"cookie": [
+										{
+											"expires": "Invalid Date",
+											"domain": "",
+											"path": ""
+										}
+									],
+									"body": "{\n    \"nickname\": \"angrybird\",\n    \"createdAt\": \"2025-08-07T14:33:00\"\n}"
+								}
+							]
+						}
+					]
+				}
+			],
+			"description": "## API 목록\n\n| 메서드 | 경로 | 설명 |\n| --- | --- | --- |\n| `POST` | `/api/users` | 사용자 등록 |\n| `GET` | `/api/users/{nickname}` | 사용자 조회 |\n| `PUT` | `/api/users/{nickname}` | 사용자 수정 |\n| `DELETE` | `/api/users/{nickname}` | 사용자 삭제 |\n| `POST` | `/api/users/{nickname}/emotions` | 감정 등록 및 분석 요청 |\n| `PUT` | `/api/users/{nickname}/emotions/{id}/select` | 감정 수정(최종 선택 확정) |\n| `PUT` | `/api/users/{nickname}/emotions/{id}/text` | 감정 수정(텍스트) |\n| `GET` | `/api/users/{nickname}/emotions/{id}` | 감정 상세 조회 |\n| `DELETE` | `/api/users/{nickname}/emotions/{id}` | 감정 기록 삭제 |\n| `GET` | `/api/users/{nickname}/emotions/calendar?month=YYYY-MM` | 캘린더 감정 리스트 조회 |\n| `GET` | `/api/users/{nickname}/emotions/summary/chart?month=YYYY-MM` | 감정 분포 통계 (차트) |\n| `GET` | `/api/users/{nickname}/emotions/summary/insight?month=YYYY-MM` | 월별 키워드 및 한줄 요약 |\n| `GET` | `/api/users/{nickname}/emotions?page=0&size=7` | 감정 기록 리스트 조회(홈탭 및 무한스크롤용) |\n|  |  |  |\n\n---\n\n### 1-1. 감정 등록 및 분석 요청\n\n**`POST /api/users/{nickname}/emotions`**\n\n- 사용자가 감정을 1개 선택한 뒤, 텍스트 또는 음성 중 1가지 방식으로 감정 분석 요청\n    \n- 분석 결과(emotions 3개)와 선택 감정(userSelectedEmotion 1개)를 함께 응답\n    \n- **감정 선택은 저장되지 않음** → 추후 확정 시 `PUT` 호출\n    \n\n### 1-2. 감정 수정(최종 선택 확정)\n\n**`PUT /api/users/{nickname}/emotions/{id}/select`**\n\n- 사용자 감정 분석 결과를 수정하거나, 기존 분석을 교체\n    \n- 기존 감정(emotions) 배열을 새로 덮어씌움\n    \n- 감정은 1개 또는 3개까지 유연하게 입력 가능\n    \n\n### 3\\. 감정 수정(텍스트)\n\n### `PUT /api/users/{nickname}/emotions/{id}/text`\n\n- STT로 변환된 텍스트를 수동 수정\n    \n\n### 4\\. 감정 상세 조회\n\n**`GET /api/users/{nickname}/emotions/{id}`**\n\n- 감정 상세 정보 조회\n    \n- 최종 확정 감정(emotions 1개)과 최초 선택 감정(userSelectedEmotion)을 함께 반환\n    \n\n### 5\\. 감정 기록 리스트 조회 (홈탭 및 무한스크롤용)\n\n### `GET /api/users/{nickname}/emotions?page=0&size=7`\n\n- 사용자 감정 기록을 페이징 형태로 조회합니다.\n    \n- 각 감정 기록마다 감정 3종을 포함하며, 프론트는 가장 높은 감정만 표시하면 됩니다.\n    \n\n### 6\\. 캘린더 감정 리스트 조회\n\n### `GET /api/users/{nickname}/emotions/calendar?month=YYYY-MM`\n\n- 달력에 표기할 날짜별 감정을 조회합니다.\n    \n- 감정 이미지 파일명 없이 감정 데이터만 반환됩니다.\n    \n\n### 7\\. 감정 삭제\n\n### `DELETE /api/users/{nickname}/emotions/{id}`\n\n- 감정 피드를 포함한 감정 기록 전체 삭제\n    \n\n### 8\\. 월별 감정 분포 통계 (차트)\n\n### `GET /api/users/{nickname}/emotions/summary/chart?month=YYYY-MM`\n\n- 월별 감정 분포 데이터를 제공합니다. 감정별 퍼센트 및 전월 대비 증감을 반환합니다.\n    \n\n### 9\\. 월별 키워드 및 한줄 요약\n\n### `GET /api/users/{nickname}/emotions/summary/insight?month=YYYY-MM`\n\n- 해당 월에 기록된 감정 텍스트 기반으로 키워드 통계 및 한줄 평가를 제공합니다.\n    \n- 텍스트 분석 처리이므로 차트와 응답 속도를 분리 관리합니다."
+		},
+		{
+			"name": "서버-헬스체크",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://{{base_url}}/actuator/health",
+					"protocol": "http",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"actuator",
+						"health"
+					]
+				}
+			},
+			"response": []
+		}
+	]
+}

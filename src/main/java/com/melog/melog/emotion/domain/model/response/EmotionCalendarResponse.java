@@ -9,6 +9,7 @@ import java.util.List;
 @Getter
 @Builder
 public class EmotionCalendarResponse {
+    private Long id; // 상세 페이지 연결용
     private LocalDate date;
     private List<EmotionScoreResponse> emotions;
 } 

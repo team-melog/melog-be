@@ -44,6 +44,11 @@ public class EmotionRecordPersistenceAdapter implements EmotionRecordPersistence
     }
 
     @Override
+    public List<EmotionRecord> findByUserAndDateBetween(User user, LocalDate startDate, LocalDate endDate) {
+        return emotionRecordJpaRepository.findByUserAndDateBetween(user, startDate, endDate);
+    }
+
+    @Override
     public void delete(EmotionRecord emotionRecord) {
         emotionRecordJpaRepository.delete(emotionRecord);
     }
@@ -54,7 +59,29 @@ public class EmotionRecordPersistenceAdapter implements EmotionRecordPersistence
     }
 
     @Override
-    public List<EmotionRecord> findByUserAndDateBetween(User user, LocalDate startDate, LocalDate endDate) {
-        return emotionRecordJpaRepository.findByUserAndDateBetween(user, startDate, endDate);
+    public long countByUser(User user) {
+        return emotionRecordJpaRepository.countByUser(user);
+    }
+
+    // 음성 파일 관련 메서드들 추가
+
+    @Override
+    public List<EmotionRecord> findByUserAndAudioFilePathIsNotNull(User user) {
+        return emotionRecordJpaRepository.findByUserAndAudioFilePathIsNotNull(user);
+    }
+
+    @Override
+    public Optional<EmotionRecord> findByAudioFilePath(String audioFilePath) {
+        return emotionRecordJpaRepository.findByAudioFilePath(audioFilePath);
+    }
+
+    @Override
+    public long countByUserAndAudioFilePathIsNotNull(User user) {
+        return emotionRecordJpaRepository.countByUserAndAudioFilePathIsNotNull(user);
+    }
+
+    @Override
+    public List<EmotionRecord> findByUserAndAudioFileSizeGreaterThan(User user, Long minFileSize) {
+        return emotionRecordJpaRepository.findByUserAndAudioFileSizeGreaterThan(user, minFileSize);
     }
 } 

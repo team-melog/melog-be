@@ -64,21 +64,34 @@ public class ExtractEmotionAdapter implements ExtractEmotionPort {
             JsonNode contentNode = objectMapper.readTree(contentJson);
             JsonNode emotionNode = contentNode.path("emotionResults");
 
-            // JSON 응답을 Map으로 파싱
             List<Map<String, Object>> rawEmotions = objectMapper.readValue(
-                    emotionNode.traverse(),
-                    new TypeReference<>() {
-                    });
+                emotionNode.traverse(),
+                new TypeReference<>() {}
+        );
 
             // Map을 EmotionResult로 변환하면서 emotionType 매핑
             List<EmotionResult> parsed = rawEmotions.stream()
                     .map(raw -> {
-                        String emotionTypeStr = (String) raw.get("type");
-                        int percentage = (Integer) raw.get("percentage");
-                        
-                        // 한글 감정명을 EmotionType enum으로 매핑
-                        EmotionType emotionType = mapEmotionType(emotionTypeStr);
-                        
+                        // 'type' 또는 'emotion' 키 모두 허용
+                        String typeKo = null;
+                        if (raw.get("type") instanceof String) typeKo = (String) raw.get("type");
+                        else if (raw.get("emotion") instanceof String) typeKo = (String) raw.get("emotion");
+
+                        if (typeKo == null || typeKo.isBlank()) {
+                            log.warn("감정 타입 누락 → 기본값 '평온' 처리");
+                            typeKo = "평온";
+                        }
+
+                        int percentage;
+                        Object pctObj = raw.get("percentage");
+                        if (pctObj instanceof Integer) percentage = (Integer) pctObj;
+                        else if (pctObj instanceof Number) percentage = ((Number) pctObj).intValue();
+                        else {
+                            log.warn("percentage 비정상 값: {} → 0으로 대체", pctObj);
+                            percentage = 0;
+                        }
+
+                        EmotionType emotionType = mapEmotionType(typeKo);
                         return EmotionResult.builder()
                                 .emotion(emotionType)
                                 .percentage(percentage)
@@ -86,6 +99,12 @@ public class ExtractEmotionAdapter implements ExtractEmotionPort {
                     })
                     .collect(Collectors.toList());
 
+
+            // 로그 출력: 감정 분석 결과 확인
+            log.info("=== ExtractEmotion 응답 분석 결과 ===");
+            log.info("감정 결과: {}", parsed);
+            log.info("=====================================");
+            
             return ExtractEmotionResponse.builder()
                     .emotionResults(parsed)
                     .build();
@@ -109,25 +128,28 @@ public class ExtractEmotionAdapter implements ExtractEmotionPort {
         return headers;
     }
 
+    // === 교체 1: buildPayload 전체 대체 ===
     private Map<String, Object> buildPayload(ExtractEmotionRequest request) {
         Map<String, Object> payload = new HashMap<>();
         payload.put("messages", toV3Messages(request.getPromptMessages()));
         payload.put("thinking", Map.of("effort", "low"));
         payload.put("topP", 0.8);
         payload.put("topK", 0);
-        payload.put("maxCompletionTokens", 5120);
-        payload.put("temperature", 0.5);
+        payload.put("maxCompletionTokens", 5120); // 충분히 크게
+        payload.put("temperature", 0.2);         // 톤 흔들림 최소화
         payload.put("repetitionPenalty", 1.1);
         return payload;
     }
 
     private List<Map<String, Object>> toV3Messages(List<PromptMessage> prompts) {
         return prompts.stream()
-                .map(pm -> Map.of(
-                        "role", pm.getRole().name().toLowerCase(),
-                        "content", List.of(Map.of("type", "text", "text", nullSafe(pm.getContent())))))
-                .collect(Collectors.toList());
+            .map(pm -> Map.of(
+                "role", pm.getRole().name().toLowerCase(),
+                "content", List.of(Map.of("type", "text", "text", nullSafe(pm.getContent())))
+            ))
+            .collect(Collectors.toList());
     }
+    
 
     private String nullSafe(String s) {
         return s == null ? "" : s;

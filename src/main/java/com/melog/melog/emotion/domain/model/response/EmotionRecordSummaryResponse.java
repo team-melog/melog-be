@@ -12,5 +12,8 @@ public class EmotionRecordSummaryResponse {
     private Long id;
     private LocalDate date;
     private String summary;
+    private String comment;
     private List<EmotionScoreResponse> emotions;
+    private String audioFilePath;
+    private Boolean hasAudioFile;
 } 
