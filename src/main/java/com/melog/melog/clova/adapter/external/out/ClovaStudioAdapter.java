@@ -54,6 +54,107 @@ public class ClovaStudioAdapter {
     }
 
     /**
+     * Clova Studio API를 호출하여 일반 텍스트 생성을 수행합니다.
+     */
+    public String generateText(String prompt) {
+        try {
+            // Clova Studio API 요청 데이터 구성
+            Map<String, Object> requestBody = createSimpleTextRequest(prompt);
+            
+            // HTTP 헤더 설정
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_JSON);
+            headers.set("Authorization", "Bearer " + clovaConfig.getStudio().getApiKey());
+            
+            HttpEntity<Map<String, Object>> entity = new HttpEntity<>(requestBody, headers);
+            
+            // API 호출
+            String url = clovaConfig.getStudio().getBaseUrl() + "/v3/chat-completions/" + clovaConfig.getStudio().getModel();
+            log.info("Clova Studio API 호출 - URL: {}, 프롬프트: {}", url, prompt);
+            
+            ResponseEntity<Map> response = restTemplate.exchange(url, HttpMethod.POST, entity, Map.class);
+            log.info("Clova Studio API 응답 상태: {}, 헤더: {}", response.getStatusCode(), response.getHeaders());
+            
+            // 응답에서 텍스트 추출
+            return extractTextFromResponse(response.getBody());
+            
+        } catch (Exception e) {
+            log.error("Clova Studio API 호출 중 오류 발생: {}", e.getMessage(), e);
+            throw new RuntimeException("텍스트 생성에 실패했습니다.", e);
+        }
+    }
+
+    /**
+     * 간단한 텍스트 생성을 위한 Clova Studio API 요청 데이터를 구성합니다.
+     */
+    private Map<String, Object> createSimpleTextRequest(String prompt) {
+        Map<String, Object> requestBody = new HashMap<>();
+        requestBody.put("messages", List.of(
+            Map.of("role", "user", "content", prompt)
+        ));
+        requestBody.put("max_tokens", 300);  // 200자 이내 응답을 위해 300 토큰으로 제한
+        requestBody.put("temperature", 0.5);  // 더 일관된 응답을 위해 온도 낮춤
+        requestBody.put("top_p", 0.8);
+        
+        return requestBody;
+    }
+
+    /**
+     * 응답에서 텍스트를 추출합니다.
+     */
+    private String extractTextFromResponse(Map responseBody) {
+        try {
+            log.debug("Clova Studio 응답 구조: {}", responseBody);
+            
+            // Clova Studio 응답 구조: result.message.content
+            Map result = (Map) responseBody.get("result");
+            if (result != null) {
+                Map message = (Map) result.get("message");
+                if (message != null) {
+                    log.debug("message: {}", message);
+                    
+                    String content = (String) message.get("content");
+                    if (content != null && !content.trim().isEmpty()) {
+                        log.debug("추출된 content: {}", content);
+                        return content.trim();
+                    } else {
+                        log.warn("content가 null이거나 비어있음: {}", content);
+                    }
+                } else {
+                    log.warn("message가 null임");
+                }
+            } else {
+                log.warn("result가 null임");
+            }
+            
+            // OpenAI 호환 구조도 시도: choices[0].message.content
+            List<Map> choices = (List<Map>) responseBody.get("choices");
+            if (choices != null && !choices.isEmpty()) {
+                Map choice = choices.get(0);
+                log.debug("첫 번째 choice: {}", choice);
+                
+                Map message = (Map) choice.get("message");
+                if (message != null) {
+                    log.debug("message: {}", message);
+                    
+                    String content = (String) message.get("content");
+                    if (content != null && !content.trim().isEmpty()) {
+                        log.debug("OpenAI 구조에서 추출된 content: {}", content);
+                        return content.trim();
+                    }
+                }
+            }
+            
+            // 응답 구조를 더 자세히 로깅
+            log.error("응답 구조 분석 실패 - 전체 응답: {}", responseBody);
+            throw new RuntimeException("응답에서 유효한 텍스트를 찾을 수 없습니다. 응답 구조: " + responseBody);
+        } catch (Exception e) {
+            log.error("텍스트 응답 파싱 중 오류 발생: {}", e.getMessage(), e);
+            throw new RuntimeException("텍스트 응답 파싱에 실패했습니다.", e);
+        }
+    }
+
+    /**
      * Clova Studio API 요청 데이터를 구성합니다.
      */
     private Map<String, Object> createClovaStudioRequest(EmotionAnalysisRequest request) {
