@@ -30,19 +30,8 @@ public class EmotionRecordSelectRequest {
         }
         
         private EmotionType findEmotionTypeByName(String emotionName) {
-            if (emotionName == null) return null;
-            
-            String normalizedName = emotionName.trim();
-            
-            // 정확한 매칭 시도
-            for (EmotionType emotionType : EmotionType.values()) {
-                if (emotionType.getDescription().equals(normalizedName)) {
-                    return emotionType;
-                }
-            }
-            
-            // 기본값 반환 (에러 대신)
-            return EmotionType.CALMNESS;
+            // Jackson이 자동으로 처리하므로 단순화
+            return emotionName != null ? EmotionType.fromDescription(emotionName) : EmotionType.CALMNESS;
         }
     }
 } 
