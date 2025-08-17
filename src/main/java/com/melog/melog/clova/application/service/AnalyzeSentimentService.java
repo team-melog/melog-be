@@ -1,12 +1,10 @@
 package com.melog.melog.clova.application.service;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 import org.springframework.stereotype.Service;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.melog.melog.clova.application.port.in.AnalyzeSentimentUseCase;
 import com.melog.melog.clova.application.port.out.ExtractEmotionPort;
