@@ -33,6 +33,11 @@ jobs:
           CLOVA_STUDIO_API_KEY=${{ secrets.CLOVA_STUDIO_API_KEY }}
           CLOVA_APP_CLIENT_ID=${{ secrets.CLOVA_APP_CLIENT_ID }}
           CLOVA_APP_CLIENT_SECRET=${{ secrets.CLOVA_APP_CLIENT_SECRET }}
+          NCLOUD_ACCESS_KEY=${{ secrets.NCLOUD_ACCESS_KEY }}
+          NCLOUD_SECRET_KEY=${{ secrets.NCLOUD_SECRET_KEY }}
+          NCLOUD_S3_ENDPOINT=${{ secrets.NCLOUD_S3_ENDPOINT }}
+          NCLOUD_S3_REGION=${{ secrets.NCLOUD_S3_REGION }}
+          NCLOUD_S3_BUCKET=${{ secrets.NCLOUD_S3_BUCKET }}
         script: |
           # 애플리케이션 디렉토리로 이동
           cd ~/melog/melog-be
@@ -48,6 +53,11 @@ jobs:
           export CLOVA_STUDIO_API_KEY="${{ secrets.CLOVA_STUDIO_API_KEY }}"
           export CLOVA_APP_CLIENT_ID="${{ secrets.CLOVA_APP_CLIENT_ID }}"
           export CLOVA_APP_CLIENT_SECRET="${{ secrets.CLOVA_APP_CLIENT_SECRET }}"
+          export NCLOUD_ACCESS_KEY="${{ secrets.NCLOUD_ACCESS_KEY }}"
+          export NCLOUD_SECRET_KEY="${{ secrets.NCLOUD_SECRET_KEY }}"
+          export NCLOUD_S3_ENDPOINT="${{ secrets.NCLOUD_S3_ENDPOINT }}"
+          export NCLOUD_S3_REGION="${{ secrets.NCLOUD_S3_REGION }}"
+          export NCLOUD_S3_BUCKET="${{ secrets.NCLOUD_S3_BUCKET }}"
           
           # 로컬 변경사항 정리 후 최신 코드 가져오기
           git reset --hard HEAD

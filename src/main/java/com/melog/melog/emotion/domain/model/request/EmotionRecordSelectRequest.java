@@ -31,12 +31,18 @@ public class EmotionRecordSelectRequest {
         
         private EmotionType findEmotionTypeByName(String emotionName) {
             if (emotionName == null) return null;
+            
+            String normalizedName = emotionName.trim();
+            
+            // 정확한 매칭 시도
             for (EmotionType emotionType : EmotionType.values()) {
-                if (emotionType.getDescription().equals(emotionName)) {
+                if (emotionType.getDescription().equals(normalizedName)) {
                     return emotionType;
                 }
             }
-            throw new IllegalArgumentException("Unknown emotion type: " + emotionName);
+            
+            // 기본값 반환 (에러 대신)
+            return EmotionType.CALMNESS;
         }
     }
 } 
