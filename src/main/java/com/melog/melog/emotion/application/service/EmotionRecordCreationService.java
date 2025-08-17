@@ -410,6 +410,9 @@ public class EmotionRecordCreationService {
     /**
      * percentage에 따라 step을 계산합니다.
      * 0-20점: step1, 21-40점: step2, 41-60점: step3, 61-80점: step4, 81-100점: step5
+     * 
+     * 이 메서드는 감정 등록 시와 감정 선택 업데이트 시 모두에서 사용됩니다.
+     * 감정의 강도를 5단계로 구분하여 적절한 코멘트와 매핑할 수 있도록 합니다.
      */
     private Integer calculateStepFromPercentage(Integer percentage) {
         if (percentage == null) {
