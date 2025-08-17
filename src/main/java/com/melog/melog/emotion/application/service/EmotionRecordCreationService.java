@@ -85,8 +85,11 @@ public class EmotionRecordCreationService {
     /**
      * 음성 파일 기반 감정 기록을 생성합니다.
      */
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public EmotionRecord createEmotionRecordFromAudio(String nickname, String text, String userSelectedEmotionJson, MultipartFile audioFile) {
+        // 음성 파일 유효성 검증
+        validateAudioFile(audioFile);
+        
         // 사용자 조회
         User user = userPersistencePort.findByNickname(nickname)
                 .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다: " + nickname));
@@ -146,8 +149,15 @@ public class EmotionRecordCreationService {
             }
         }
 
-        // Clova Studio를 통한 감정 분석 수행
-        performEmotionAnalysis(savedRecord, text);
+        try {
+            // Clova Studio를 통한 감정 분석 수행
+            performEmotionAnalysis(savedRecord, text);
+            log.info("감정 분석 완료: recordId={}, text={}", savedRecord.getId(), text);
+        } catch (Exception e) {
+            log.error("감정 분석 실패: recordId={}, error={}", savedRecord.getId(), e.getMessage(), e);
+            // 감정 분석 실패 시에도 기본 기록은 유지하되, 에러 정보를 로그에 기록
+            // 트랜잭션은 롤백되지 않음 (감정 분석은 부가 기능)
+        }
         
         return savedRecord;
     }
@@ -338,6 +348,35 @@ public class EmotionRecordCreationService {
     }
 
     /**
+     * 음성 파일 유효성을 검증합니다.
+     */
+    private void validateAudioFile(MultipartFile audioFile) {
+        if (audioFile == null || audioFile.isEmpty()) {
+            throw new IllegalArgumentException("음성 파일이 비어있습니다.");
+        }
+        
+        // 파일 크기 검증 (최소 1KB, 최대 50MB)
+        long fileSize = audioFile.getSize();
+        if (fileSize < 1024) { // 1KB 미만
+            throw new IllegalArgumentException("음성 파일이 너무 작습니다. 최소 1KB 이상이어야 합니다. (현재: " + fileSize + " bytes)");
+        }
+        if (fileSize > 50 * 1024 * 1024) { // 50MB 초과
+            throw new IllegalArgumentException("음성 파일이 너무 큽니다. 최대 50MB 이하여야 합니다. (현재: " + fileSize + " bytes)");
+        }
+        
+        // 파일 확장자 검증
+        String originalFilename = audioFile.getOriginalFilename();
+        if (originalFilename != null) {
+            String extension = getFileExtension(originalFilename).toLowerCase();
+            if (!extension.matches("(mp3|wav|m4a|aac|ogg|flac)")) {
+                throw new IllegalArgumentException("지원하지 않는 음성 파일 형식입니다: " + extension + ". 지원 형식: mp3, wav, m4a, aac, ogg, flac");
+            }
+        }
+        
+        log.info("음성 파일 유효성 검증 통과: {} (크기: {} bytes)", originalFilename, fileSize);
+    }
+
+    /**
      * 한글 감정명을 EmotionType enum으로 변환합니다.
      */
     private EmotionType convertToEmotionType(String emotionName) {
@@ -346,19 +385,10 @@ public class EmotionRecordCreationService {
             return EmotionType.CALMNESS;
         }
         
-        String normalizedName = emotionName.trim();
-        
-        // 정확한 매칭 시도
-        for (EmotionType emotionType : EmotionType.values()) {
-            if (emotionType.getDescription().equals(normalizedName)) {
-                log.debug("정확한 매칭: '{}' -> {}", emotionName, emotionType);
-                return emotionType;
-            }
-        }
-        
-        // 기본값 반환 (에러 대신)
-        log.warn("알 수 없는 감정 타입: '{}', 기본값 CALMNESS 사용", emotionName);
-        return EmotionType.CALMNESS;
+        // Jackson이 자동으로 처리하므로 단순화
+        EmotionType result = EmotionType.fromDescription(emotionName);
+        log.debug("감정 타입 변환: '{}' -> {}", emotionName, result);
+        return result;
     }
 
     /**
