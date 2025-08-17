@@ -9,6 +9,7 @@ import com.melog.melog.user.domain.User;
 import com.melog.melog.clova.application.port.in.EmotionAnalysisUseCase;
 import com.melog.melog.clova.domain.model.request.EmotionAnalysisRequest;
 import com.melog.melog.clova.domain.model.response.EmotionAnalysisResponse;
+import com.melog.melog.common.service.S3FileService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -25,6 +26,8 @@ import java.util.List;
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
 public class EmotionRecordCreationService {
+
+    private final S3FileService s3FileService;
 
     private final UserPersistencePort userPersistencePort;
     private final EmotionRecordPersistencePort emotionRecordPersistencePort;
@@ -101,8 +104,8 @@ public class EmotionRecordCreationService {
         Long audioFileSize = audioFile.getSize();
         String audioMimeType = audioFile.getContentType();
         
-        // 로컬 파일 저장 (개발 환경용)
-        String audioFilePath = saveAudioFileLocally(audioFile, audioFileName);
+        // S3에 파일 저장
+        String audioFilePath = saveAudioFileToS3(audioFile, user.getNickname());
         
         // 음성 길이 계산 (임시로 0 설정, 실제로는 오디오 파일 분석 필요)
         Integer audioDuration = 0; // TODO: 오디오 파일 길이 분석 로직 구현 필요
@@ -266,7 +269,28 @@ public class EmotionRecordCreationService {
     }
 
     /**
-     * 음성 파일을 로컬에 저장합니다.
+     * 음성 파일을 S3에 저장합니다.
+     */
+    private String saveAudioFileToS3(MultipartFile audioFile, String userId) {
+        try {
+            // S3 서비스를 통한 파일 업로드
+            log.info("S3에 음성 파일 업로드 시작: userId={}, filename={}, size={}bytes", 
+                    userId, audioFile.getOriginalFilename(), audioFile.getSize());
+            
+            String s3Url = s3FileService.uploadAudioFile(audioFile, userId);
+            log.info("S3 업로드 성공: {}", s3Url);
+            return s3Url;
+            
+        } catch (Exception e) {
+            log.error("S3 파일 업로드 중 오류 발생: {}", e.getMessage(), e);
+            // S3 업로드 실패 시 로컬 저장으로 폴백
+            log.warn("로컬 저장으로 폴백합니다.");
+            return saveAudioFileLocally(audioFile, audioFile.getOriginalFilename());
+        }
+    }
+
+    /**
+     * 음성 파일을 로컬에 저장합니다. (임시용, S3 연동 완료 후 제거)
      */
     private String saveAudioFileLocally(MultipartFile audioFile, String originalFileName) {
         try {
