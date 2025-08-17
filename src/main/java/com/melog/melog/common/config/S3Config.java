@@ -12,7 +12,7 @@ import org.springframework.context.annotation.Profile;
 
 @Slf4j
 @Configuration
-@Profile("dev")
+@Profile({"dev", "prod"})
 public class S3Config {
 
     @Value("${NCLOUD_ACCESS_KEY}")
