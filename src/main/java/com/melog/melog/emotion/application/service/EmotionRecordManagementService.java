@@ -12,6 +12,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -23,6 +24,7 @@ public class EmotionRecordManagementService {
     private final EmotionRecordPersistencePort emotionRecordPersistencePort;
     private final EmotionScorePersistencePort emotionScorePersistencePort;
     private final EmotionCommentPersistencePort emotionCommentPersistencePort;
+    private final EmotionRecordQueryService emotionRecordQueryService;
 
     /**
      * 감정 선택을 업데이트합니다.
@@ -100,7 +102,13 @@ public class EmotionRecordManagementService {
             log.error("주요 감정 코멘트 매핑 실패: error={}", e.getMessage(), e);
         }
 
-        return null; // 실제로는 EmotionRecordResponse를 반환해야 하지만, 여기서는 null 반환
+        // 업데이트된 감정 기록을 다시 조회하여 응답 생성
+        EmotionRecord updatedRecord = emotionRecordPersistencePort.findById(recordId)
+                .orElseThrow(() -> new IllegalArgumentException("업데이트된 감정 기록을 찾을 수 없습니다: " + recordId));
+        
+        // 기존 감정 기록 정보를 그대로 사용하여 응답 생성
+        // emotions는 이미 위에서 수정했으므로 DB에서 최신 정보 조회
+        return emotionRecordQueryService.getEmotionRecord(nickname, recordId);
     }
 
     /**
@@ -116,9 +124,11 @@ public class EmotionRecordManagementService {
                 .orElseThrow(() -> new IllegalArgumentException("감정 기록을 찾을 수 없습니다: " + recordId));
 
         record.updateRecord(request.getText(), null);
-        EmotionRecord updatedRecord = emotionRecordPersistencePort.save(record);
+        emotionRecordPersistencePort.save(record);
 
-        return null; // 실제로는 EmotionRecordResponse를 반환해야 하지만, 여기서는 null 반환
+        // 기존 감정 기록 정보를 그대로 사용하여 응답 생성
+        // text만 수정했으므로 DB에서 최신 정보 조회
+        return emotionRecordQueryService.getEmotionRecord(nickname, recordId);
     }
 
     /**

@@ -377,6 +377,22 @@ public class EmotionRecordCreationService {
     }
 
     /**
+     * 파일명에서 확장자를 추출합니다.
+     */
+    private String getFileExtension(String filename) {
+        if (filename == null || filename.isEmpty()) {
+            return "";
+        }
+        
+        int lastDotIndex = filename.lastIndexOf('.');
+        if (lastDotIndex == -1 || lastDotIndex == filename.length() - 1) {
+            return "";
+        }
+        
+        return filename.substring(lastDotIndex + 1);
+    }
+
+    /**
      * 한글 감정명을 EmotionType enum으로 변환합니다.
      */
     private EmotionType convertToEmotionType(String emotionName) {
