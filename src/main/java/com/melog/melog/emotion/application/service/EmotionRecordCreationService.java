@@ -342,16 +342,23 @@ public class EmotionRecordCreationService {
      */
     private EmotionType convertToEmotionType(String emotionName) {
         if (emotionName == null) {
-            throw new IllegalArgumentException("감정명이 null입니다.");
+            log.warn("감정명이 null입니다. 기본값 CALMNESS 사용");
+            return EmotionType.CALMNESS;
         }
         
+        String normalizedName = emotionName.trim();
+        
+        // 정확한 매칭 시도
         for (EmotionType emotionType : EmotionType.values()) {
-            if (emotionType.getDescription().equals(emotionName)) {
+            if (emotionType.getDescription().equals(normalizedName)) {
+                log.debug("정확한 매칭: '{}' -> {}", emotionName, emotionType);
                 return emotionType;
             }
         }
         
-        throw new IllegalArgumentException("알 수 없는 감정 타입입니다: " + emotionName);
+        // 기본값 반환 (에러 대신)
+        log.warn("알 수 없는 감정 타입: '{}', 기본값 CALMNESS 사용", emotionName);
+        return EmotionType.CALMNESS;
     }
 
     /**
