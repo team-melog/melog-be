@@ -38,9 +38,9 @@ services:
       NCLOUD_S3_ENDPOINT: ${NCLOUD_S3_ENDPOINT}
       NCLOUD_S3_REGION: ${NCLOUD_S3_REGION}
       NCLOUD_S3_BUCKET: ${NCLOUD_S3_BUCKET}
-      # SSL 인증서 경로 설정
-      SSL_CERT_PATH: /etc/ssl/live/melog508.duckdns.org/fullchain.pem
-      SSL_KEY_PATH: /etc/ssl/live/melog508.duckdns.org/privkey.pem
+      # SSL 인증서 설정
+      DOMAIN_NAME: melog508.duckdns.org
+      SERVER_PORT: 443
 
 
     ports:
@@ -50,7 +50,7 @@ services:
       - /etc/letsencrypt:/etc/letsencrypt:ro  # SSL 인증서 전체 디렉터리 마운트
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8080/actuator/health"]
+      test: ["CMD", "curl", "-fsS", "-k", "https://localhost/actuator/health"]
       interval: 30s
       timeout: 10s
       retries: 3

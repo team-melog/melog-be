@@ -58,6 +58,25 @@ $COMPOSE -f docker-compose.prod.yml down --remove-orphans || true
 echo "🧹 Docker 캐시 정리 중..."
 docker system prune -f 2>/dev/null || true
 
+# SSL 인증서 존재 확인 (기동 전 실사)
+echo "🔐 SSL 인증서 사전 점검 중..."
+DOMAIN="melog508.duckdns.org"
+
+# 호스트에서 PEM 파일 존재 확인
+test -f "/etc/letsencrypt/live/$DOMAIN/fullchain.pem" || { 
+    echo "❌ fullchain.pem이 존재하지 않습니다!"; 
+    echo "   certbot으로 인증서를 발급하세요:";
+    echo "   sudo certbot certonly --standalone -d $DOMAIN";
+    exit 1; 
+}
+
+test -f "/etc/letsencrypt/live/$DOMAIN/privkey.pem" || { 
+    echo "❌ privkey.pem이 존재하지 않습니다!"; 
+    exit 1; 
+}
+
+echo "✅ 호스트 SSL 인증서 확인 완료"
+
 echo "🔨 새 이미지 빌드 및 실행..."
 $COMPOSE -f docker-compose.prod.yml --env-file .env up -d --build
 
@@ -66,6 +85,22 @@ sleep 10
 
 echo "📊 컨테이너 상태 확인..."
 $COMPOSE -f docker-compose.prod.yml ps
+
+# 컨테이너 내부에서 SSL 인증서 확인
+echo "🧪 컨테이너 내부 SSL 인증서 확인 중..."
+$COMPOSE -f docker-compose.prod.yml exec app sh -lc "
+  echo '== Inside container: check cert files =='
+  ls -l /etc/letsencrypt/live/$DOMAIN || exit 1
+  ls -l /etc/letsencrypt/archive/$DOMAIN || true
+  # 내용 확인
+  head -n 1 /etc/letsencrypt/live/$DOMAIN/fullchain.pem
+  head -n 1 /etc/letsencrypt/live/$DOMAIN/privkey.pem
+" || {
+    echo "❌ 컨테이너에서 SSL 인증서가 보이지 않습니다 (마운트/경로 문제)";
+    echo "   docker-compose.prod.yml의 볼륨 마운트를 확인하세요";
+    exit 1;
+}
+echo "✅ 컨테이너 내부 SSL 인증서 확인 완료"
 
 echo "🏥 헬스체크..."
 if curl -fsS -k https://localhost/actuator/health >/dev/null; then
