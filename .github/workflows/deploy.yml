@@ -60,6 +60,7 @@ jobs:
           export NCLOUD_S3_REGION="${{ secrets.NCLOUD_S3_REGION }}"
           export NCLOUD_S3_BUCKET="${{ secrets.NCLOUD_S3_BUCKET }}"
           export DUCKDNS_TOKEN="${{ secrets.DUCKDNS_TOKEN }}"
+          export SSL_KEY_STORE_PASSWORD="${{ secrets.SSL_KEY_STORE_PASSWORD }}"
           
           # 로컬 변경사항 정리 후 최신 코드 가져오기
           git reset --hard HEAD
