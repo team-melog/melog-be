@@ -144,6 +144,29 @@ fi
 # 권한 설정 (권한 문제로 인해 제거)
 echo "🔐 인증서 발급 완료 (권한 설정 생략)"
 
+# PEM 파일을 PKCS12로 변환 (Spring Boot 호환성)
+echo "🔄 PEM 파일을 PKCS12로 변환 중..."
+if [ -f "/etc/letsencrypt/live/$DOMAIN_NAME/fullchain.pem" ] && [ -f "/etc/letsencrypt/live/$DOMAIN_NAME/privkey.pem" ]; then
+    # PKCS12 키스토어 생성
+    openssl pkcs12 -export \
+        -in "/etc/letsencrypt/live/$DOMAIN_NAME/fullchain.pem" \
+        -inkey "/etc/letsencrypt/live/$DOMAIN_NAME/privkey.pem" \
+        -out "/etc/letsencrypt/live/$DOMAIN_NAME/keystore.p12" \
+        -name "melog" \
+        -passout pass:"${SSL_KEY_STORE_PASSWORD:-melog1234}"
+    
+    if [ $? -eq 0 ]; then
+        echo "✅ PKCS12 키스토어 생성 완료!"
+        echo "🔐 키스토어 경로: /etc/letsencrypt/live/$DOMAIN_NAME/keystore.p12"
+    else
+        echo "❌ PKCS12 키스토어 생성 실패!"
+        exit 1
+    fi
+else
+    echo "❌ SSL 인증서 파일을 찾을 수 없습니다!"
+    exit 1
+fi
+
 # 4) 메인 애플리케이션 실행
 echo "🔨 새 이미지 빌드 및 실행..."
 $COMPOSE -f docker-compose.prod.yml --env-file .env up -d --build app
