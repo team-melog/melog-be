@@ -37,8 +37,8 @@ spring:
     bundle:
       pem:
         app-cert:
-          certificate: /etc/letsencrypt/live/melog508.duckdns.org/fullchain.pem
-          private-key: /etc/letsencrypt/live/melog508.duckdns.org/privkey.pem
+          certificate: ${SSL_CERT_PATH:/etc/letsencrypt/live/${DOMAIN_NAME}/fullchain.pem}
+          private-key: ${SSL_KEY_PATH:/etc/letsencrypt/live/${DOMAIN_NAME}/privkey.pem}
 
   error:
     include-stacktrace: never

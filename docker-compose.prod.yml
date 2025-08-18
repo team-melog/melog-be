@@ -21,7 +21,7 @@ services:
   app:
     build:
       context: .
-      dockerfile: Dockerfile
+      dockerfile: Dockerfile.prod
     environment:
       SPRING_PROFILES_ACTIVE: prod
       DB_HOST: ${DB_HOST}
