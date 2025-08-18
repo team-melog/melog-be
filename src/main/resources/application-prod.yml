@@ -33,6 +33,13 @@ spring:
       max-request-size: 3MB
       enabled: true
 
+  ssl:
+    bundle:
+      pem:
+        app-cert:
+          certificate: /etc/letsencrypt/live/melog508.duckdns.org/fullchain.pem
+          private-key: /etc/letsencrypt/live/melog508.duckdns.org/privkey.pem
+
   error:
     include-stacktrace: never
     include-message: always
@@ -42,6 +49,8 @@ logging:
     com.melog.melog: INFO
     org.springframework.web: WARN
     org.hibernate: WARN
+    org.springframework.boot.ssl: DEBUG
+    org.springframework.web.server: DEBUG
   pattern:
     console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
 
@@ -57,7 +66,5 @@ management:
 server:
   port: ${SERVER_PORT:443}
   ssl:
-    key-store: /etc/letsencrypt/live/melog508.duckdns.org/fullchain.pem
-    key-store-type: PEM
-    key-store-password: ${SSL_KEY_STORE_PASSWORD}
-    key-alias: melog
+    enabled: true
+    bundle: app-cert
