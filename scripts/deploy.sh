@@ -81,28 +81,42 @@ echo "✅ 80 포트 비움 완료"
 
 # 3) SSL 인증서 발급 또는 갱신
 echo "🔐 SSL 인증서 처리 중..."
-if [ -f "/etc/letsencrypt/live/$DOMAIN_NAME/fullchain.pem" ]; then
-    echo "📋 기존 SSL 인증서가 발견되었습니다. 갱신을 시도합니다..."
+
+# 호스트에서 직접 certbot 실행 (권한 문제 해결)
+if command -v certbot >/dev/null 2>&1; then
+    echo "🔧 호스트 certbot 사용..."
     
-    # Docker로 certbot 실행하여 인증서 갱신
-    docker run --rm \
-        -v /etc/letsencrypt:/etc/letsencrypt \
-        -v /var/lib/letsencrypt:/var/lib/letsencrypt \
-        -p 80:80 \
-        certbot/certbot renew \
-        --standalone \
-        --non-interactive
-    
-    if [ $? -eq 0 ]; then
-        echo "✅ SSL 인증서 갱신 완료!"
+    if [ -f "/etc/letsencrypt/live/$DOMAIN_NAME/fullchain.pem" ]; then
+        echo "📋 기존 SSL 인증서가 발견되었습니다. 갱신을 시도합니다..."
+        
+        # 호스트에서 직접 certbot 실행
+        certbot renew --non-interactive
+        
+        if [ $? -eq 0 ]; then
+            echo "✅ SSL 인증서 갱신 완료!"
+        else
+            echo "⚠️ 인증서 갱신 실패. 새로 발급을 시도합니다..."
+            # 갱신 실패 시 새로 발급
+            certbot certonly \
+                --standalone \
+                --email "$EMAIL" \
+                --agree-tos \
+                --no-eff-email \
+                --domains "$DOMAIN_NAME" \
+                --non-interactive
+            
+            if [ $? -eq 0 ]; then
+                echo "✅ SSL 인증서 새로 발급 완료!"
+            else
+                echo "❌ SSL 인증서 발급 실패!"
+                exit 1
+            fi
+        fi
     else
-        echo "⚠️ 인증서 갱신 실패. 새로 발급을 시도합니다..."
-        # 갱신 실패 시 새로 발급
-        docker run --rm \
-            -v /etc/letsencrypt:/etc/letsencrypt \
-            -v /var/lib/letsencrypt:/var/lib/letsencrypt \
-            -p 80:80 \
-            certbot/certbot certonly \
+        echo "📦 SSL 인증서가 없습니다. 새로 발급을 시작합니다..."
+        
+        # 호스트에서 직접 certbot 실행
+        certbot certonly \
             --standalone \
             --email "$EMAIL" \
             --agree-tos \
@@ -111,33 +125,73 @@ if [ -f "/etc/letsencrypt/live/$DOMAIN_NAME/fullchain.pem" ]; then
             --non-interactive
         
         if [ $? -eq 0 ]; then
-            echo "✅ SSL 인증서 새로 발급 완료!"
+            echo "✅ SSL 인증서 발급 성공!"
         else
             echo "❌ SSL 인증서 발급 실패!"
             exit 1
         fi
     fi
 else
-    echo "📦 SSL 인증서가 없습니다. 새로 발급을 시작합니다..."
+    echo "🐳 Docker certbot 사용 (호스트에 certbot이 없음)..."
     
-    # Docker로 certbot 실행하여 새 인증서 발급
-    docker run --rm \
-        -v /etc/letsencrypt:/etc/letsencrypt \
-        -v /var/lib/letsencrypt:/var/lib/letsencrypt \
-        -p 80:80 \
-        certbot/certbot certonly \
-        --standalone \
-            --email "$EMAIL" \
-            --agree-tos \
-            --no-eff-email \
-            --domains "$DOMAIN_NAME" \
+    if [ -f "/etc/letsencrypt/live/$DOMAIN_NAME/fullchain.pem" ]; then
+        echo "📋 기존 SSL 인증서가 발견되었습니다. 갱신을 시도합니다..."
+        
+        # Docker로 certbot 실행하여 인증서 갱신
+        docker run --rm \
+            -v /etc/letsencrypt:/etc/letsencrypt \
+            -v /var/lib/letsencrypt:/var/lib/letsencrypt \
+            -p 80:80 \
+            certbot/certbot renew \
+            --standalone \
             --non-interactive
-    
-    if [ $? -eq 0 ]; then
-        echo "✅ SSL 인증서 발급 성공!"
+        
+        if [ $? -eq 0 ]; then
+            echo "✅ SSL 인증서 갱신 완료!"
+        else
+            echo "⚠️ 인증서 갱신 실패. 새로 발급을 시도합니다..."
+            # 갱신 실패 시 새로 발급
+            docker run --rm \
+                -v /etc/letsencrypt:/etc/letsencrypt \
+                -v /var/lib/letsencrypt:/var/lib/letsencrypt \
+                -p 80:80 \
+                certbot/certbot certonly \
+                --standalone \
+                --email "$EMAIL" \
+                --agree-tos \
+                --no-eff-email \
+                --domains "$DOMAIN_NAME" \
+                --non-interactive
+            
+            if [ $? -eq 0 ]; then
+                echo "✅ SSL 인증서 새로 발급 완료!"
+            else
+                echo "❌ SSL 인증서 발급 실패!"
+                exit 1
+            fi
+        fi
     else
-        echo "❌ SSL 인증서 발급 실패!"
-        exit 1
+        echo "📦 SSL 인증서가 없습니다. 새로 발급을 시작합니다..."
+        
+        # Docker로 certbot 실행하여 새 인증서 발급
+        docker run --rm \
+            -v /etc/letsencrypt:/etc/letsencrypt \
+            -v /var/lib/letsencrypt:/var/lib/letsencrypt \
+            -p 80:80 \
+            certbot/certbot certonly \
+            --standalone \
+                --email "$EMAIL" \
+                --agree-tos \
+                --no-eff-email \
+                --domains "$DOMAIN_NAME" \
+                --non-interactive
+        
+        if [ $? -eq 0 ]; then
+            echo "✅ SSL 인증서 발급 성공!"
+        else
+            echo "❌ SSL 인증서 발급 실패!"
+            exit 1
+        fi
     fi
 fi
 
