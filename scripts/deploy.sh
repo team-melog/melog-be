@@ -46,8 +46,9 @@ NCLOUD_SECRET_KEY=${NCLOUD_SECRET_KEY}
 NCLOUD_S3_ENDPOINT=${NCLOUD_S3_ENDPOINT}
 NCLOUD_S3_REGION=${NCLOUD_S3_REGION}
 NCLOUD_S3_BUCKET=${NCLOUD_S3_BUCKET}
-
 DUCKDNS_TOKEN=${DUCKDNS_TOKEN}
+DOMAIN_NAME=${DOMAIN_NAME:-melog508.duckdns.org}
+CERTBOT_EMAIL=${CERTBOT_EMAIL:-kioplm0211@gmail.com}
 EOF
 
 # 혹시 남아있는 고아 컨테이너/네트워크 정리
@@ -61,7 +62,7 @@ docker system prune -f 2>/dev/null || true
 # SSL 인증서 존재 확인 (기동 전 실사)
 echo "🔐 SSL 인증서 사전 점검 중..."
 DOMAIN="${DOMAIN_NAME:-melog508.duckdns.org}"
-EMAIL="${CERTBOT_EMAIL:-admin@melog508.duckdns.org}"
+EMAIL="${CERTBOT_EMAIL:-kioplm0211@gmail.com}"
 echo "🔍 사용할 도메인: $DOMAIN"
 echo "📧 인증서 발급 이메일: $EMAIL"
 
@@ -72,40 +73,86 @@ echo ""
 
 # 2) 80 포트 비우기 (HTTP-01 검증을 위해)
 echo "🔓 80 포트 비우기 중..."
-sudo lsof -i :80 | grep LISTEN | awk '{print $2}' | xargs -r sudo kill -9 || true
+# Docker 컨테이너로 실행 중인 서비스만 중지
+docker ps --filter "publish=80" --format "{{.ID}}" | xargs -r docker stop || true
 echo "✅ 80 포트 비움 완료"
 
-# 호스트에서 PEM 파일 존재 확인 및 자동 발급
-if [ ! -f "/etc/letsencrypt/live/$DOMAIN/fullchain.pem" ] || [ ! -f "/etc/letsencrypt/live/$DOMAIN/privkey.pem" ]; then
-    echo "❌ SSL 인증서가 존재하지 않습니다!"
-    echo "🔐 certbot으로 인증서를 자동 발급합니다..."
+# 3) SSL 인증서 발급 또는 갱신
+echo "🔐 SSL 인증서 처리 중..."
+if [ -f "/etc/letsencrypt/live/$DOMAIN/fullchain.pem" ]; then
+    echo "📋 기존 SSL 인증서가 발견되었습니다. 갱신을 시도합니다..."
     
-    # certbot 설치 확인
-    if ! command -v certbot &> /dev/null; then
-        echo "📦 certbot 설치 중..."
-        sudo apt-get update
-        sudo apt-get install -y certbot
+    # Docker로 certbot 실행하여 인증서 갱신
+    docker run --rm \
+        -v /etc/letsencrypt:/etc/letsencrypt \
+        -v /var/lib/letsencrypt:/var/lib/letsencrypt \
+        -p 80:80 \
+        certbot/certbot renew \
+        --standalone \
+        --non-interactive
+    
+    if [ $? -eq 0 ]; then
+        echo "✅ SSL 인증서 갱신 완료!"
+    else
+        echo "⚠️ 인증서 갱신 실패. 새로 발급을 시도합니다..."
+        # 갱신 실패 시 새로 발급
+        docker run --rm \
+            -v /etc/letsencrypt:/etc/letsencrypt \
+            -v /var/lib/letsencrypt:/var/lib/letsencrypt \
+            -p 80:80 \
+            certbot/certbot certonly \
+            --standalone \
+            --email "$EMAIL" \
+            --agree-tos \
+            --no-eff-email \
+            --domains "$DOMAIN" \
+            --non-interactive
+        
+        if [ $? -eq 0 ]; then
+            echo "✅ SSL 인증서 새로 발급 완료!"
+        else
+            echo "❌ SSL 인증서 발급 실패!"
+            exit 1
+        fi
     fi
-    
-    # 인증서 발급
-    sudo certbot certonly --standalone \
-        -d "$DOMAIN" \
-        --non-interactive --agree-tos -m "$EMAIL" || {
-        echo "❌ 인증서 발급 실패!";
-        echo "   80 포트가 사용 중이거나 방화벽 문제일 수 있습니다.";
-        exit 1;
-    }
-    
-    echo "✅ SSL 인증서 발급 완료!"
 else
-    echo "✅ 호스트 SSL 인증서 확인 완료"
+    echo "📦 SSL 인증서가 없습니다. 새로 발급을 시작합니다..."
+    
+    # Docker로 certbot 실행하여 새 인증서 발급
+    docker run --rm \
+        -v /etc/letsencrypt:/etc/letsencrypt \
+        -v /var/lib/letsencrypt:/var/lib/letsencrypt \
+        -p 80:80 \
+        certbot/certbot certonly \
+        --standalone \
+        --email "$EMAIL" \
+        --agree-tos \
+        --no-eff-email \
+        --domains "$DOMAIN" \
+        --non-interactive
+    
+    if [ $? -eq 0 ]; then
+        echo "✅ SSL 인증서 발급 성공!"
+    else
+        echo "❌ SSL 인증서 발급 실패!"
+        exit 1
+    fi
 fi
 
+# 권한 설정
+chmod -R 755 /etc/letsencrypt/live/
+chmod -R 644 /etc/letsencrypt/live/$DOMAIN/*.pem
+echo "🔐 인증서 권한 설정 완료"
+
+# 4) 메인 애플리케이션 실행
 echo "🔨 새 이미지 빌드 및 실행..."
-$COMPOSE -f docker-compose.prod.yml --env-file .env up -d --build
+$COMPOSE -f docker-compose.prod.yml --env-file .env up -d --build app
+
+# 5) 애플리케이션 상태 확인
+echo "🔍 애플리케이션 상태 확인 중..."
 
 echo "⏳ 기동 대기..."
-sleep 10
+sleep 15
 
 echo "📊 컨테이너 상태 확인..."
 $COMPOSE -f docker-compose.prod.yml ps
@@ -113,9 +160,9 @@ $COMPOSE -f docker-compose.prod.yml ps
 # 컨테이너 내부에서 SSL 인증서 확인
 echo "🧪 컨테이너 내부 SSL 인증서 확인 중..."
 $COMPOSE -f docker-compose.prod.yml exec app sh -lc "
-  echo '== Inside container: check cert files =='
-  ls -l /etc/letsencrypt/live/$DOMAIN || exit 1
-  ls -l /etc/letsencrypt/archive/$DOMAIN || true
+  echo '== Inside app container: check cert files =='
+  ls -la /etc/letsencrypt/live/$DOMAIN || exit 1
+  ls -la /etc/letsencrypt/archive/$DOMAIN || true
   # 내용 확인
   head -n 1 /etc/letsencrypt/live/$DOMAIN/fullchain.pem
   head -n 1 /etc/letsencrypt/live/$DOMAIN/privkey.pem
