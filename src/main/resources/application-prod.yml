@@ -33,13 +33,6 @@ spring:
       max-request-size: 3MB
       enabled: true
 
-  ssl:
-    bundle:
-      pem:
-        app-cert:
-          certificate: /etc/letsencrypt/live/melog508.duckdns.org/fullchain.pem
-          private-key: /etc/letsencrypt/live/melog508.duckdns.org/privkey.pem
-  
   error:
     include-stacktrace: never
     include-message: always
@@ -64,4 +57,7 @@ management:
 server:
   port: ${SERVER_PORT:443}
   ssl:
-    bundle: app-cert
+    key-store: /etc/letsencrypt/live/melog508.duckdns.org/fullchain.pem
+    key-store-type: PEM
+    key-store-password: ${SSL_KEY_STORE_PASSWORD}
+    key-alias: melog

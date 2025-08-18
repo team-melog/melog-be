@@ -28,6 +28,7 @@ echo "NCLOUD_S3_REGION=${NCLOUD_S3_REGION:-'NOT SET'}"
 echo "NCLOUD_S3_BUCKET=${NCLOUD_S3_BUCKET:-'NOT SET'}"
 
 echo "DUCKDNS_TOKEN=${DUCKDNS_TOKEN:-'NOT SET'}"
+echo "SSL_KEY_STORE_PASSWORD=${SSL_KEY_STORE_PASSWORD:-'NOT SET'}"
 
 # 환경변수 파일 생성
 cat <<EOF > .env
@@ -47,6 +48,7 @@ NCLOUD_S3_ENDPOINT=${NCLOUD_S3_ENDPOINT}
 NCLOUD_S3_REGION=${NCLOUD_S3_REGION}
 NCLOUD_S3_BUCKET=${NCLOUD_S3_BUCKET}
 DUCKDNS_TOKEN=${DUCKDNS_TOKEN}
+SSL_KEY_STORE_PASSWORD=${SSL_KEY_STORE_PASSWORD}
 DOMAIN_NAME=${DOMAIN_NAME:-melog508.duckdns.org}
 CERTBOT_EMAIL=${CERTBOT_EMAIL:-kioplm0211@gmail.com}
 EOF
@@ -161,9 +163,16 @@ $COMPOSE -f docker-compose.prod.yml exec app sh -lc "
   echo '== Inside app container: check cert files =='
   ls -la /etc/letsencrypt/live/$DOMAIN_NAME || exit 1
   ls -la /etc/letsencrypt/archive/$DOMAIN_NAME || true
-  # 내용 확인
+  # 파일 권한 및 내용 확인
+  echo '=== File permissions ==='
+  ls -la /etc/letsencrypt/live/$DOMAIN_NAME/fullchain.pem
+  ls -la /etc/letsencrypt/live/$DOMAIN_NAME/privkey.pem
+  echo '=== File content check ==='
   head -n 1 /etc/letsencrypt/live/$DOMAIN_NAME/fullchain.pem
   head -n 1 /etc/letsencrypt/live/$DOMAIN_NAME/privkey.pem
+  echo '=== File size check ==='
+  wc -l /etc/letsencrypt/live/$DOMAIN_NAME/fullchain.pem
+  wc -l /etc/letsencrypt/live/$DOMAIN_NAME/privkey.pem
 " || {
     echo "❌ 컨테이너에서 SSL 인증서가 보이지 않습니다 (마운트/경로 문제)";
     echo "   docker-compose.prod.yml의 볼륨 마운트를 확인하세요";
