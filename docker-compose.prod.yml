@@ -60,6 +60,8 @@ services:
       # SSL 인증서 설정
       DOMAIN_NAME: melog508.duckdns.org
       SERVER_PORT: 443
+      SSL_CERT_PATH: /etc/letsencrypt/live/${DOMAIN_NAME}/fullchain.pem
+      SSL_KEY_PATH: /etc/letsencrypt/live/${DOMAIN_NAME}/privkey.pem
     ports:
       - "443:443"  # HTTPS 포트
     user: "0:0"  # root 권한으로 실행 (권한 문제 해결)

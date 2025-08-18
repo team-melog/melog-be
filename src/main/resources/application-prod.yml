@@ -33,6 +33,17 @@ spring:
       max-request-size: 3MB
       enabled: true
 
+  ssl:
+    bundle:
+      pem:
+        app-cert:
+          certificate: /etc/letsencrypt/live/${DOMAIN_NAME}/fullchain.pem
+          private-key: /etc/letsencrypt/live/${DOMAIN_NAME}/privkey.pem
+  
+  error:
+    include-stacktrace: never
+    include-message: always
+
 logging:
   level:
     com.melog.melog: INFO
@@ -54,14 +65,3 @@ server:
   port: ${SERVER_PORT:443}
   ssl:
     bundle: app-cert
-
-spring:
-  ssl:
-    bundle:
-      pem:
-        app-cert:
-          certificate: /etc/letsencrypt/live/${DOMAIN_NAME}/fullchain.pem
-          private-key: /etc/letsencrypt/live/${DOMAIN_NAME}/privkey.pem
-  error:
-    include-stacktrace: never
-    include-message: always
