@@ -61,9 +61,9 @@ docker system prune -f 2>/dev/null || true
 
 # SSL 인증서 존재 확인 (기동 전 실사)
 echo "🔐 SSL 인증서 사전 점검 중..."
-DOMAIN="${DOMAIN_NAME:-melog508.duckdns.org}"
+DOMAIN_NAME="${DOMAIN_NAME:-melog508.duckdns.org}"
 EMAIL="${CERTBOT_EMAIL:-kioplm0211@gmail.com}"
-echo "🔍 사용할 도메인: $DOMAIN"
+echo "🔍 사용할 도메인: $DOMAIN_NAME"
 echo "📧 인증서 발급 이메일: $EMAIL"
 
 # 1) DuckDNS 레코드 업데이트
