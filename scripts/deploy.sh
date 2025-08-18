@@ -82,7 +82,7 @@ echo "✅ 80 포트 비움 완료"
 # 3) SSL 인증서 발급 또는 갱신
 echo "🔐 SSL 인증서 처리 중..."
 
-# 호스트에서 직접 certbot 실행 (권한 문제 해결)
+# 호스트에서 직접 certbot 실행
 if command -v certbot >/dev/null 2>&1; then
     echo "🔧 호스트 certbot 사용..."
     
@@ -216,7 +216,7 @@ if [ -f "/etc/letsencrypt/live/$DOMAIN_NAME/keystore.p12" ]; then
 else
     echo "❌ PKCS12 키스토어를 찾을 수 없습니다!"
     echo "💡 수동으로 PKCS12 키스토어를 생성해주세요:"
-    echo "   sudo openssl pkcs12 -export \\"
+    echo "   openssl pkcs12 -export \\"
     echo "     -in /etc/letsencrypt/live/$DOMAIN_NAME/fullchain.pem \\"
     echo "     -inkey /etc/letsencrypt/live/$DOMAIN_NAME/privkey.pem \\"
     echo "     -out /etc/letsencrypt/live/$DOMAIN_NAME/keystore.p12 \\"
