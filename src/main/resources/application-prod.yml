@@ -54,8 +54,8 @@ server:
   port: 443
   ssl:
     enabled: true
-    certificate: /etc/letsencrypt/live/melog508.duckdns.org/fullchain.pem
-    certificate-private-key: /etc/letsencrypt/live/melog508.duckdns.org/privkey.pem
+    certificate: ${SSL_CERT_PATH:/etc/ssl/live/melog508.duckdns.org/fullchain.pem}
+    certificate-private-key: ${SSL_KEY_PATH:/etc/ssl/live/melog508.duckdns.org/privkey.pem}
   http2:
     enabled: true
   error:
