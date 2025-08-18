@@ -43,7 +43,7 @@ public class EmotionRecordManagementService {
 
         // 새로운 감정 점수 저장 및 코멘트 매핑
         for (EmotionRecordSelectRequest.EmotionSelection selection : request.getEmotions()) {
-            // percentage에 따라 step 계산
+            // percentage에 따라 step 계산 (0-20: step1, 21-40: step2, 41-60: step3, 61-80: step4, 81-100: step5)
             int step = calculateStepFromPercentage(selection.getPercentage());
             
             EmotionScore emotionScore = EmotionScore.builder()

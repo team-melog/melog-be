@@ -1,43 +1,90 @@
+
+---
+
 # melog-be
 
-## 프로젝트 소개
-Melog 백엔드 API 서버입니다. 감정 기록 및 분석을 위한 RESTful API를 제공합니다.
+## 1. 프로젝트 소개
 
-## 개발 환경
-- Java 17
-- Spring Boot
-- Gradle
-- PostgreSQL
-- JPA/Hibernate
+Melog 백엔드 API 서버입니다.
+사용자가 텍스트 또는 음성으로 감정을 기록하면, AI가 이를 분석하여 월별 통계와 인사이트를 제공하는 **AI 감정 다이어리 서비스**입니다.
 
-## 개발자
-- whooseong
+본 서비스는 **NCloud 인프라와 Clova AI API**를 기반으로 개발되었으며, 단순 기록을 넘어 **AI 기반 감정 분석 및 음성 인터랙션**을 제공합니다.
 
-## 시작하기
-```bash
-./gradlew bootRun
-```
+---
 
-## 작업 내용 (whooseong 브랜치)
+## 2. NCloud + Clova 서비스 활용
 
-### 1. 작업 내용 요약
-- **도메인 엔티티 구현 완료**: ERD 기반으로 User, EmotionRecord, EmotionScore, UserSelectedEmotion, EmotionKeyword 엔티티 구현
-- **도메인 중심 헥사고날 아키텍처 적용**: Ports & Adapters 패턴으로 도메인별 구조 재구성
-- **API 명세 구현 완료**: API 명세에 맞는 RESTful API 엔드포인트 구현
-- **Repository 계층 구현**: JPA 기반 데이터 접근 계층 구현
-- **Service 계층 구현**: 비즈니스 로직 처리 서비스 구현
-- **Controller 계층 구현**: REST API 컨트롤러 구현
+Melog는 **NCloud의 다양한 인프라·AI 서비스를 종합적으로 활용**하여 구축되었습니다.
 
-### 2. 주요 기능 요약
+* **Compute**
 
-- **사용자 관리**: 사용자 등록, 조회, 수정, 삭제 기능
-- **감정 기록 관리**: 감정 등록, 조회, 수정, 삭제 기능
-- **감정 분석**: 텍스트 기반 감정 분석 및 키워드 추출
-- **캘린더 조회**: 월별 감정 기록 캘린더 뷰
-- **통계 및 차트**: 월별 감정 분포 통계 및 차트 데이터
-- **인사이트 제공**: 월별 키워드 및 요약 정보
+  * NCloud **Server (VPC)** – Spring Boot 백엔드 서버 운영
+  * **Auto Scaling** – 무중단 확장 대응
+* **Database**
 
-### 3. 전체 흐름을 표현한 Mermaid 플로우차트
+  * **Cloud DB for PostgreSQL (VPC)** – 감정 기록 데이터 저장
+  * **Cloud DB for Cache** – 감정 분석 결과 및 통계 캐싱
+* **Storage**
+
+  * **Object Storage** – 음성 파일 및 분석 리소스 저장
+* **AI Services**
+
+  * **Clova Studio** – 감정 분석, 요약, 키워드 추출
+  * **Clova Speech Recognition (CSR)** – STT (음성 → 텍스트 변환)
+  * **Clova Voice Premium** – TTS (감정 기반 음성 합성)
+* **Networking**
+
+  * **VPC + Public IP** – 안전한 네트워크 구성
+  * **Load Balancer** – 대규모 트래픽 분산
+* **Monitoring**
+
+  * **Cloud Log Analytics / Cloud Insight** – 성능 모니터링 및 장애 대응
+
+---
+
+## 3. AI 서비스 차별성
+
+Melog는 단순 CRUD 서버가 아닌, **Clova AI와 긴밀히 통합된 AI 중심 서비스**입니다.
+
+* **STT → 감정 분석 → TTS 완전 자동화**
+* **3단계 대화 요약** (공감 → 돌아보기 → 위로/조언)
+* **감정 점수 + 키워드 추출 + 위로 멘트 자동 매핑**
+* **실시간 AI 피드백** (분석 즉시 음성/텍스트 응답 제공)
+
+➡️ 이를 통해 **단순 일기 서비스 → AI 감정 케어 플랫폼**으로 발전합니다.
+
+---
+
+## 4. AI 기능 고도화
+
+### 4.1 Prompt Engineering (Clova Studio)
+
+* 사용자별 감정 패턴을 반영한 **맞춤형 요약/피드백**
+* Function Calling으로 **JSON 응답 일관성 보장**
+* 3단계 대화 구조를 강제하여 상담형 요약문 생성
+
+### 4.2 Clova Voice
+
+* 감정 점수를 음성 파라미터에 매핑하여 **감정 기반 TTS 제공**
+* 기쁨, 설렘, 슬픔, 분노 등 감정을 음성 톤에 반영
+* 음성 UI 기반 감정 피드백 서비스로 확장
+
+### 4.3 감정 코멘트 자동 매핑
+
+* 감정 점수(0\~100)를 5단계로 분류하여 **맞춤형 위로 멘트 제공**
+* DB에 저장된 멘트를 자동 매핑, 개인화된 피드백 강화
+
+### 4.4 AI 파이프라인 통합
+
+* **STT → 감정 분석 → TTS** 전체 플로우 자동화
+* 음성 입력부터 음성 응답까지 자연스러운 AI 인터랙션 제공
+
+---
+
+## 5. 개발 구조 및 운영 아키텍처
+
+본 프로젝트는 **헥사고날 아키텍처(Ports & Adapters)** 기반으로 설계되어 유지보수성과 확장성을 확보했습니다.
+또한 NCloud 인프라의 **Auto Scaling, Load Balancer, Cloud DB Cache**를 통합하여 **무중단 운영 및 성능 최적화**를 보장합니다.
 
 ```mermaid
 flowchart TD
@@ -48,167 +95,77 @@ flowchart TD
     E --> F[Persistence Port]
     F --> G[Repository Adapter]
     G --> H[JPA Repository]
-    H --> I[Database]
+    H --> I[Cloud DB for PostgreSQL]
     
     D --> J[External APIs]
     J --> K[CLOVA STT API]
     J --> L[CLOVA Emotion Analysis API]
-    J --> M[CLOVA Keyword Extraction API]
+    J --> N[CLOVA TTS API]
     
-    E --> N[Response DTO]
-    N --> O[Client Response]
+    D --> O[File Service]
+    O --> P[NCloud Object Storage]
+    
+    subgraph "운영 인프라 (NCloud)"
+        I
+        P
+        LB[Load Balancer]
+        ASC[Auto Scaling]
+        CDB[Cloud DB for Cache]
+        MON[Cloud Log Analytics / Cloud Insight]
+    end
 ```
 
-## 상세 코드 분석
+**핵심 운영 전략**
 
-### 1. 시스템 전체 흐름 요약
+* **캐싱 최적화**: Cloud DB for Cache 활용 → 감정 분석 결과 캐싱
+* **트래픽 대응**: Auto Scaling + Load Balancer → 무중단 확장
+* **모니터링**: Cloud Log Analytics & Insight → 성능·장애 대응
 
-이 프로젝트는 Spring Boot와 JPA를 기반으로 한 백엔드 API 서버로, 감정 기록 및 분석을 위한 시스템입니다. 시스템의 주요 흐름은 다음과 같습니다:
+---
 
-1. **API 요청 처리**: 클라이언트가 REST API 엔드포인트를 호출하면 Spring Boot의 컨트롤러가 요청을 받아 처리합니다.
+## 6. 향후 발전 및 비즈니스 확장 계획
 
-2. **비즈니스 로직 처리**: 컨트롤러는 UseCase 인터페이스를 통해 서비스 계층의 비즈니스 로직을 호출합니다.
+Melog는 단순 기록 서비스에 그치지 않고, **실제 비즈니스로 확장 가능한 AI 감정 케어 플랫폼**을 목표로 합니다.
 
-3. **데이터 접근**: 서비스 계층은 Persistence Port를 통해 데이터 접근 계층과 상호작용하여 데이터를 조회하거나 저장합니다.
+### 6.1 기능 확장 계획
 
-4. **외부 API 연동**: 감정 분석, STT, 키워드 추출 등의 기능은 외부 CLOVA API와 연동하여 처리합니다.
+* **Clova OCR**
 
-5. **응답 반환**: 처리된 결과는 DTO를 통해 클라이언트에게 JSON 형태로 반환됩니다.
+  * 손글씨 일기·메모를 촬영하여 텍스트 추출 → 감정 분석 확장
+  * 멀티모달 감정 분석(텍스트 + 음성 + 이미지) 서비스로 발전
+* **AI 개인화 고도화**
 
-### 2. 주요 기능 요약
+  * 사용자별 감정 히스토리 학습
+  * 맞춤형 리포트·코칭 제공
 
-- **사용자 관리**: 닉네임 기반 사용자 등록, 조회, 수정, 삭제
-- **감정 기록 관리**: 텍스트 기반 감정 기록 생성, 조회, 수정, 삭제
-- **감정 분석**: 외부 API를 통한 감정 분석 및 키워드 추출
-- **캘린더 기능**: 월별 감정 기록 캘린더 뷰 제공
-- **통계 기능**: 월별 감정 분포 통계 및 차트 데이터 제공
-- **인사이트 기능**: 월별 키워드 및 요약 정보 제공
+### 6.2 서비스 모델 확장
 
-### 3. 아키텍처 구조
+* **B2C 모델 (개인 사용자)**
 
-```
-src/main/java/com/melog/melog/
-├── user/                         # 사용자 도메인
-│   ├── domain/                  # 사용자 도메인 엔티티 및 모델
-│   │   ├── model/              # DTO 모델
-│   │   │   ├── request/        # 요청 DTO
-│   │   │   │   ├── UserCreateRequest.java
-│   │   │   │   └── UserUpdateRequest.java
-│   │   │   └── response/       # 응답 DTO
-│   │   │       └── UserResponse.java
-│   │   └── User.java           # 사용자 엔티티
-│   ├── application/             # 사용자 애플리케이션 계층
-│   │   ├── port/
-│   │   │   ├── in/             # UseCase 인터페이스
-│   │   │   │   └── UserUseCase.java
-│   │   │   └── out/            # PersistencePort 인터페이스
-│   │   │       └── UserPersistencePort.java
-│   │   └── service/            # 서비스 구현체
-│   │       └── UserService.java
-│   └── adapter/                # 사용자 어댑터 계층
-│       ├── in/
-│       │   └── web/            # 컨트롤러
-│       │       └── UserController.java
-│       └── out/
-│           └── persistence/    # 데이터 접근 어댑터
-│               ├── UserPersistenceAdapter.java
-│               └── UserJpaRepository.java
-├── emotion/                     # 감정 도메인
-│   ├── domain/                  # 감정 도메인 엔티티 및 모델
-│   │   ├── model/              # DTO 모델
-│   │   │   ├── request/        # 요청 DTO
-│   │   │   │   ├── EmotionRecordCreateRequest.java
-│   │   │   │   ├── EmotionRecordSelectRequest.java
-│   │   │   │   └── EmotionRecordTextUpdateRequest.java
-│   │   │   └── response/       # 응답 DTO
-│   │   │       ├── EmotionRecordResponse.java
-│   │   │       ├── EmotionScoreResponse.java
-│   │   │       ├── UserSelectedEmotionResponse.java
-│   │   │       ├── EmotionKeywordResponse.java
-│   │   │       ├── EmotionCalendarResponse.java
-│   │   │       ├── EmotionChartResponse.java
-│   │   │       ├── EmotionInsightResponse.java
-│   │   │       ├── EmotionListResponse.java
-│   │   │       └── EmotionRecordSummaryResponse.java
-│   │   ├── EmotionRecord.java  # 감정 기록 엔티티
-│   │   ├── EmotionScore.java   # 감정 점수 엔티티
-│   │   ├── UserSelectedEmotion.java # 사용자 선택 감정 엔티티
-│   │   ├── EmotionKeyword.java # 감정 키워드 엔티티
-│   │   └── EmotionType.java    # 감정 타입 enum
-│   ├── application/             # 감정 애플리케이션 계층
-│   │   ├── port/
-│   │   │   ├── in/             # UseCase 인터페이스
-│   │   │   │   └── EmotionRecordUseCase.java
-│   │   │   └── out/            # PersistencePort 인터페이스
-│   │   │       ├── EmotionRecordPersistencePort.java
-│   │   │       ├── EmotionScorePersistencePort.java
-│   │   │       ├── UserSelectedEmotionPersistencePort.java
-│   │   │       └── EmotionKeywordPersistencePort.java
-│   │   └── service/            # 서비스 구현체
-│   │       └── EmotionRecordService.java
-│   └── adapter/                # 감정 어댑터 계층
-│       ├── in/
-│       │   └── web/            # 컨트롤러
-│       │       └── EmotionRecordController.java
-│       └── out/
-│           └── persistence/    # 데이터 접근 어댑터
-│               ├── EmotionRecordPersistenceAdapter.java
-│               ├── EmotionRecordJpaRepository.java
-│               ├── EmotionScorePersistenceAdapter.java
-│               ├── EmotionScoreJpaRepository.java
-│               ├── UserSelectedEmotionPersistenceAdapter.java
-│               ├── UserSelectedEmotionJpaRepository.java
-│               ├── EmotionKeywordPersistenceAdapter.java
-│               └── EmotionKeywordJpaRepository.java
-└── common/                      # 공통 모듈
-    ├── exception/               # 예외 처리
-    │   └── GlobalExceptionHandler.java
-    └── config/                  # 설정
-        └── RestTemplateConfig.java
-```
+  * 월 구독 기반 감정 다이어리 서비스
+  * 개인화된 감정 리포트, 음성 코칭 제공
+* **B2B SaaS 모델 (기업 고객)**
 
-### 4. 주요 클래스 설명
+  * 콜센터: 고객 감정 분석 API 제공 → 상담 품질 개선
+  * 헬스케어: 감정 기록 기반 스트레스·멘탈 모니터링 API
+  * 교육/복지 기관: 아동·노인 대상 감정 관리 솔루션
 
-#### User Domain Layer
-- **User**: 사용자 엔티티 (id, nickname, createdAt)
-- **UserUseCase**: 사용자 관련 비즈니스 로직 인터페이스
-- **UserPersistencePort**: 사용자 데이터 접근 인터페이스
-- **UserService**: 사용자 서비스 구현체
-- **UserController**: 사용자 관련 REST API 컨트롤러
-- **UserPersistenceAdapter**: 사용자 데이터 접근 어댑터
+### 6.3 기술적 성장 전략
 
-#### Emotion Domain Layer
-- **EmotionRecord**: 감정 기록 엔티티 (text, summary, date, user)
-- **EmotionScore**: 감정 분석 결과 엔티티 (emotionType, percentage, step)
-- **UserSelectedEmotion**: 사용자 선택 감정 엔티티
-- **EmotionKeyword**: 감정 키워드 엔티티
-- **EmotionType**: 감정 타입 enum (기쁨, 분노, 슬픔, 평온, 설렘, 지침)
-- **EmotionRecordUseCase**: 감정 기록 관련 비즈니스 로직 인터페이스
-- **EmotionRecordService**: 감정 기록 서비스 구현체
-- **EmotionRecordController**: 감정 기록 관련 REST API 컨트롤러
+* **오토스케일링 + 캐싱**으로 글로벌 사용자 대응
+* **멀티클라우드 확장** (해외 리전에 맞춘 배포)
+* **AI 파트너십**: NCloud AI 생태계 내 서비스와 통합
 
-#### Common Layer
-- **DTO Models**: 요청/응답 데이터 전송 객체
-- **GlobalExceptionHandler**: 전역 예외 처리
-- **RestTemplateConfig**: 외부 API 연동 설정
+### 6.4 장기 비전
 
-### 5. API 엔드포인트
+* **Emotion-as-a-Service (EaaS)**
 
-#### 사용자 관련 API
-- `POST /api/users` - 사용자 등록
-- `GET /api/users/{nickname}` - 사용자 조회
-- `PUT /api/users/{nickname}` - 사용자 수정
-- `DELETE /api/users/{nickname}` - 사용자 삭제
+  * 감정 데이터 API를 타 SaaS, 메타버스, 게임 등에 제공
+* **AI 기반 심리 웰빙 플랫폼**
 
-#### 감정 기록 관련 API
-- `POST /api/users/{nickname}/emotions` - 감정 등록 및 분석
-- `PUT /api/users/{nickname}/emotions/{id}/select` - 감정 선택 확정
-- `PUT /api/users/{nickname}/emotions/{id}/text` - 텍스트 수정
-- `GET /api/users/{nickname}/emotions/{id}` - 감정 상세 조회
-- `DELETE /api/users/{nickname}/emotions/{id}` - 감정 기록 삭제
-- `GET /api/users/{nickname}/emotions/calendar` - 캘린더 조회
-- `GET /api/users/{nickname}/emotions/summary/chart` - 차트 데이터
-- `GET /api/users/{nickname}/emotions/summary/insight` - 인사이트
-- `GET /api/users/{nickname}/emotions` - 감정 기록 리스트
+  * 음성·텍스트·이미지 통합 분석
+  * 감정 케어 + 커뮤니티 기능 통합
+
+---
 
 

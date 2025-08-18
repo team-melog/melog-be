@@ -38,9 +38,12 @@ services:
       NCLOUD_S3_ENDPOINT: ${NCLOUD_S3_ENDPOINT}
       NCLOUD_S3_REGION: ${NCLOUD_S3_REGION}
       NCLOUD_S3_BUCKET: ${NCLOUD_S3_BUCKET}
+      SSL_KEY_STORE_PASSWORD: ${SSL_KEY_STORE_PASSWORD}
 
     ports:
-      - "8080:8080"
+      - "443:443"  # HTTPS 포트
+    volumes:
+      - /etc/letsencrypt:/etc/letsencrypt:ro  # SSL 인증서 읽기 전용 마운트
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8080/actuator/health"]

@@ -16,6 +16,18 @@ echo "DB_PORT: ${DB_PORT:-'NOT SET'}"
 echo "POSTGRES_DB: ${POSTGRES_DB:-'NOT SET'}"
 echo "POSTGRES_USER: ${POSTGRES_USER:-'NOT SET'}"
 echo "POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-'NOT SET'}"
+echo "CLOVA_SPEECH_CLIENT_ID=${CLOVA_SPEECH_CLIENT_ID:-'NOT SET'}"
+echo "CLOVA_SPEECH_CLIENT_SECRET=${CLOVA_SPEECH_CLIENT_SECRET:-'NOT SET'}"
+echo "CLOVA_STUDIO_API_KEY=${CLOVA_STUDIO_API_KEY:-'NOT SET'}"
+echo "CLOVA_APP_CLIENT_ID=${CLOVA_APP_CLIENT_ID:-'NOT SET'}"
+echo "CLOVA_APP_CLIENT_SECRET=${CLOVA_APP_CLIENT_SECRET:-'NOT SET'}"
+echo "NCLOUD_ACCESS_KEY=${NCLOUD_ACCESS_KEY:-'NOT SET'}"
+echo "NCLOUD_SECRET_KEY=${NCLOUD_SECRET_KEY:-'NOT SET'}"
+echo "NCLOUD_S3_ENDPOINT=${NCLOUD_S3_ENDPOINT:-'NOT SET'}"
+echo "NCLOUD_S3_REGION=${NCLOUD_S3_REGION:-'NOT SET'}"
+echo "NCLOUD_S3_BUCKET=${NCLOUD_S3_BUCKET:-'NOT SET'}"
+echo "SSL_KEY_STORE_PASSWORD=${SSL_KEY_STORE_PASSWORD:-'NOT SET'}"
+echo "DUCKDNS_TOKEN=${DUCKDNS_TOKEN:-'NOT SET'}"
 
 # 환경변수 파일 생성
 cat <<EOF > .env
@@ -34,6 +46,8 @@ NCLOUD_SECRET_KEY=${NCLOUD_SECRET_KEY}
 NCLOUD_S3_ENDPOINT=${NCLOUD_S3_ENDPOINT}
 NCLOUD_S3_REGION=${NCLOUD_S3_REGION}
 NCLOUD_S3_BUCKET=${NCLOUD_S3_BUCKET}
+SSL_KEY_STORE_PASSWORD=${SSL_KEY_STORE_PASSWORD}
+DUCKDNS_TOKEN=${DUCKDNS_TOKEN}
 EOF
 
 # 혹시 남아있는 고아 컨테이너/네트워크 정리
@@ -50,13 +64,18 @@ echo "📊 컨테이너 상태 확인..."
 $COMPOSE -f docker-compose.prod.yml ps
 
 echo "🏥 헬스체크..."
-if curl -fsS http://localhost:8080/actuator/health >/dev/null; then
-  echo "✅ 애플리케이션 기동 OK"
+if curl -fsS -k https://localhost:443/actuator/health >/dev/null; then
+  echo "✅ 애플리케이션 기동 OK (HTTPS)"
 else
-  echo "❌ 헬스체크 실패. 앱 로그:"
+  echo "❌ HTTPS 헬스체크 실패. 앱 로그:"
   $COMPOSE -f docker-compose.prod.yml logs --no-color app || true
   exit 1
 fi
 
 echo "🎉 배포 완료!"
-echo "📱 http://$(curl -s ifconfig.me):8080"
+
+# HTTPS 완료 메시지
+echo "🔒 HTTPS 설정 완료!"
+echo "📱 HTTPS: https://$(curl -s ifconfig.me):443"
+echo "🌐 도메인: https://melog508.duckdns.org"
+echo "💡 Load Balancer: https://49.50.134.32"
