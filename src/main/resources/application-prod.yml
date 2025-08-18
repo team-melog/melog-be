@@ -51,13 +51,17 @@ management:
       show-details: when-authorized
 
 server:
-  port: 443
+  port: ${SERVER_PORT:443}
   ssl:
-    enabled: true
-    certificate: /etc/letsencrypt/live/melog508.duckdns.org/fullchain.pem
-    certificate-private-key: /etc/letsencrypt/live/melog508.duckdns.org/privkey.pem
-  http2:
-    enabled: true
+    bundle: app-cert
+
+spring:
+  ssl:
+    bundle:
+      pem:
+        app-cert:
+          certificate: /etc/letsencrypt/live/${DOMAIN_NAME}/fullchain.pem
+          private-key: /etc/letsencrypt/live/${DOMAIN_NAME}/privkey.pem
   error:
     include-stacktrace: never
     include-message: always
