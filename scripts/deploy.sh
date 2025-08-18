@@ -68,7 +68,7 @@ echo "📧 인증서 발급 이메일: $EMAIL"
 
 # 1) DuckDNS 레코드 업데이트
 echo "🦆 DuckDNS 레코드 업데이트 중..."
-curl -s "https://www.duckdns.org/update?domains=${DOMAIN%%.*}&token=${DUCKDNS_TOKEN}&ip="
+curl -s "https://www.duckdns.org/update?domains=${DOMAIN_NAME%%.*}&token=${DUCKDNS_TOKEN}&ip="
 echo ""
 
 # 2) 80 포트 비우기 (HTTP-01 검증을 위해)
@@ -79,7 +79,7 @@ echo "✅ 80 포트 비움 완료"
 
 # 3) SSL 인증서 발급 또는 갱신
 echo "🔐 SSL 인증서 처리 중..."
-if [ -f "/etc/letsencrypt/live/$DOMAIN/fullchain.pem" ]; then
+if [ -f "/etc/letsencrypt/live/$DOMAIN_NAME/fullchain.pem" ]; then
     echo "📋 기존 SSL 인증서가 발견되었습니다. 갱신을 시도합니다..."
     
     # Docker로 certbot 실행하여 인증서 갱신
@@ -105,7 +105,7 @@ if [ -f "/etc/letsencrypt/live/$DOMAIN/fullchain.pem" ]; then
             --email "$EMAIL" \
             --agree-tos \
             --no-eff-email \
-            --domains "$DOMAIN" \
+            --domains "$DOMAIN_NAME" \
             --non-interactive
         
         if [ $? -eq 0 ]; then
@@ -125,11 +125,11 @@ else
         -p 80:80 \
         certbot/certbot certonly \
         --standalone \
-        --email "$EMAIL" \
-        --agree-tos \
-        --no-eff-email \
-        --domains "$DOMAIN" \
-        --non-interactive
+            --email "$EMAIL" \
+            --agree-tos \
+            --no-eff-email \
+            --domains "$DOMAIN_NAME" \
+            --non-interactive
     
     if [ $? -eq 0 ]; then
         echo "✅ SSL 인증서 발급 성공!"
