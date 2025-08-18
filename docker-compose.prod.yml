@@ -1,4 +1,23 @@
 services:
+  # SSL 인증서 발급용 certbot 서비스 (프로필로 분리)
+  certbot:
+    image: certbot/certbot:latest
+    container_name: melog-certbot
+    volumes:
+      - /etc/letsencrypt:/etc/letsencrypt
+      - /var/lib/letsencrypt:/var/lib/letsencrypt
+    command: >
+      certonly --standalone
+      --email kioplm0211@gmail.com
+      --agree-tos --no-eff-email
+      --domains melog508.duckdns.org
+      --non-interactive
+    ports:
+      - "80:80"
+    restart: "no"
+    profiles:
+      - ssl-setup
+
   app:
     build:
       context: .
@@ -41,8 +60,6 @@ services:
       # SSL 인증서 설정
       DOMAIN_NAME: melog508.duckdns.org
       SERVER_PORT: 443
-
-
     ports:
       - "443:443"  # HTTPS 포트
     user: "0:0"  # root 권한으로 실행 (권한 문제 해결)
