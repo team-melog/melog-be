@@ -38,7 +38,7 @@ jobs:
           NCLOUD_S3_ENDPOINT=${{ secrets.NCLOUD_S3_ENDPOINT }}
           NCLOUD_S3_REGION=${{ secrets.NCLOUD_S3_REGION }}
           NCLOUD_S3_BUCKET=${{ secrets.NCLOUD_S3_BUCKET }}
-          SSL_KEY_STORE_PASSWORD=${{ secrets.SSL_KEY_STORE_PASSWORD }}
+
           DUCKDNS_TOKEN=${{ secrets.DUCKDNS_TOKEN }}
         script: |
           # 애플리케이션 디렉토리로 이동
@@ -60,7 +60,7 @@ jobs:
           export NCLOUD_S3_ENDPOINT="${{ secrets.NCLOUD_S3_ENDPOINT }}"
           export NCLOUD_S3_REGION="${{ secrets.NCLOUD_S3_REGION }}"
           export NCLOUD_S3_BUCKET="${{ secrets.NCLOUD_S3_BUCKET }}"
-          export SSL_KEY_STORE_PASSWORD="${{ secrets.SSL_KEY_STORE_PASSWORD }}"
+
           export DUCKDNS_TOKEN="${{ secrets.DUCKDNS_TOKEN }}"
           
           # 로컬 변경사항 정리 후 최신 코드 가져오기

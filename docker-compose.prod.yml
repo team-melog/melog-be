@@ -38,10 +38,11 @@ services:
       NCLOUD_S3_ENDPOINT: ${NCLOUD_S3_ENDPOINT}
       NCLOUD_S3_REGION: ${NCLOUD_S3_REGION}
       NCLOUD_S3_BUCKET: ${NCLOUD_S3_BUCKET}
-      SSL_KEY_STORE_PASSWORD: ${SSL_KEY_STORE_PASSWORD}
+
 
     ports:
       - "443:443"  # HTTPS 포트
+    user: "0:0"  # root 권한으로 실행 (권한 문제 해결)
     volumes:
       - /etc/letsencrypt:/etc/letsencrypt:ro  # SSL 인증서 읽기 전용 마운트
     restart: unless-stopped
