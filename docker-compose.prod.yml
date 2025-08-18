@@ -47,7 +47,7 @@ services:
       - "443:443"  # HTTPS 포트
     user: "0:0"  # root 권한으로 실행 (권한 문제 해결)
     volumes:
-      - /etc/letsencrypt:/etc/ssl:ro  # SSL 인증서를 컨테이너 내부 경로로 마운트
+      - /etc/letsencrypt:/etc/letsencrypt:ro  # SSL 인증서 전체 디렉터리 마운트
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8080/actuator/health"]
