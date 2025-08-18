@@ -159,11 +159,11 @@ $COMPOSE -f docker-compose.prod.yml ps
 echo "🧪 컨테이너 내부 SSL 인증서 확인 중..."
 $COMPOSE -f docker-compose.prod.yml exec app sh -lc "
   echo '== Inside app container: check cert files =='
-  ls -la /etc/letsencrypt/live/$DOMAIN || exit 1
-  ls -la /etc/letsencrypt/archive/$DOMAIN || true
+  ls -la /etc/letsencrypt/live/$DOMAIN_NAME || exit 1
+  ls -la /etc/letsencrypt/archive/$DOMAIN_NAME || true
   # 내용 확인
-  head -n 1 /etc/letsencrypt/live/$DOMAIN/fullchain.pem
-  head -n 1 /etc/letsencrypt/live/$DOMAIN/privkey.pem
+  head -n 1 /etc/letsencrypt/live/$DOMAIN_NAME/fullchain.pem
+  head -n 1 /etc/letsencrypt/live/$DOMAIN_NAME/privkey.pem
 " || {
     echo "❌ 컨테이너에서 SSL 인증서가 보이지 않습니다 (마운트/경로 문제)";
     echo "   docker-compose.prod.yml의 볼륨 마운트를 확인하세요";
