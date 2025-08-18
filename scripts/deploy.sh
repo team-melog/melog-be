@@ -26,7 +26,7 @@ echo "NCLOUD_SECRET_KEY=${NCLOUD_SECRET_KEY:-'NOT SET'}"
 echo "NCLOUD_S3_ENDPOINT=${NCLOUD_S3_ENDPOINT:-'NOT SET'}"
 echo "NCLOUD_S3_REGION=${NCLOUD_S3_REGION:-'NOT SET'}"
 echo "NCLOUD_S3_BUCKET=${NCLOUD_S3_BUCKET:-'NOT SET'}"
-echo "SSL_KEY_STORE_PASSWORD=${SSL_KEY_STORE_PASSWORD:-'NOT SET'}"
+
 echo "DUCKDNS_TOKEN=${DUCKDNS_TOKEN:-'NOT SET'}"
 
 # 환경변수 파일 생성
@@ -46,13 +46,17 @@ NCLOUD_SECRET_KEY=${NCLOUD_SECRET_KEY}
 NCLOUD_S3_ENDPOINT=${NCLOUD_S3_ENDPOINT}
 NCLOUD_S3_REGION=${NCLOUD_S3_REGION}
 NCLOUD_S3_BUCKET=${NCLOUD_S3_BUCKET}
-SSL_KEY_STORE_PASSWORD=${SSL_KEY_STORE_PASSWORD}
+
 DUCKDNS_TOKEN=${DUCKDNS_TOKEN}
 EOF
 
 # 혹시 남아있는 고아 컨테이너/네트워크 정리
 echo "🧹 고아 컨테이너/네트워크 정리..."
 $COMPOSE -f docker-compose.prod.yml down --remove-orphans || true
+
+# Docker 캐시 정리 (용량 부족 방지)
+echo "🧹 Docker 캐시 정리 중..."
+docker system prune -f 2>/dev/null || true
 
 echo "🔨 새 이미지 빌드 및 실행..."
 $COMPOSE -f docker-compose.prod.yml --env-file .env up -d --build
@@ -64,7 +68,7 @@ echo "📊 컨테이너 상태 확인..."
 $COMPOSE -f docker-compose.prod.yml ps
 
 echo "🏥 헬스체크..."
-if curl -fsS -k https://localhost:443/actuator/health >/dev/null; then
+if curl -fsS -k https://localhost/actuator/health >/dev/null; then
   echo "✅ 애플리케이션 기동 OK (HTTPS)"
 else
   echo "❌ HTTPS 헬스체크 실패. 앱 로그:"
