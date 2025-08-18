@@ -30,13 +30,8 @@ public class EmotionRecordSelectRequest {
         }
         
         private EmotionType findEmotionTypeByName(String emotionName) {
-            if (emotionName == null) return null;
-            for (EmotionType emotionType : EmotionType.values()) {
-                if (emotionType.getDescription().equals(emotionName)) {
-                    return emotionType;
-                }
-            }
-            throw new IllegalArgumentException("Unknown emotion type: " + emotionName);
+            // Jackson이 자동으로 처리하므로 단순화
+            return emotionName != null ? EmotionType.fromDescription(emotionName) : EmotionType.CALMNESS;
         }
     }
 } 

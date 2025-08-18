@@ -9,6 +9,7 @@ import com.melog.melog.user.domain.User;
 import com.melog.melog.clova.application.port.in.EmotionAnalysisUseCase;
 import com.melog.melog.clova.domain.model.request.EmotionAnalysisRequest;
 import com.melog.melog.clova.domain.model.response.EmotionAnalysisResponse;
+import com.melog.melog.common.service.S3FileService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -25,6 +26,8 @@ import java.util.List;
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
 public class EmotionRecordCreationService {
+
+    private final S3FileService s3FileService;
 
     private final UserPersistencePort userPersistencePort;
     private final EmotionRecordPersistencePort emotionRecordPersistencePort;
@@ -82,8 +85,11 @@ public class EmotionRecordCreationService {
     /**
      * 음성 파일 기반 감정 기록을 생성합니다.
      */
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public EmotionRecord createEmotionRecordFromAudio(String nickname, String text, String userSelectedEmotionJson, MultipartFile audioFile) {
+        // 음성 파일 유효성 검증
+        validateAudioFile(audioFile);
+        
         // 사용자 조회
         User user = userPersistencePort.findByNickname(nickname)
                 .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다: " + nickname));
@@ -101,8 +107,8 @@ public class EmotionRecordCreationService {
         Long audioFileSize = audioFile.getSize();
         String audioMimeType = audioFile.getContentType();
         
-        // 로컬 파일 저장 (개발 환경용)
-        String audioFilePath = saveAudioFileLocally(audioFile, audioFileName);
+        // S3에 파일 저장
+        String audioFilePath = saveAudioFileToS3(audioFile, user.getNickname());
         
         // 음성 길이 계산 (임시로 0 설정, 실제로는 오디오 파일 분석 필요)
         Integer audioDuration = 0; // TODO: 오디오 파일 길이 분석 로직 구현 필요
@@ -143,8 +149,15 @@ public class EmotionRecordCreationService {
             }
         }
 
-        // Clova Studio를 통한 감정 분석 수행
-        performEmotionAnalysis(savedRecord, text);
+        try {
+            // Clova Studio를 통한 감정 분석 수행
+            performEmotionAnalysis(savedRecord, text);
+            log.info("감정 분석 완료: recordId={}, text={}", savedRecord.getId(), text);
+        } catch (Exception e) {
+            log.error("감정 분석 실패: recordId={}, error={}", savedRecord.getId(), e.getMessage(), e);
+            // 감정 분석 실패 시에도 기본 기록은 유지하되, 에러 정보를 로그에 기록
+            // 트랜잭션은 롤백되지 않음 (감정 분석은 부가 기능)
+        }
         
         return savedRecord;
     }
@@ -266,7 +279,28 @@ public class EmotionRecordCreationService {
     }
 
     /**
-     * 음성 파일을 로컬에 저장합니다.
+     * 음성 파일을 S3에 저장합니다.
+     */
+    private String saveAudioFileToS3(MultipartFile audioFile, String userId) {
+        try {
+            // S3 서비스를 통한 파일 업로드
+            log.info("S3에 음성 파일 업로드 시작: userId={}, filename={}, size={}bytes", 
+                    userId, audioFile.getOriginalFilename(), audioFile.getSize());
+            
+            String s3Url = s3FileService.uploadAudioFile(audioFile, userId);
+            log.info("S3 업로드 성공: {}", s3Url);
+            return s3Url;
+            
+        } catch (Exception e) {
+            log.error("S3 파일 업로드 중 오류 발생: {}", e.getMessage(), e);
+            // S3 업로드 실패 시 로컬 저장으로 폴백
+            log.warn("로컬 저장으로 폴백합니다.");
+            return saveAudioFileLocally(audioFile, audioFile.getOriginalFilename());
+        }
+    }
+
+    /**
+     * 음성 파일을 로컬에 저장합니다. (임시용, S3 연동 완료 후 제거)
      */
     private String saveAudioFileLocally(MultipartFile audioFile, String originalFileName) {
         try {
@@ -314,20 +348,63 @@ public class EmotionRecordCreationService {
     }
 
     /**
+     * 음성 파일 유효성을 검증합니다.
+     */
+    private void validateAudioFile(MultipartFile audioFile) {
+        if (audioFile == null || audioFile.isEmpty()) {
+            throw new IllegalArgumentException("음성 파일이 비어있습니다.");
+        }
+        
+        // 파일 크기 검증 (최소 1KB, 최대 50MB)
+        long fileSize = audioFile.getSize();
+        if (fileSize < 1024) { // 1KB 미만
+            throw new IllegalArgumentException("음성 파일이 너무 작습니다. 최소 1KB 이상이어야 합니다. (현재: " + fileSize + " bytes)");
+        }
+        if (fileSize > 50 * 1024 * 1024) { // 50MB 초과
+            throw new IllegalArgumentException("음성 파일이 너무 큽니다. 최대 50MB 이하여야 합니다. (현재: " + fileSize + " bytes)");
+        }
+        
+        // 파일 확장자 검증
+        String originalFilename = audioFile.getOriginalFilename();
+        if (originalFilename != null) {
+            String extension = getFileExtension(originalFilename).toLowerCase();
+            if (!extension.matches("(mp3|wav|m4a|aac|ogg|flac)")) {
+                throw new IllegalArgumentException("지원하지 않는 음성 파일 형식입니다: " + extension + ". 지원 형식: mp3, wav, m4a, aac, ogg, flac");
+            }
+        }
+        
+        log.info("음성 파일 유효성 검증 통과: {} (크기: {} bytes)", originalFilename, fileSize);
+    }
+
+    /**
+     * 파일명에서 확장자를 추출합니다.
+     */
+    private String getFileExtension(String filename) {
+        if (filename == null || filename.isEmpty()) {
+            return "";
+        }
+        
+        int lastDotIndex = filename.lastIndexOf('.');
+        if (lastDotIndex == -1 || lastDotIndex == filename.length() - 1) {
+            return "";
+        }
+        
+        return filename.substring(lastDotIndex + 1);
+    }
+
+    /**
      * 한글 감정명을 EmotionType enum으로 변환합니다.
      */
     private EmotionType convertToEmotionType(String emotionName) {
         if (emotionName == null) {
-            throw new IllegalArgumentException("감정명이 null입니다.");
+            log.warn("감정명이 null입니다. 기본값 CALMNESS 사용");
+            return EmotionType.CALMNESS;
         }
         
-        for (EmotionType emotionType : EmotionType.values()) {
-            if (emotionType.getDescription().equals(emotionName)) {
-                return emotionType;
-            }
-        }
-        
-        throw new IllegalArgumentException("알 수 없는 감정 타입입니다: " + emotionName);
+        // Jackson이 자동으로 처리하므로 단순화
+        EmotionType result = EmotionType.fromDescription(emotionName);
+        log.debug("감정 타입 변환: '{}' -> {}", emotionName, result);
+        return result;
     }
 
     /**
