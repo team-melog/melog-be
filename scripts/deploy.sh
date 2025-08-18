@@ -60,22 +60,46 @@ docker system prune -f 2>/dev/null || true
 
 # SSL 인증서 존재 확인 (기동 전 실사)
 echo "🔐 SSL 인증서 사전 점검 중..."
-DOMAIN="melog508.duckdns.org"
+DOMAIN="${DOMAIN_NAME:-melog508.duckdns.org}"
+EMAIL="${CERTBOT_EMAIL:-admin@melog508.duckdns.org}"
+echo "🔍 사용할 도메인: $DOMAIN"
+echo "📧 인증서 발급 이메일: $EMAIL"
 
-# 호스트에서 PEM 파일 존재 확인
-test -f "/etc/letsencrypt/live/$DOMAIN/fullchain.pem" || { 
-    echo "❌ fullchain.pem이 존재하지 않습니다!"; 
-    echo "   certbot으로 인증서를 발급하세요:";
-    echo "   sudo certbot certonly --standalone -d $DOMAIN";
-    exit 1; 
-}
+# 1) DuckDNS 레코드 업데이트
+echo "🦆 DuckDNS 레코드 업데이트 중..."
+curl -s "https://www.duckdns.org/update?domains=${DOMAIN%%.*}&token=${DUCKDNS_TOKEN}&ip="
+echo ""
 
-test -f "/etc/letsencrypt/live/$DOMAIN/privkey.pem" || { 
-    echo "❌ privkey.pem이 존재하지 않습니다!"; 
-    exit 1; 
-}
+# 2) 80 포트 비우기 (HTTP-01 검증을 위해)
+echo "🔓 80 포트 비우기 중..."
+sudo lsof -i :80 | grep LISTEN | awk '{print $2}' | xargs -r sudo kill -9 || true
+echo "✅ 80 포트 비움 완료"
 
-echo "✅ 호스트 SSL 인증서 확인 완료"
+# 호스트에서 PEM 파일 존재 확인 및 자동 발급
+if [ ! -f "/etc/letsencrypt/live/$DOMAIN/fullchain.pem" ] || [ ! -f "/etc/letsencrypt/live/$DOMAIN/privkey.pem" ]; then
+    echo "❌ SSL 인증서가 존재하지 않습니다!"
+    echo "🔐 certbot으로 인증서를 자동 발급합니다..."
+    
+    # certbot 설치 확인
+    if ! command -v certbot &> /dev/null; then
+        echo "📦 certbot 설치 중..."
+        sudo apt-get update
+        sudo apt-get install -y certbot
+    fi
+    
+    # 인증서 발급
+    sudo certbot certonly --standalone \
+        -d "$DOMAIN" \
+        --non-interactive --agree-tos -m "$EMAIL" || {
+        echo "❌ 인증서 발급 실패!";
+        echo "   80 포트가 사용 중이거나 방화벽 문제일 수 있습니다.";
+        exit 1;
+    }
+    
+    echo "✅ SSL 인증서 발급 완료!"
+else
+    echo "✅ 호스트 SSL 인증서 확인 완료"
+fi
 
 echo "🔨 새 이미지 빌드 및 실행..."
 $COMPOSE -f docker-compose.prod.yml --env-file .env up -d --build
