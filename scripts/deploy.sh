@@ -146,29 +146,38 @@ else
             --standalone \
             --non-interactive
         
-        if [ $? -eq 0 ]; then
-            echo "✅ SSL 인증서 갱신 완료!"
-        else
-            echo "⚠️ 인증서 갱신 실패. 새로 발급을 시도합니다..."
-            # 갱신 실패 시 새로 발급
-            docker run --rm \
-                -v /etc/letsencrypt:/etc/letsencrypt \
-                -v /var/lib/letsencrypt:/var/lib/letsencrypt \
-                -p 80:80 \
-                certbot/certbot certonly \
-                --standalone \
-                --email "$EMAIL" \
-                --agree-tos \
-                --no-eff-email \
-                --domains "$DOMAIN_NAME" \
-                --non-interactive
+        # 갱신 결과 확인 (갱신 불필요도 성공으로 간주)
+        if [ $? -eq 0 ] || [ $? -eq 1 ]; then
+            echo "✅ SSL 인증서 갱신 완료 또는 불필요!"
             
-            if [ $? -eq 0 ]; then
-                echo "✅ SSL 인증서 새로 발급 완료!"
+            # 실제로 인증서 파일이 존재하는지 확인
+            if [ -f "/etc/letsencrypt/live/$DOMAIN_NAME/fullchain.pem" ]; then
+                echo "✅ SSL 인증서 파일 확인됨!"
             else
-                echo "❌ SSL 인증서 발급 실패!"
-                exit 1
+                echo "⚠️ 인증서 파일이 없습니다. 새로 발급을 시도합니다..."
+                # 새로 발급
+                docker run --rm \
+                    -v /etc/letsencrypt:/etc/letsencrypt \
+                    -v /var/lib/letsencrypt:/var/lib/letsencrypt \
+                    -p 80:80 \
+                    certbot/certbot certonly \
+                    --standalone \
+                    --email "$EMAIL" \
+                    --agree-tos \
+                    --no-eff-email \
+                    --domains "$DOMAIN_NAME" \
+                    --non-interactive
+                
+                if [ $? -eq 0 ]; then
+                    echo "✅ SSL 인증서 새로 발급 완료!"
+                else
+                    echo "❌ SSL 인증서 발급 실패!"
+                    exit 1
+                fi
             fi
+        else
+            echo "❌ SSL 인증서 갱신 실패!"
+            exit 1
         fi
     else
         echo "📦 SSL 인증서가 없습니다. 새로 발급을 시작합니다..."
@@ -198,26 +207,21 @@ fi
 # 권한 설정 (권한 문제로 인해 제거)
 echo "🔐 인증서 발급 완료 (권한 설정 생략)"
 
-# PEM 파일을 PKCS12로 변환 (Spring Boot 호환성)
-echo "🔄 PEM 파일을 PKCS12로 변환 중..."
-if [ -f "/etc/letsencrypt/live/$DOMAIN_NAME/fullchain.pem" ] && [ -f "/etc/letsencrypt/live/$DOMAIN_NAME/privkey.pem" ]; then
-    # PKCS12 키스토어 생성
-    openssl pkcs12 -export \
-        -in "/etc/letsencrypt/live/$DOMAIN_NAME/fullchain.pem" \
-        -inkey "/etc/letsencrypt/live/$DOMAIN_NAME/privkey.pem" \
-        -out "/etc/letsencrypt/live/$DOMAIN_NAME/keystore.p12" \
-        -name "melog" \
-        -passout pass:"${SSL_KEY_STORE_PASSWORD:-melog1234}"
-    
-    if [ $? -eq 0 ]; then
-        echo "✅ PKCS12 키스토어 생성 완료!"
-        echo "🔐 키스토어 경로: /etc/letsencrypt/live/$DOMAIN_NAME/keystore.p12"
-    else
-        echo "❌ PKCS12 키스토어 생성 실패!"
-        exit 1
-    fi
+# PKCS12 키스토어 확인 (이미 생성되어 있음)
+echo "🔍 PKCS12 키스토어 확인 중..."
+if [ -f "/etc/letsencrypt/live/$DOMAIN_NAME/keystore.p12" ]; then
+    echo "✅ PKCS12 키스토어 확인됨!"
+    echo "🔐 키스토어 경로: /etc/letsencrypt/live/$DOMAIN_NAME/keystore.p12"
+    echo "📏 키스토어 크기: $(ls -lh "/etc/letsencrypt/live/$DOMAIN_NAME/keystore.p12" | awk '{print $5}')"
 else
-    echo "❌ SSL 인증서 파일을 찾을 수 없습니다!"
+    echo "❌ PKCS12 키스토어를 찾을 수 없습니다!"
+    echo "💡 수동으로 PKCS12 키스토어를 생성해주세요:"
+    echo "   sudo openssl pkcs12 -export \\"
+    echo "     -in /etc/letsencrypt/live/$DOMAIN_NAME/fullchain.pem \\"
+    echo "     -inkey /etc/letsencrypt/live/$DOMAIN_NAME/privkey.pem \\"
+    echo "     -out /etc/letsencrypt/live/$DOMAIN_NAME/keystore.p12 \\"
+    echo "     -name \"melog\" \\"
+    echo "     -passout pass:\"${SSL_KEY_STORE_PASSWORD:-melog1234}\""
     exit 1
 fi
 
