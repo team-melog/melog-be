@@ -9,10 +9,12 @@ import com.melog.melog.clova.domain.model.request.TtsRequest;
 import com.melog.melog.clova.domain.model.response.TtsResponse;
 import com.melog.melog.common.service.S3FileService;
 import com.melog.melog.emotion.application.port.in.AudioUseCase;
+import com.melog.melog.emotion.application.port.out.EmotionCommentPersistencePort;
 import com.melog.melog.emotion.application.port.out.EmotionRecordPersistencePort;
 import com.melog.melog.emotion.application.port.out.EmotionScorePersistencePort;
 import com.melog.melog.emotion.application.port.out.TtsCachePersistencePort;
 import com.melog.melog.emotion.application.port.out.UserSelectedEmotionPersistencePort;
+import com.melog.melog.emotion.domain.EmotionComment;
 import com.melog.melog.emotion.domain.EmotionRecord;
 import com.melog.melog.emotion.domain.EmotionScore;
 import com.melog.melog.emotion.domain.TtsCache;
@@ -66,6 +68,7 @@ public class AudioService implements AudioUseCase {
     private final EmotionRecordPersistencePort emotionRecordPersistencePort;
     private final EmotionScorePersistencePort emotionScorePersistencePort;
     private final UserSelectedEmotionPersistencePort userSelectedEmotionPersistencePort;
+    private final EmotionCommentPersistencePort emotionCommentPersistencePort;
     private final TtsCachePersistencePort ttsCachePersistencePort;
     
     // 의존성 주입: 외부 서비스들
@@ -260,6 +263,7 @@ public class AudioService implements AudioUseCase {
 
     /**
      * TTS 오디오 파일 처리 (캐시 확인 후 생성)
+     * summary와 가장 높은 감정점수를 가진 comment를 함께 읽어줍니다.
      * 
      * @param emotionRecord 감정 기록
      * @param voiceType 음성 타입
@@ -274,11 +278,23 @@ public class AudioService implements AudioUseCase {
         }
         
         try {
-            // 1. TTS는 기본 톤으로 고정 (감정 조절 없음)
+            // 1. 가장 높은 감정점수를 가진 comment 조회
+            String topEmotionComment = getTopEmotionComment(emotionRecord);
+            
+            // 2. summary와 comment를 조합하여 TTS용 텍스트 생성
+            String combinedText = combineSummaryAndComment(emotionRecord.getSummary(), topEmotionComment);
+            
+            log.debug("TTS용 텍스트 생성 완료: recordId={}, originalSummaryLength={}, commentLength={}, combinedLength={}", 
+                    emotionRecord.getId(), 
+                    emotionRecord.getSummary().length(), 
+                    topEmotionComment.length(), 
+                    combinedText.length());
+            
+            // 3. TTS는 기본 톤으로 고정 (감정 조절 없음)
             VoiceToner voiceToner = VoiceToner.getDefaultTone();
             
-            // 2. 캐시 키 생성 및 캐시 조회 (summary 텍스트 사용)
-            String cacheKey = generateTtsCacheKey(emotionRecord.getSummary(), voiceType, voiceToner);
+            // 4. 캐시 키 생성 및 캐시 조회 (조합된 텍스트 사용)
+            String cacheKey = generateTtsCacheKey(combinedText, voiceType, voiceToner);
             Optional<TtsCache> cachedTts = ttsCachePersistencePort.findByCacheKey(cacheKey);
             
             if (cachedTts.isPresent()) {
@@ -293,7 +309,7 @@ public class AudioService implements AudioUseCase {
             } else {
                 // 캐시 미스: 새로운 TTS 생성
                 log.info("TTS 캐시 미스, 새로 생성: recordId={}, cacheKey={}", emotionRecord.getId(), cacheKey);
-                return generateAndCacheNewTts(emotionRecord, voiceType, voiceToner, cacheKey, emotionRecord.getSummary());
+                return generateAndCacheNewTts(emotionRecord, voiceType, voiceToner, cacheKey, combinedText);
             }
             
         } catch (Exception e) {
@@ -589,5 +605,143 @@ public class AudioService implements AudioUseCase {
             log.error("VoiceToner JSON 직렬화 실패: cacheKey={}, error={}", cacheKey, e.getMessage(), e);
             throw new RuntimeException("캐시 저장에 실패했습니다: " + e.getMessage(), e);
         }
+    }
+
+    /**
+     * EmotionRecord에서 가장 높은 감정점수를 가진 comment를 조회합니다.
+     * 
+     * 우선순위:
+     * 1. UserSelectedEmotion이 있으면 해당 감정의 comment 조회
+     * 2. 없으면 EmotionScore에서 가장 높은 점수를 가진 감정의 comment 조회
+     * 
+     * @param emotionRecord 감정 기록
+     * @return 조회된 comment 텍스트 (없으면 빈 문자열)
+     */
+    private String getTopEmotionComment(EmotionRecord emotionRecord) {
+        log.debug("가장 높은 감정점수의 comment 조회 시작: recordId={}", emotionRecord.getId());
+        
+        try {
+            // 1. UserSelectedEmotion 우선 확인
+            Optional<UserSelectedEmotion> userSelectedEmotion = userSelectedEmotionPersistencePort.findByRecord(emotionRecord);
+            if (userSelectedEmotion.isPresent()) {
+                UserSelectedEmotion selected = userSelectedEmotion.get();
+                log.debug("사용자 선택 감정으로 comment 조회: recordId={}, emotionType={}, percentage={}", 
+                        emotionRecord.getId(), selected.getEmotionType(), selected.getPercentage());
+                
+                return findCommentByEmotionAndPercentage(selected.getEmotionType(), selected.getPercentage());
+            }
+            
+            // 2. UserSelectedEmotion이 없으면 EmotionScore에서 최고 점수 감정 확인
+            List<EmotionScore> emotionScores = emotionScorePersistencePort.findByRecord(emotionRecord);
+            if (emotionScores.isEmpty()) {
+                log.warn("감정 데이터가 없어 comment를 조회할 수 없습니다: recordId={}", emotionRecord.getId());
+                return "";
+            }
+            
+            // 감정 점수 내림차순 정렬하여 최고 점수 감정 선택
+            EmotionScore topEmotion = emotionScores.stream()
+                    .max((a, b) -> Integer.compare(a.getPercentage(), b.getPercentage()))
+                    .orElse(null);
+            
+            if (topEmotion == null) {
+                log.warn("최고 감정 점수를 찾을 수 없습니다: recordId={}", emotionRecord.getId());
+                return "";
+            }
+            
+            log.debug("최고 감정 점수로 comment 조회: recordId={}, emotionType={}, percentage={}", 
+                    emotionRecord.getId(), topEmotion.getEmotionType(), topEmotion.getPercentage());
+            
+            return findCommentByEmotionAndPercentage(topEmotion.getEmotionType(), topEmotion.getPercentage());
+            
+        } catch (Exception e) {
+            log.error("감정 comment 조회 중 오류 발생: recordId={}, error={}", 
+                    emotionRecord.getId(), e.getMessage(), e);
+            return ""; // 오류 발생 시 빈 문자열 반환
+        }
+    }
+    
+    /**
+     * 감정 타입과 퍼센티지를 기반으로 적절한 단계의 comment를 조회합니다.
+     * 
+     * @param emotionType 감정 타입
+     * @param percentage 감정 강도 (0-100)
+     * @return 조회된 comment 텍스트 (없으면 빈 문자열)
+     */
+    private String findCommentByEmotionAndPercentage(com.melog.melog.emotion.domain.EmotionType emotionType, Integer percentage) {
+        log.debug("감정 타입과 퍼센티지로 comment 조회: emotionType={}, percentage={}", emotionType, percentage);
+        
+        try {
+            // 퍼센티지를 1-5 단계로 변환 (20% 단위)
+            Integer step = convertPercentageToStep(percentage);
+            
+            // 해당 감정 타입과 단계의 comment 조회
+            Optional<EmotionComment> comment = emotionCommentPersistencePort.findByEmotionTypeAndStep(emotionType, step);
+            
+            if (comment.isPresent() && comment.get().getIsActive()) {
+                log.debug("comment 조회 성공: emotionType={}, step={}, commentId={}", 
+                        emotionType, step, comment.get().getId());
+                return comment.get().getComment();
+            } else {
+                log.debug("해당 감정 타입과 단계의 활성화된 comment가 없습니다: emotionType={}, step={}", emotionType, step);
+                return "";
+            }
+            
+        } catch (Exception e) {
+            log.error("감정 comment 조회 중 오류 발생: emotionType={}, percentage={}, error={}", 
+                    emotionType, percentage, e.getMessage(), e);
+            return "";
+        }
+    }
+    
+    /**
+     * 퍼센티지를 1-5 단계로 변환합니다.
+     * 
+     * @param percentage 감정 강도 (0-100)
+     * @return 변환된 단계 (1-5)
+     */
+    private Integer convertPercentageToStep(Integer percentage) {
+        if (percentage == null || percentage < 0) {
+            return 1;
+        }
+        if (percentage <= 20) {
+            return 1;
+        } else if (percentage <= 40) {
+            return 2;
+        } else if (percentage <= 60) {
+            return 3;
+        } else if (percentage <= 80) {
+            return 4;
+        } else {
+            return 5;
+        }
+    }
+    
+    /**
+     * summary와 comment를 조합하여 TTS용 텍스트를 생성합니다.
+     * 
+     * @param summary 요약 텍스트
+     * @param comment 감정 comment
+     * @return 조합된 텍스트
+     */
+    private String combineSummaryAndComment(String summary, String comment) {
+        log.debug("summary와 comment 조합 시작: summaryLength={}, commentLength={}", 
+                summary != null ? summary.length() : 0, 
+                comment != null ? comment.length() : 0);
+        
+        // summary가 없으면 comment만 반환
+        if (summary == null || summary.trim().isEmpty()) {
+            return comment != null && !comment.trim().isEmpty() ? comment.trim() : "";
+        }
+        
+        // comment가 없으면 summary만 반환
+        if (comment == null || comment.trim().isEmpty()) {
+            return summary.trim();
+        }
+        
+        // 둘 다 있으면 조합하여 반환
+        String combinedText = summary.trim() + ". " + comment.trim();
+        
+        log.debug("summary와 comment 조합 완료: combinedLength={}", combinedText.length());
+        return combinedText;
     }
 }
