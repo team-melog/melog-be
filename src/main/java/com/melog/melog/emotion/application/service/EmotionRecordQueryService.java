@@ -239,10 +239,11 @@ public class EmotionRecordQueryService {
      */
     private EmotionRecordResponse buildEmotionRecordResponse(EmotionRecord record) {
         // 감정 점수 목록 (상위 3개만 반환)
+        // 주의: id는 DB의 실제 EmotionScore ID를 유지 (월별 통계, 감정 점수 추적 등에서 필요)
         List<EmotionScoreResponse> emotionScoreResponses = emotionScorePersistencePort.findByRecord(record)
                 .stream()
                 .map(score -> EmotionScoreResponse.builder()
-                        .id(score.getId())
+                        .id(score.getId()) // DB ID 유지 (월별 통계 등에서 필요)
                         .emotionType(score.getEmotionType())
                         .percentage(score.getPercentage())
                         .step(score.getStep())
@@ -287,10 +288,11 @@ public class EmotionRecordQueryService {
      */
     private EmotionRecordSummaryResponse buildEmotionRecordSummaryResponse(EmotionRecord record) {
         // 감정 점수 목록 (상위 3개만 반환)
+        // 주의: id는 DB의 실제 EmotionScore ID를 유지 (월별 통계, 감정 점수 추적 등에서 필요)
         List<EmotionScoreResponse> emotionScoreResponses = emotionScorePersistencePort.findByRecord(record)
                 .stream()
                 .map(score -> EmotionScoreResponse.builder()
-                        .id(score.getId())
+                        .id(score.getId()) // DB ID 유지 (월별 통계 등에서 필요)
                         .emotionType(score.getEmotionType())
                         .percentage(score.getPercentage())
                         .step(score.getStep())

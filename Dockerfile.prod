@@ -19,8 +19,6 @@ RUN ./gradlew --no-daemon dependencies
 # 소스 코드 복사
 COPY src/ src/
 
-
-
 # 애플리케이션 빌드 (테스트 제외)
 RUN ./gradlew --no-daemon clean bootJar -x test
 
@@ -42,10 +40,10 @@ COPY --from=builder /app/build/libs/*.jar app.jar
 RUN chown -R spring:spring /app
 USER spring
 
-# 포트 노출 (프로덕션은 HTTPS 443, 개발은 HTTP 8080)
+# 포트 노출 (프로덕션 HTTPS)
 EXPOSE 443
 
-# 헬스체크 (프로덕션은 HTTPS, 개발은 HTTP)
+# 헬스체크 (HTTPS)
 HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
   CMD curl -f -k https://localhost:443/actuator/health || exit 1
 

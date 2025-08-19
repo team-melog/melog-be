@@ -1,8 +1,27 @@
 services:
+  # SSL 인증서 발급용 certbot 서비스 (프로필로 분리)
+  certbot:
+    image: certbot/certbot:latest
+    container_name: melog-certbot
+    volumes:
+      - /etc/letsencrypt:/etc/letsencrypt
+      - /var/lib/letsencrypt:/var/lib/letsencrypt
+    command: >
+      certonly --standalone
+      --email kioplm0211@gmail.com
+      --agree-tos --no-eff-email
+      --domains melog508.duckdns.org
+      --non-interactive
+    ports:
+      - "80:80"
+    restart: "no"
+    profiles:
+      - ssl-setup
+
   app:
     build:
       context: .
-      dockerfile: Dockerfile
+      dockerfile: Dockerfile.prod
     environment:
       SPRING_PROFILES_ACTIVE: prod
       DB_HOST: ${DB_HOST}
@@ -38,12 +57,18 @@ services:
       NCLOUD_S3_ENDPOINT: ${NCLOUD_S3_ENDPOINT}
       NCLOUD_S3_REGION: ${NCLOUD_S3_REGION}
       NCLOUD_S3_BUCKET: ${NCLOUD_S3_BUCKET}
-
+      # SSL 인증서 설정
+      DOMAIN_NAME: melog508.duckdns.org
+      SERVER_PORT: 443
+      SSL_KEY_STORE_PASSWORD: ${SSL_KEY_STORE_PASSWORD}
     ports:
-      - "8080:8080"
+      - "443:443"  # HTTPS 포트
+    user: "0:0"  # root 권한으로 실행 (권한 문제 해결)
+    volumes:
+      - /etc/letsencrypt:/etc/letsencrypt:ro  # SSL 인증서 전체 디렉터리 마운트
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8080/actuator/health"]
+      test: ["CMD", "curl", "-fsS", "-k", "https://localhost/actuator/health"]
       interval: 30s
       timeout: 10s
       retries: 3

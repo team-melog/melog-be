@@ -16,6 +16,19 @@ echo "DB_PORT: ${DB_PORT:-'NOT SET'}"
 echo "POSTGRES_DB: ${POSTGRES_DB:-'NOT SET'}"
 echo "POSTGRES_USER: ${POSTGRES_USER:-'NOT SET'}"
 echo "POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-'NOT SET'}"
+echo "CLOVA_SPEECH_CLIENT_ID=${CLOVA_SPEECH_CLIENT_ID:-'NOT SET'}"
+echo "CLOVA_SPEECH_CLIENT_SECRET=${CLOVA_SPEECH_CLIENT_SECRET:-'NOT SET'}"
+echo "CLOVA_STUDIO_API_KEY=${CLOVA_STUDIO_API_KEY:-'NOT SET'}"
+echo "CLOVA_APP_CLIENT_ID=${CLOVA_APP_CLIENT_ID:-'NOT SET'}"
+echo "CLOVA_APP_CLIENT_SECRET=${CLOVA_APP_CLIENT_SECRET:-'NOT SET'}"
+echo "NCLOUD_ACCESS_KEY=${NCLOUD_ACCESS_KEY:-'NOT SET'}"
+echo "NCLOUD_SECRET_KEY=${NCLOUD_SECRET_KEY:-'NOT SET'}"
+echo "NCLOUD_S3_ENDPOINT=${NCLOUD_S3_ENDPOINT:-'NOT SET'}"
+echo "NCLOUD_S3_REGION=${NCLOUD_S3_REGION:-'NOT SET'}"
+echo "NCLOUD_S3_BUCKET=${NCLOUD_S3_BUCKET:-'NOT SET'}"
+
+echo "DUCKDNS_TOKEN=${DUCKDNS_TOKEN:-'NOT SET'}"
+echo "SSL_KEY_STORE_PASSWORD=${SSL_KEY_STORE_PASSWORD:-'NOT SET'}"
 
 # 환경변수 파일 생성
 cat <<EOF > .env
@@ -34,29 +47,108 @@ NCLOUD_SECRET_KEY=${NCLOUD_SECRET_KEY}
 NCLOUD_S3_ENDPOINT=${NCLOUD_S3_ENDPOINT}
 NCLOUD_S3_REGION=${NCLOUD_S3_REGION}
 NCLOUD_S3_BUCKET=${NCLOUD_S3_BUCKET}
+DUCKDNS_TOKEN=${DUCKDNS_TOKEN}
+SSL_KEY_STORE_PASSWORD=${SSL_KEY_STORE_PASSWORD}
+DOMAIN_NAME=${DOMAIN_NAME:-melog508.duckdns.org}
+CERTBOT_EMAIL=${CERTBOT_EMAIL:-kioplm0211@gmail.com}
 EOF
 
 # 혹시 남아있는 고아 컨테이너/네트워크 정리
 echo "🧹 고아 컨테이너/네트워크 정리..."
 $COMPOSE -f docker-compose.prod.yml down --remove-orphans || true
 
+# Docker 캐시 정리 (용량 부족 방지)
+echo "🧹 Docker 캐시 정리 중..."
+docker system prune -f 2>/dev/null || true
+
+# SSL 인증서 존재 확인 (기동 전 실사)
+echo "🔐 SSL 인증서 사전 점검 중..."
+DOMAIN_NAME="${DOMAIN_NAME:-melog508.duckdns.org}"
+EMAIL="${CERTBOT_EMAIL:-kioplm0211@gmail.com}"
+echo "🔍 사용할 도메인: $DOMAIN_NAME"
+echo "📧 인증서 발급 이메일: $EMAIL"
+
+# 1) DuckDNS 레코드 업데이트
+echo "🦆 DuckDNS 레코드 업데이트 중..."
+curl -s "https://www.duckdns.org/update?domains=${DOMAIN_NAME%%.*}&token=${DUCKDNS_TOKEN}&ip="
+echo ""
+
+# 2) 80 포트 비우기 (HTTP-01 검증을 위해)
+echo "🔓 80 포트 비우기 중..."
+# Docker 컨테이너로 실행 중인 서비스만 중지
+docker ps --filter "publish=80" --format "{{.ID}}" | xargs -r docker stop || true
+echo "✅ 80 포트 비움 완료"
+
+# 3) SSL 인증서 발급 또는 갱신
+echo "🔐 SSL 인증서 처리 중..."
+
+# PKCS12 키스토어 확인 (이미 생성되어 있음)
+echo "🔍 PKCS12 키스토어 확인 중..."
+if [ -f "/etc/letsencrypt/live/$DOMAIN_NAME/keystore.p12" ]; then
+    echo "✅ PKCS12 키스토어 확인됨!"
+    echo "🔐 키스토어 경로: /etc/letsencrypt/live/$DOMAIN_NAME/keystore.p12"
+    echo "📏 키스토어 크기: $(ls -lh "/etc/letsencrypt/live/$DOMAIN_NAME/keystore.p12" | awk '{print $5}')"
+else
+    echo "❌ PKCS12 키스토어를 찾을 수 없습니다!"
+    echo "💡 수동으로 PKCS12 키스토어를 생성해주세요:"
+    echo "   openssl pkcs12 -export \\"
+    echo "     -in /etc/letsencrypt/live/$DOMAIN_NAME/fullchain.pem \\"
+    echo "     -inkey /etc/letsencrypt/live/$DOMAIN_NAME/privkey.pem \\"
+    echo "     -out /etc/letsencrypt/live/$DOMAIN_NAME/keystore.p12 \\"
+    echo "     -name \"melog\" \\"
+    echo "     -passout pass:\"${SSL_KEY_STORE_PASSWORD:-melog1234}\""
+    exit 1
+fi
+
+# 4) 메인 애플리케이션 실행
 echo "🔨 새 이미지 빌드 및 실행..."
-$COMPOSE -f docker-compose.prod.yml --env-file .env up -d --build
+$COMPOSE -f docker-compose.prod.yml --env-file .env up -d --build app
+
+# 5) 애플리케이션 상태 확인
+echo "🔍 애플리케이션 상태 확인 중..."
 
 echo "⏳ 기동 대기..."
-sleep 10
+sleep 15
 
 echo "📊 컨테이너 상태 확인..."
 $COMPOSE -f docker-compose.prod.yml ps
 
+# 컨테이너 내부에서 SSL 인증서 확인
+echo "🧪 컨테이너 내부 SSL 인증서 확인 중..."
+$COMPOSE -f docker-compose.prod.yml exec app sh -lc "
+  echo '== Inside app container: check cert files =='
+  ls -la /etc/letsencrypt/live/$DOMAIN_NAME || exit 1
+  ls -la /etc/letsencrypt/archive/$DOMAIN_NAME || true
+  # 파일 권한 및 내용 확인
+  echo '=== File permissions ==='
+  ls -la /etc/letsencrypt/live/$DOMAIN_NAME/fullchain.pem
+  ls -la /etc/letsencrypt/live/$DOMAIN_NAME/privkey.pem
+  echo '=== File content check ==='
+  head -n 1 /etc/letsencrypt/live/$DOMAIN_NAME/fullchain.pem
+  head -n 1 /etc/letsencrypt/live/$DOMAIN_NAME/privkey.pem
+  echo '=== File size check ==='
+  wc -l /etc/letsencrypt/live/$DOMAIN_NAME/fullchain.pem
+  wc -l /etc/letsencrypt/live/$DOMAIN_NAME/privkey.pem
+" || {
+    echo "❌ 컨테이너에서 SSL 인증서가 보이지 않습니다 (마운트/경로 문제)";
+    echo "   docker-compose.prod.yml의 볼륨 마운트를 확인하세요";
+    exit 1;
+}
+echo "✅ 컨테이너 내부 SSL 인증서 확인 완료"
+
 echo "🏥 헬스체크..."
-if curl -fsS http://localhost:8080/actuator/health >/dev/null; then
-  echo "✅ 애플리케이션 기동 OK"
+if curl -fsS -k https://localhost/actuator/health >/dev/null; then
+  echo "✅ 애플리케이션 기동 OK (HTTPS)"
 else
-  echo "❌ 헬스체크 실패. 앱 로그:"
+  echo "❌ HTTPS 헬스체크 실패. 앱 로그:"
   $COMPOSE -f docker-compose.prod.yml logs --no-color app || true
   exit 1
 fi
 
 echo "🎉 배포 완료!"
-echo "📱 http://$(curl -s ifconfig.me):8080"
+
+# HTTPS 완료 메시지
+echo "🔒 HTTPS 설정 완료!"
+echo "📱 HTTPS: https://$(curl -s ifconfig.me):443"
+echo "🌐 도메인: https://melog508.duckdns.org"
+echo "💡 Load Balancer: https://49.50.134.32"

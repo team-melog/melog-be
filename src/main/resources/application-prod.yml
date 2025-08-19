@@ -33,11 +33,19 @@ spring:
       max-request-size: 3MB
       enabled: true
 
+  error:
+    include-stacktrace: never
+    include-message: always
+
 logging:
   level:
     com.melog.melog: INFO
     org.springframework.web: WARN
     org.hibernate: WARN
+    org.springframework.boot.ssl: DEBUG
+    org.springframework.web.server: DEBUG
+    org.springframework.boot: DEBUG
+    org.springframework.context: DEBUG
   pattern:
     console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
 
@@ -51,7 +59,10 @@ management:
       show-details: when-authorized
 
 server:
-  port: 8080
-  error:
-    include-stacktrace: never
-    include-message: always
+  port: ${SERVER_PORT:443}
+  ssl:
+    enabled: true
+    key-store: /etc/letsencrypt/live/melog508.duckdns.org/keystore.p12
+    key-store-type: PKCS12
+    key-store-password: ${SSL_KEY_STORE_PASSWORD}
+    key-alias: melog
