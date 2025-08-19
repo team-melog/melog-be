@@ -5,9 +5,11 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.melog.melog.emotion.domain.EmotionType;
 import lombok.Builder;
 import lombok.Getter;
+import lombok.ToString;
 
 @Getter
 @Builder
+@ToString
 public class EmotionScoreResponse {
     private Long id;
     @JsonIgnore

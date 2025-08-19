@@ -2,6 +2,7 @@ package com.melog.melog.emotion.domain.model.response;
 
 import lombok.Builder;
 import lombok.Getter;
+import lombok.ToString;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -9,6 +10,7 @@ import java.util.List;
 
 @Getter
 @Builder
+@ToString
 public class EmotionRecordResponse {
     private Long id;
     private String text;

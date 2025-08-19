@@ -3,6 +3,7 @@ package com.melog.melog.clova.domain.model.response;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.ToString;
 import lombok.AllArgsConstructor;
 
 import java.util.List;
@@ -30,6 +31,7 @@ public class EmotionAnalysisResponse {
     
     @Getter
     @Builder
+    @ToString
     @NoArgsConstructor
     @AllArgsConstructor
     public static class EmotionScore {
