@@ -9,6 +9,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 import com.melog.melog.clova.application.port.in.SpeechToTextUseCase;
+
+import java.time.LocalDate;
 import java.time.YearMonth;
 import java.util.List;
 
@@ -28,6 +30,15 @@ public class EmotionRecordService implements EmotionRecordUseCase {
     @Transactional
     public EmotionRecordResponse createEmotionRecord(String nickname, EmotionRecordCreateRequest request) {
         var savedRecord = emotionRecordCreationService.createEmotionRecordFromText(nickname, request);
+        return emotionRecordQueryService.getEmotionRecord(nickname, savedRecord.getId());
+    }
+
+    /**
+     * 감정 등록 및 분석 요청 (텍스트) - 날짜 지정 가능 (Admin 전용)
+     */
+    @Transactional
+    public EmotionRecordResponse createEmotionRecordWithDate(String nickname, EmotionRecordCreateRequest request, LocalDate targetDate) {
+        var savedRecord = emotionRecordCreationService.createEmotionRecordFromTextWithDate(nickname, request, targetDate);
         return emotionRecordQueryService.getEmotionRecord(nickname, savedRecord.getId());
     }
 

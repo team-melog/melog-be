@@ -1,6 +1,8 @@
 package com.melog.melog.emotion.domain.model.request;
 
 import com.melog.melog.emotion.domain.EmotionType;
+
+import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
@@ -8,6 +10,7 @@ import java.util.List;
 
 @Getter
 @NoArgsConstructor
+@AllArgsConstructor
 public class EmotionRecordSelectRequest {
     private List<EmotionSelection> emotions;
     

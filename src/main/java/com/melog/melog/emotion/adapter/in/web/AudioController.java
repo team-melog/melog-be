@@ -159,11 +159,4 @@ public class AudioController {
         public String getVoiceName() { return voiceName; }
     }
 
-    /**
-     * (선택) 헬스 체크가 필요하면 아래 유지
-     */
-//    @GetMapping("/audio/health")
-//    public ResponseEntity<String> healthCheck() {
-//        return ResponseEntity.ok("Audio API is healthy");
-//    }
 }
