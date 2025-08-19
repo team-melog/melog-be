@@ -5,7 +5,6 @@ import java.io.OutputStream;
 
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -16,7 +15,6 @@ import org.springframework.web.multipart.MultipartFile;
 import com.melog.melog.clova.application.port.in.AnalyzeSentimentUseCase;
 import com.melog.melog.clova.application.port.in.SpeechToTextUseCase;
 import com.melog.melog.clova.application.port.in.TextToSpeakUseCase;
-import com.melog.melog.clova.domain.model.VoiceType;
 import com.melog.melog.clova.domain.model.request.AnalyzeSentimentRequest;
 import com.melog.melog.clova.domain.model.request.TtsRequest;
 import com.melog.melog.clova.domain.model.response.AnalyzeSentimentResponse;
@@ -73,45 +71,27 @@ public class ClovaApiContoller {
         }
     }
 
-    @GetMapping("/tts")
-    public void ttsTest(
-            @RequestParam String nickname,
-            @RequestParam String text,
-            @RequestParam String voiceTypeString,
-            @RequestParam(required = false, defaultValue = "0") int emotion,
-            @RequestParam(required = false, defaultValue = "1") int emotionStrength,
+    @PostMapping(value = "/tts", consumes = MediaType.APPLICATION_JSON_VALUE)
+    public void tts(@RequestBody TtsRequest req, HttpServletResponse response) throws IOException {
 
-            HttpServletResponse response) throws IOException {
-
-        TtsResponse res = textToSpeakUseCase.textToSpeak(
-                TtsRequest.builder()
-                        .nickname(nickname)
-                        .text(text)
-                        .emotion(emotion)
-                        .emotionStrength(emotionStrength)
-                        .voiceType(VoiceType.valueOf(voiceTypeString))
-                        .build());
+        TtsResponse res = textToSpeakUseCase.textToSpeak(req);
 
         byte[] audio = res.getAudioByteArr();
-        String format = res.getFormat() != null ? res.getFormat().toLowerCase() : "mp3";
+        String format = (res.getFormat() == null) ? "mp3" : res.getFormat().toLowerCase();
 
-        // Content-Type 지정
         switch (format) {
             case "mp3" -> response.setContentType("audio/mpeg");
             case "wav" -> response.setContentType("audio/wav");
             default -> response.setContentType("application/octet-stream");
         }
 
-        // 다운로드 되게 파일명 헤더 설정
-        String filename = nickname + "_" + System.currentTimeMillis() + "." + format;
+        String filename = req.getVoiceType() + "_" + System.currentTimeMillis() + "." + format;
         response.setHeader("Content-Disposition", "attachment; filename=\"" + filename + "\"");
 
-        // 사이즈 있으면 세팅
         if (res.getAudioFileSize() > 0) {
             response.setContentLength(res.getAudioFileSize());
         }
 
-        // 실제 바이트 전송
         try (OutputStream os = response.getOutputStream()) {
             os.write(audio);
             os.flush();
