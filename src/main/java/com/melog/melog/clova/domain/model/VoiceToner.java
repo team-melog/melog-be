@@ -131,4 +131,21 @@ public class VoiceToner {
     private static int clamp(int v, int min, int max) {
         return Math.max(min, Math.min(max, v));
     }
+
+    /**
+     * 기본 음성 톤 설정 반환
+     * 모든 값이 중립(0)으로 설정된 기본 톤
+     * 
+     * @return 기본 음성 톤 설정
+     */
+    public static VoiceToner getDefaultTone() {
+        return VoiceToner.builder()
+                .volume(0)
+                .speed(0)
+                .pitch(0)
+                .alpha(0)
+                .emotion(0)
+                .emotionStrength(0)
+                .build();
+    }
 }

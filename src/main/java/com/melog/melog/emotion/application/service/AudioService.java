@@ -109,13 +109,17 @@ public class AudioService implements AudioUseCase {
             // 3. 요청 타입에 따른 분기 처리
             AudioResponse response;
             if (request.isUserUploadRequest()) {
-                // 사용자 업로드 파일 반환
-                response = handleUserUploadAudio(emotionRecord);
-                log.info("사용자 업로드 오디오 반환 완료: recordId={}", request.getRecordId());
+                // 사용자 업로드 파일 또는 감정 기반 TTS 파일 반환
+                response = handleUserUploadAudio(emotionRecord, request.getVoiceType());
+                log.info("사용자 업로드 오디오 반환 완료: recordId={}, voiceType={}", request.getRecordId(), request.getVoiceType());
             } else {
-                // TTS 생성 또는 캐시된 파일 반환
-                response = handleTtsAudio(emotionRecord, request.getVoiceTypeOrDefault());
-                log.info("TTS 오디오 처리 완료: recordId={}, voiceType={}", request.getRecordId(), request.getVoiceTypeOrDefault());
+                // voiceType이 null이 아닐 때만 TTS 생성 또는 캐시된 파일 반환
+                if (request.getVoiceType() != null) {
+                    response = handleTtsAudio(emotionRecord, request.getVoiceType());
+                    log.info("TTS 오디오 처리 완료: recordId={}, voiceType={}", request.getRecordId(), request.getVoiceType());
+                } else {
+                    throw new RuntimeException("summary 요청 시에는 voiceType이 필요합니다. 준비된 음성 파일이 없습니다.");
+                }
             }
             
             return response;
@@ -187,33 +191,71 @@ public class AudioService implements AudioUseCase {
 
     /**
      * 사용자 업로드 오디오 파일 처리
+     * voiceType이 null이면 원본 음성 파일, 아니면 TTS 생성 파일 반환
      * 
      * @param emotionRecord 감정 기록
-     * @return 사용자 업로드 오디오 응답
-     * @throws RuntimeException 업로드된 오디오 파일이 없는 경우
+     * @param voiceType 음성 타입 (null이면 원본 파일, 아니면 TTS 생성)
+     * @return 사용자 업로드 또는 TTS 오디오 응답
      */
-    private AudioResponse handleUserUploadAudio(EmotionRecord emotionRecord) {
-        log.debug("사용자 업로드 오디오 처리 시작: recordId={}", emotionRecord.getId());
+    private AudioResponse handleUserUploadAudio(EmotionRecord emotionRecord, VoiceType voiceType) {
+        log.debug("사용자 업로드 오디오 처리 시작: recordId={}, voiceType={}", emotionRecord.getId(), voiceType);
         
-        // 업로드된 오디오 파일 존재 여부 확인
-        if (emotionRecord.getAudioFilePath() == null || emotionRecord.getAudioFilePath().trim().isEmpty()) {
-            throw new RuntimeException("업로드된 오디오 파일이 없습니다. TTS 기능만 사용 가능합니다. 감정 기록 ID: " + emotionRecord.getId());
+        if (voiceType == null) {
+            // voiceType이 null이면 원본 음성 파일 반환
+            if (emotionRecord.getAudioFilePath() == null || emotionRecord.getAudioFilePath().trim().isEmpty()) {
+                throw new RuntimeException("업로드된 오디오 파일이 없습니다. 감정 기록 ID: " + emotionRecord.getId());
+            }
+            
+            // S3 파일 존재 여부 확인 (옵션: 성능상 이유로 생략 가능)
+            if (!s3FileService.fileExists(emotionRecord.getAudioFilePath())) {
+                log.warn("S3에서 오디오 파일을 찾을 수 없음: recordId={}, path={}", 
+                        emotionRecord.getId(), emotionRecord.getAudioFilePath());
+                // 파일이 없어도 URL은 반환하여 클라이언트에서 처리하도록 함
+            }
+            
+            return AudioResponse.fromUserUpload(
+                    emotionRecord.getAudioFilePath(),
+                    emotionRecord.getAudioFileName(),
+                    emotionRecord.getAudioFileSize(),
+                    emotionRecord.getAudioMimeType(),
+                    emotionRecord.getAudioDuration()
+            );
+        } else {
+            // voiceType이 지정되면 사용자 텍스트로 감정 기반 TTS 생성
+            if (emotionRecord.getText() == null || emotionRecord.getText().trim().isEmpty()) {
+                throw new RuntimeException("TTS 생성을 위한 텍스트가 없습니다. 감정 기록 ID: " + emotionRecord.getId());
+            }
+            
+            try {
+                // 감정 데이터 추출 및 음성 톤 계산 (사용자 업로드 요청 시에만 감정 적용)
+                List<EmotionRecordCreateRequest.UserSelectedEmotion> emotions = extractEmotionsFromRecord(emotionRecord);
+                VoiceToner voiceToner = calculateVoiceToner(emotions);
+                
+                // 캐시 키 생성 및 캐시 조회 (사용자 텍스트 사용)
+                String cacheKey = generateTtsCacheKey(emotionRecord.getText(), voiceType, voiceToner);
+                Optional<TtsCache> cachedTts = ttsCachePersistencePort.findByCacheKey(cacheKey);
+                
+                if (cachedTts.isPresent()) {
+                    // 캐시 히트: 기존 파일 반환
+                    log.info("사용자 업로드 TTS 캐시 히트: recordId={}, cacheKey={}", emotionRecord.getId(), cacheKey);
+                    return AudioResponse.fromTtsCache(
+                            cachedTts.get().getS3Url(),
+                            cachedTts.get().getFileName(),
+                            cachedTts.get().getFileSize(),
+                            cachedTts.get().getMimeType(),
+                            voiceType);
+                } else {
+                    // 캐시 미스: 새로운 TTS 생성
+                    log.info("사용자 업로드 TTS 캐시 미스, 새로 생성: recordId={}, cacheKey={}", emotionRecord.getId(), cacheKey);
+                    return generateAndCacheNewTts(emotionRecord, voiceType, voiceToner, cacheKey, emotionRecord.getText());
+                }
+                
+            } catch (Exception e) {
+                log.error("사용자 업로드 TTS 처리 중 오류 발생: recordId={}, voiceType={}, error={}", 
+                        emotionRecord.getId(), voiceType, e.getMessage(), e);
+                throw new RuntimeException("TTS 오디오 생성에 실패했습니다: " + e.getMessage(), e);
+            }
         }
-        
-        // S3 파일 존재 여부 확인 (옵션: 성능상 이유로 생략 가능)
-        if (!s3FileService.fileExists(emotionRecord.getAudioFilePath())) {
-            log.warn("S3에서 오디오 파일을 찾을 수 없음: recordId={}, path={}", 
-                    emotionRecord.getId(), emotionRecord.getAudioFilePath());
-            // 파일이 없어도 URL은 반환하여 클라이언트에서 처리하도록 함
-        }
-        
-        return AudioResponse.fromUserUpload(
-                emotionRecord.getAudioFilePath(),
-                emotionRecord.getAudioFileName(),
-                emotionRecord.getAudioFileSize(),
-                emotionRecord.getAudioMimeType(),
-                emotionRecord.getAudioDuration()
-        );
     }
 
     /**
@@ -226,18 +268,17 @@ public class AudioService implements AudioUseCase {
     private AudioResponse handleTtsAudio(EmotionRecord emotionRecord, VoiceType voiceType) {
         log.debug("TTS 오디오 처리 시작: recordId={}, voiceType={}", emotionRecord.getId(), voiceType);
         
-        // 텍스트 존재 여부 확인
-        if (emotionRecord.getText() == null || emotionRecord.getText().trim().isEmpty()) {
-            throw new RuntimeException("TTS 생성을 위한 텍스트가 없습니다. 감정 기록 ID: " + emotionRecord.getId());
+        // 요약 텍스트 존재 여부 확인 (TTS는 항상 summary 사용)
+        if (emotionRecord.getSummary() == null || emotionRecord.getSummary().trim().isEmpty()) {
+            throw new RuntimeException("TTS 생성을 위한 요약 텍스트가 없습니다. 감정 기록 ID: " + emotionRecord.getId());
         }
         
         try {
-            // 1. 감정 데이터 추출 및 음성 톤 계산
-            List<EmotionRecordCreateRequest.UserSelectedEmotion> emotions = extractEmotionsFromRecord(emotionRecord);
-            VoiceToner voiceToner = calculateVoiceToner(emotions);
+            // 1. TTS는 기본 톤으로 고정 (감정 조절 없음)
+            VoiceToner voiceToner = VoiceToner.getDefaultTone();
             
-            // 2. 캐시 키 생성 및 캐시 조회
-            String cacheKey = generateTtsCacheKey(emotionRecord.getText(), voiceType, voiceToner);
+            // 2. 캐시 키 생성 및 캐시 조회 (summary 텍스트 사용)
+            String cacheKey = generateTtsCacheKey(emotionRecord.getSummary(), voiceType, voiceToner);
             Optional<TtsCache> cachedTts = ttsCachePersistencePort.findByCacheKey(cacheKey);
             
             if (cachedTts.isPresent()) {
@@ -252,7 +293,7 @@ public class AudioService implements AudioUseCase {
             } else {
                 // 캐시 미스: 새로운 TTS 생성
                 log.info("TTS 캐시 미스, 새로 생성: recordId={}, cacheKey={}", emotionRecord.getId(), cacheKey);
-                return generateAndCacheNewTts(emotionRecord, voiceType, voiceToner, cacheKey);
+                return generateAndCacheNewTts(emotionRecord, voiceType, voiceToner, cacheKey, emotionRecord.getSummary());
             }
             
         } catch (Exception e) {
@@ -396,26 +437,27 @@ public class AudioService implements AudioUseCase {
      * @param voiceType 음성 타입
      * @param voiceToner 음성 톤 설정
      * @param cacheKey 캐시 키
+     * @param textForTts TTS 생성에 사용할 텍스트
      * @return 생성된 TTS 오디오 응답
      */
     @Transactional
     private AudioResponse generateAndCacheNewTts(EmotionRecord emotionRecord, VoiceType voiceType, 
-                                                VoiceToner voiceToner, String cacheKey) {
+                                                VoiceToner voiceToner, String cacheKey, String textForTts) {
         log.info("새로운 TTS 생성 시작: recordId={}, voiceType={}, cacheKey={}", 
                 emotionRecord.getId(), voiceType, cacheKey);
         
         try {
-            // 1. 감정 데이터 추출 (TTS 생성용)
-            List<EmotionRecordCreateRequest.UserSelectedEmotion> emotions = extractEmotionsFromRecord(emotionRecord);
+            // 1. 감정 데이터 추출 (TTS 생성용) - voiceToner 기반으로 감정 리스트 생성
+            List<EmotionRecordCreateRequest.UserSelectedEmotion> emotions = generateEmotionsFromToner(voiceToner);
             
             // 2. TTS 생성 요청
-            TtsResponse ttsResponse = generateTtsFromService(emotionRecord.getText(), voiceType, emotions);
+            TtsResponse ttsResponse = generateTtsFromService(textForTts, voiceType, emotions);
             
             // 3. S3에 업로드
             String s3Url = uploadTtsToS3(ttsResponse, emotionRecord.getUser().getNickname());
             
             // 4. 캐시에 저장
-            TtsCache savedCache = saveTtsToCache(cacheKey, emotionRecord.getText(), voiceType, 
+            TtsCache savedCache = saveTtsToCache(cacheKey, textForTts, voiceType, 
                     voiceToner, s3Url, ttsResponse);
             
             log.info("새로운 TTS 생성 및 캐시 저장 완료: recordId={}, cacheId={}, s3Url={}", 
@@ -484,6 +526,24 @@ public class AudioService implements AudioUseCase {
         
         log.debug("TTS S3 업로드 완료: s3Url={}", s3Url);
         return s3Url;
+    }
+
+    /**
+     * VoiceToner로부터 감정 리스트 생성
+     * 기본적으로 중립 감정을 반환하되, 필요시 VoiceToner의 설정에 따라 감정을 유추
+     * 
+     * @param voiceToner 음성 톤 설정
+     * @return 생성된 감정 리스트
+     */
+    private List<EmotionRecordCreateRequest.UserSelectedEmotion> generateEmotionsFromToner(VoiceToner voiceToner) {
+        log.debug("VoiceToner로부터 감정 생성: emotion={}, emotionStrength={}", 
+                voiceToner.getEmotion(), voiceToner.getEmotionStrength());
+        
+        // 기본적으로 중립 감정 반환
+        return List.of(EmotionRecordCreateRequest.UserSelectedEmotion.builder()
+                .type(com.melog.melog.emotion.domain.EmotionType.CALMNESS.getDescription())
+                .percentage(50)
+                .build());
     }
 
     /**

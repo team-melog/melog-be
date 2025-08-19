@@ -1,8 +1,6 @@
 package com.melog.melog.common.adapter.in.web;
 
 import com.melog.melog.common.service.DummyDataService;
-import com.melog.melog.emotion.application.service.EmotionRecordService;
-import com.melog.melog.user.application.port.in.UserUseCase;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

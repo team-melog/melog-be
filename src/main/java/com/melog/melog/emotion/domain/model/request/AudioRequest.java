@@ -15,9 +15,10 @@ import lombok.NoArgsConstructor;
  * TTS 생성 시에는 음성 타입을 지정할 수 있습니다.
  * 
  * 비즈니스 규칙:
- * - isRequiredUserAudio가 true인 경우: 기존 업로드된 음성 파일 반환
- * - isRequiredUserAudio가 false인 경우: TTS로 새로 생성하거나 캐시된 파일 반환
- * - TTS 요청 시 voiceType은 필수값이며, null인 경우 기본값(ARA) 사용
+ * - isRequiredUserAudio=true, voiceType=null: 원본 업로드 음성 파일 반환
+ * - isRequiredUserAudio=true, voiceType=지정: emotionRecord.text로 감정 기반 TTS 생성
+ * - isRequiredUserAudio=false, voiceType=지정: emotionRecord.summary로 기본 톤 TTS 생성
+ * - isRequiredUserAudio=false, voiceType=null: 준비된 음성 파일 없음으로 오류
  * 
  * @author Melog Team
  * @since 1.0
@@ -61,11 +62,11 @@ public class AudioRequest {
     /**
      * TTS 음성 타입
      * 
-     * isRequiredUserAudio가 false일 때만 사용됩니다.
-     * VoiceType enum에 정의된 음성 중 하나를 선택
+     * isRequiredUserAudio가 true이고 voiceType이 지정된 경우: 감정 기반 TTS 생성
+     * isRequiredUserAudio가 false이고 voiceType이 지정된 경우: 기본 톤으로 TTS 생성
+     * voiceType이 null인 경우: 원본 음성 파일 반환 (isRequiredUserAudio=true일 때만)
      * 
-     * null인 경우 기본값으로 VoiceType.ARA 사용
-     * (비즈니스 요구사항에 따라 기본값 변경 가능)
+     * VoiceType enum에 정의된 음성 중 하나를 선택
      */
     @Schema(description = "TTS 음성 타입", example = "ARA")
     private VoiceType voiceType;
@@ -114,13 +115,4 @@ public class AudioRequest {
         return Boolean.TRUE.equals(isRequiredUserAudio);
     }
 
-    /**
-     * TTS 요청 시 사용할 음성 타입 반환
-     * null인 경우 기본값(ARA) 반환
-     * 
-     * @return 사용할 음성 타입
-     */
-    public VoiceType getVoiceTypeOrDefault() {
-        return voiceType != null ? voiceType : VoiceType.ARA;
-    }
 }
