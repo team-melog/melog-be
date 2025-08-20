@@ -37,28 +37,34 @@ public class EmotionRecordCreationService {
     private final EmotionAnalysisUseCase emotionAnalysisUseCase;
     private final ObjectMapper objectMapper;
 
+
+    @Transactional
+    public EmotionRecord createEmotionRecordFromText(String nickname, EmotionRecordCreateRequest request) {
+        return createEmotionRecordFromTextWithDate(nickname, request, LocalDate.now());
+    }
     /**
      * 텍스트 기반 감정 기록을 생성합니다.
      */
     @Transactional(rollbackFor = Exception.class)
     public EmotionRecord createEmotionRecordFromText(String nickname, EmotionRecordCreateRequest request) {
+
         // 사용자 조회
         User user = userPersistencePort.findByNickname(nickname)
                 .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다: " + nickname));
 
         // 오늘 날짜로 감정 기록 생성
-        LocalDate today = LocalDate.now();
+        // LocalDate today = LocalDate.now();
         
         // 해당 날짜에 이미 기록이 있는지 확인
-        if (emotionRecordPersistencePort.existsByUserAndDate(user, today)) {
-            throw new IllegalArgumentException("오늘 이미 감정 기록이 존재합니다: " + today);
+        if (emotionRecordPersistencePort.existsByUserAndDate(user, date)) {
+            throw new IllegalArgumentException("오늘 이미 감정 기록이 존재합니다: " + date);
         }
 
         // 감정 기록 생성
         EmotionRecord emotionRecord = EmotionRecord.builder()
                 .user(user)
                 .text(request.getText())
-                .date(today)
+                .date(date)
                 .build();
 
         EmotionRecord savedRecord = emotionRecordPersistencePort.save(emotionRecord);

@@ -1,0 +1,352 @@
+[
+  {
+    "text": "새벽부터 붙잡고 있던 메모리 누수 버그를 드디어 해결했습니다. 팀 채팅방에 패치 노트를 올리는 순간 하루가 환해졌습니다.",
+    "userSelectedEmotion": {
+      "type": "기쁨",
+      "percentage": 100
+    }
+  },
+  {
+    "text": "출근길에 비가 멈추고 구름 사이로 햇빛이 비쳤습니다. 그 틈에 찍은 사진을 가족에게 보내니 모두가 미소로 답했습니다.",
+    "userSelectedEmotion": {
+      "type": "기쁨",
+      "percentage": 100
+    }
+  },
+  {
+    "text": "몇 주 준비한 데모가 끊김 없이 잘 돌아갔습니다. 발표가 끝나자 박수가 이어졌고 손끝까지 가벼워졌습니다.",
+    "userSelectedEmotion": {
+      "type": "기쁨",
+      "percentage": 100
+    }
+  },
+  {
+    "text": "마감 직전까지 고민하던 카피 문장이 딱 맞아 떨어졌습니다. 동료가 '이제 퍼즐이 완성됐다'고 말해 주어 더 기뻤습니다.",
+    "userSelectedEmotion": {
+      "type": "기쁨",
+      "percentage": 100
+    }
+  },
+  {
+    "text": "주방 정리를 마치고 따뜻한 차를 내렸습니다. 창밖 고양이가 낮잠 자는 모습을 보며 작은 행복이 크게 느껴졌습니다.",
+    "userSelectedEmotion": {
+      "type": "기쁨",
+      "percentage": 100
+    }
+  },
+  {
+    "text": "런 이후 첫 5km 완주 기록을 갱신했습니다. 숨이 찼지만 골인 지점에서 스스로에게 박수를 보냈습니다.",
+    "userSelectedEmotion": {
+      "type": "기쁨",
+      "percentage": 100
+    }
+  },
+  {
+    "text": "어려웠던 고객 요청을 깔끔히 정리해 드렸더니 감사 메일이 도착했습니다. 모니터 앞에서 괜히 허리를 펴게 되었습니다.",
+    "userSelectedEmotion": {
+      "type": "기쁨",
+      "percentage": 100
+    }
+  },
+  {
+    "text": "오래 미뤄둔 책 한 권을 오늘 마쳤습니다. 마지막 페이지를 덮는 순간 마음이 환해지고 다음 이야기가 기대되었습니다.",
+    "userSelectedEmotion": {
+      "type": "기쁨",
+      "percentage": 100
+    }
+  },
+  {
+    "text": "식탁 위에 계절 과일을 예쁘게 담아 가족과 나눠 먹었습니다. 웃음소리가 집 안을 가득 채워 마음이 가벼웠습니다.",
+    "userSelectedEmotion": {
+      "type": "기쁨",
+      "percentage": 100
+    }
+  },
+  {
+    "text": "오랫동안 준비한 제안서가 채택되지 않았다는 연락을 받았습니다. 빈 회의실에 홀로 앉아 잠시 마음을 추슬렀습니다.",
+    "userSelectedEmotion": {
+      "type": "슬픔",
+      "percentage": 100
+    }
+  },
+  {
+    "text": "약속 장소에 도착했지만 상대가 급히 사정이 생겨 오지 못했습니다. 컵에 남은 얼음이 천천히 녹는 것을 보며 자리를 정리했습니다.",
+    "userSelectedEmotion": {
+      "type": "슬픔",
+      "percentage": 100
+    }
+  },
+  {
+    "text": "돌보고 있던 화분이 결국 시들어 버렸습니다. 잎을 하나하나 쓰다듬으며 미안하다는 말밖에 떠오르지 않았습니다.",
+    "userSelectedEmotion": {
+      "type": "슬픔",
+      "percentage": 100
+    }
+  },
+  {
+    "text": "오랜만에 들른 동네 서점이 문을 닫았습니다. 익숙한 종이 냄새가 그리워져 발걸음이 무거워졌습니다.",
+    "userSelectedEmotion": {
+      "type": "슬픔",
+      "percentage": 100
+    }
+  },
+  {
+    "text": "기대하던 공연 예매를 놓쳤습니다. 남은 좌석을 몇 번이나 새로고침했지만 빈자리는 끝내 나타나지 않았습니다.",
+    "userSelectedEmotion": {
+      "type": "슬픔",
+      "percentage": 100
+    }
+  },
+  {
+    "text": "친구와의 짧은 통화를 끊고 나니, 얼굴을 보지 못한 시간이 더 길게 느껴졌습니다. 화면 속 ‘통화 종료’ 글자가 유난히 차갑게 보였습니다.",
+    "userSelectedEmotion": {
+      "type": "슬픔",
+      "percentage": 100
+    }
+  },
+  {
+    "text": "열심히 쓴 글이 저장되지 않아 사라졌습니다. 빈 문서 화면을 한동안 멍하니 바라보며 마음을 추슬렀습니다.",
+    "userSelectedEmotion": {
+      "type": "슬픔",
+      "percentage": 100
+    }
+  },
+  {
+    "text": "주말 소풍이 비로 취소되었습니다. 준비해 둔 도시락을 식탁에 올려놓고 조용히 빗소리만 들었습니다.",
+    "userSelectedEmotion": {
+      "type": "슬픔",
+      "percentage": 100
+    }
+  },
+  {
+    "text": "오래 쓰던 머그컵이 손에서 미끄러져 깨졌습니다. 손잡이 자국이 남은 자리만 덩그러니 남아 서늘했습니다.",
+    "userSelectedEmotion": {
+      "type": "슬픔",
+      "percentage": 100
+    }
+  },
+  {
+    "text": "고객센터 연결까지 30분을 기다렸는데 통화가 끊겼습니다. 반복되는 안내 멘트를 다시 듣자니 속이 뜨겁게 달아올랐습니다.",
+    "userSelectedEmotion": {
+      "type": "분노",
+      "percentage": 100
+    }
+  },
+  {
+    "text": "회의에서 준비한 자료를 제대로 읽어보지도 않고 결론부터 내리는 모습을 보았습니다. 억울함이 목 끝까지 차올랐습니다.",
+    "userSelectedEmotion": {
+      "type": "분노",
+      "percentage": 100
+    }
+  },
+  {
+    "text": "코드 리뷰에서 근거 없는 지적이 이어졌습니다. 논리를 설명해도 되돌아오는 답이 없어 답답함이 분노로 번졌습니다.",
+    "userSelectedEmotion": {
+      "type": "분노",
+      "percentage": 100
+    }
+  },
+  {
+    "text": "약속 시간을 반복해서 지키지 않는 메시지를 또 받았습니다. 휴대폰 화면을 잠시 내려놓고 심호흡을 했지만 화는 쉽게 가라앉지 않았습니다.",
+    "userSelectedEmotion": {
+      "type": "분노",
+      "percentage": 100
+    }
+  },
+  {
+    "text": "엘리베이터 앞에서 새치기를 당했습니다. 항의하려다 다른 이들의 시선에 잠시 멈칫했지만 마음속 불꽃은 쉬 꺼지지 않았습니다.",
+    "userSelectedEmotion": {
+      "type": "분노",
+      "percentage": 100
+    }
+  },
+  {
+    "text": "오랫동안 재현되던 버그가 다시 터졌고, 담당 부서 간 핑퐁이 이어졌습니다. 책임 없는 말들이 화약처럼 쌓였습니다.",
+    "userSelectedEmotion": {
+      "type": "분노",
+      "percentage": 100
+    }
+  },
+  {
+    "text": "수정 요청을 반영하지 않은 파일이 마치 최신본인 것처럼 공유되었습니다. 작업 시간이 무시당한 느낌에 화가 났습니다.",
+    "userSelectedEmotion": {
+      "type": "분노",
+      "percentage": 100
+    }
+  },
+  {
+    "text": "밤늦게 아랫집에서 진동이 계속 올라왔습니다. 벽을 타고 전해지는 소음에 신경이 곤두서 잠을 설쳤습니다.",
+    "userSelectedEmotion": {
+      "type": "분노",
+      "percentage": 100
+    }
+  },
+  {
+    "text": "창문을 열자 저녁 바람이 얇은 커튼을 흔들었습니다. 차 한 잔을 천천히 마시며 마음을 가라앉혔습니다.",
+    "userSelectedEmotion": {
+      "type": "평온",
+      "percentage": 100
+    }
+  },
+  {
+    "text": "노을빛이 벽을 타고 흘렀습니다. 오늘의 메모를 정리하니 머릿속도 함께 정리되는 듯했습니다.",
+    "userSelectedEmotion": {
+      "type": "평온",
+      "percentage": 100
+    }
+  },
+  {
+    "text": "공원 벤치에 앉아 아이들의 웃음소리를 들었습니다. 오래된 나무 그늘 아래에서 호흡이 고르게 돌아왔습니다.",
+    "userSelectedEmotion": {
+      "type": "평온",
+      "percentage": 100
+    }
+  },
+  {
+    "text": "싱크대를 말끔히 비우고 난 뒤 주방이 한층 넓어 보였습니다. 물기 하나 없는 상판을 보며 마음이 차분해졌습니다.",
+    "userSelectedEmotion": {
+      "type": "평온",
+      "percentage": 100
+    }
+  },
+  {
+    "text": "짧은 스트레칭 후 등 근육이 풀리는 기분을 느꼈습니다. 몸이 이완되자 생각도 얌전해졌습니다.",
+    "userSelectedEmotion": {
+      "type": "평온",
+      "percentage": 100
+    }
+  },
+  {
+    "text": "라디오에서 잔잔한 피아노 선율이 흘러나왔습니다. 스피커 앞 조도를 낮추자 방 안의 공기가 부드러워졌습니다.",
+    "userSelectedEmotion": {
+      "type": "평온",
+      "percentage": 100
+    }
+  },
+  {
+    "text": "문서의 장과 절을 정갈하게 나누었습니다. 구조가 선명해지자 마음의 소음도 줄었습니다.",
+    "userSelectedEmotion": {
+      "type": "평온",
+      "percentage": 100
+    }
+  },
+  {
+    "text": "파도 소리에 맞춰 호흡을 길게 들이쉬고 내쉬었습니다. 발끝에 닿는 모래가 오늘의 긴장을 가져갔습니다.",
+    "userSelectedEmotion": {
+      "type": "평온",
+      "percentage": 100
+    }
+  },
+  {
+    "text": "새 프로젝트의 킥오프 미팅이 잡혔습니다. 빈 노트를 펼치자 첫 페이지에 어떤 이야기가 채워질지 마음이 두근거렸습니다.",
+    "userSelectedEmotion": {
+      "type": "설렘",
+      "percentage": 100
+    }
+  },
+  {
+    "text": "내일 처음 만날 팀원과의 1:1 일정이 잡혔습니다. 어떤 관점을 나눌지 생각하니 벌써 대화가 기대되었습니다.",
+    "userSelectedEmotion": {
+      "type": "설렘",
+      "percentage": 100
+    }
+  },
+  {
+    "text": "오래 기다리던 택배의 ‘배송 중’ 알림이 울렸습니다. 포장 상자를 열어볼 순간을 떠올리니 손끝이 설레었습니다.",
+    "userSelectedEmotion": {
+      "type": "설렘",
+      "percentage": 100
+    }
+  },
+  {
+    "text": "여행 일정을 지도에 표시했습니다. 서로 다른 색의 핀이 박힐 때마다 마음이 한 뼘씩 들떴습니다.",
+    "userSelectedEmotion": {
+      "type": "설렘",
+      "percentage": 100
+    }
+  },
+  {
+    "text": "신규 기능의 첫 사용자 피드백을 곧 받습니다. 화면을 열어볼 순간을 상상하니 심장이 한 박자 빨라졌습니다.",
+    "userSelectedEmotion": {
+      "type": "설렘",
+      "percentage": 100
+    }
+  },
+  {
+    "text": "처음 가는 카페를 저장해 두었습니다. 문을 여는 벨소리와 새로운 향을 떠올리니 발걸음이 가벼워졌습니다.",
+    "userSelectedEmotion": {
+      "type": "설렘",
+      "percentage": 100
+    }
+  },
+  {
+    "text": "지원한 프로그램의 면접 일정이 확정되었습니다. 예상 질문을 정리하면서도 미소가 먼저 지어졌습니다.",
+    "userSelectedEmotion": {
+      "type": "설렘",
+      "percentage": 100
+    }
+  },
+  {
+    "text": "주문 제작하던 노트가 완성되었다는 메시지를 받았습니다. 표지를 만져볼 생각에 마음이 간질거렸습니다.",
+    "userSelectedEmotion": {
+      "type": "설렘",
+      "percentage": 100
+    }
+  },
+  {
+    "text": "회의가 연달아 이어져 머리가 무거웠습니다. 메모를 정리하려고 노트를 펴도 글자가 눈에 잘 들어오지 않았습니다.",
+    "userSelectedEmotion": {
+      "type": "지침",
+      "percentage": 100
+    }
+  },
+  {
+    "text": "야근이 길어져 지하철 손잡이에 매달린 채 꾸벅꾸벅 졸았습니다. 집 문을 여는 손목이 유난히 힘이 없었습니다.",
+    "userSelectedEmotion": {
+      "type": "지침",
+      "percentage": 100
+    }
+  },
+  {
+    "text": "오전에 집중을 너무 많이 쏟았는지 오후에는 눈꺼풀이 자꾸 내려앉았습니다. 커피 향도 더 이상 자극이 되지 않았습니다.",
+    "userSelectedEmotion": {
+      "type": "지침",
+      "percentage": 100
+    }
+  },
+  {
+    "text": "장시간 운전 후 허리가 뻐근해 몸을 곧게 펴기가 어려웠습니다. 의자 등받이에 기대어 한참을 쉬었습니다.",
+    "userSelectedEmotion": {
+      "type": "지침",
+      "percentage": 100
+    }
+  },
+  {
+    "text": "서류를 오래 들여다보니 글자가 겹쳐 보였습니다. 화면 밝기를 낮추고 잠시 창밖을 바라보며 숨을 고르려 했습니다.",
+    "userSelectedEmotion": {
+      "type": "지침",
+      "percentage": 100
+    }
+  },
+  {
+    "text": "미세한 감기 기운이 하루 종일 따라붙었습니다. 몸이 살짝 뜨거워져 작은 일도 버겁게 느껴졌습니다.",
+    "userSelectedEmotion": {
+      "type": "지침",
+      "percentage": 100
+    }
+  },
+  {
+    "text": "시스템 점검을 밤새 지켜본 뒤, 아침 햇빛이 창틀을 넘어올 때까지 눈이 무겁게 감겼습니다.",
+    "userSelectedEmotion": {
+      "type": "지침",
+      "percentage": 100
+    }
+  },
+  {
+    "text": "집에 돌아오니 가방 끈 자국이 어깨에 선명했습니다. 따뜻한 물로 손을 씻으며 오늘의 피로를 조심스레 내려놓았습니다.",
+    "userSelectedEmotion": {
+      "type": "지침",
+      "percentage": 100
+    }
+  }
+]
