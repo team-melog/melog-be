@@ -372,7 +372,13 @@ public class EmotionRecordCreationService {
             }
         }
         
-        log.info("음성 파일 유효성 검증 통과: {} (크기: {} bytes)", originalFilename, fileSize);
+        // STT를 위한 추가 검증
+        if (fileSize < 2048) { // 2KB 미만
+            log.warn("음성 파일이 매우 작습니다 ({} bytes). STT 변환 품질이 낮을 수 있습니다.", fileSize);
+        }
+        
+        log.info("음성 파일 유효성 검증 통과: {} (크기: {} bytes, 형식: {})", 
+                originalFilename, fileSize, getFileExtension(originalFilename));
     }
 
     /**
