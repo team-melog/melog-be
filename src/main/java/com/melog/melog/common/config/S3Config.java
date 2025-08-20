@@ -48,7 +48,7 @@ public class S3Config {
                                 endpoint, region))
                 .withCredentials(new AWSStaticCredentialsProvider(
                         new BasicAWSCredentials(accessKey, secretKey)))
-                .withPathStyleAccessEnabled(true) // Ncloud Storage는 path-style URL 사용
+                .withPathStyleAccessEnabled(false) // Virtual-hosted-style 사용 (한글 닉네임 지원)
                 .build();
     }
 }
