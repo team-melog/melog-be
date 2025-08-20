@@ -17,7 +17,10 @@ import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.Arrays;
+import java.util.Base64;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -63,9 +66,10 @@ public class S3FileService {
             // Cache-Control 설정 (오디오 스트리밍 최적화)
             metadata.setCacheControl("public, max-age=31536000, immutable");
             
-            metadata.addUserMetadata("original-filename", originalFilename);
-            metadata.addUserMetadata("upload-date", LocalDateTime.now().toString());
-            metadata.addUserMetadata("user-id", userId);
+            // user metadata를 ASCII로 강제 (S3 서명 문제 방지)
+            putAsciiUserMeta(metadata, "original-filename", originalFilename);
+            putAsciiUserMeta(metadata, "upload-date", LocalDateTime.now().toString());
+            putAsciiUserMeta(metadata, "user-id", userId);
 
             // 파일 업로드 (퍼블릭 읽기 허용)
             PutObjectRequest putObjectRequest = new PutObjectRequest(
@@ -285,41 +289,72 @@ public class S3FileService {
 
     /**
      * S3 키를 생성합니다.
+     * S3 업로드용이므로 원본 그대로 사용 (URL 인코딩하지 않음)
      */
     private String generateS3Key(String userId, String fileName) {
         LocalDateTime now = LocalDateTime.now();
         String year = String.valueOf(now.getYear());
         String month = String.format("%02d", now.getMonthValue());
         
-        try {
-            // 한글 닉네임을 URL 인코딩하여 S3 키에 안전하게 포함
-            String encodedUserId = URLEncoder.encode(userId, StandardCharsets.UTF_8.toString());
-            return String.format("users/%s/audio/%s/%s/%s", encodedUserId, year, month, fileName);
-        } catch (Exception e) {
-            log.warn("URL 인코딩 실패, 원본 userId 사용: {}", userId);
-            // 인코딩 실패 시 원본 userId 사용
-            return String.format("users/%s/audio/%s/%s/%s", userId, year, month, fileName);
-        }
+        // S3 키는 원본 그대로 사용 (SDK가 알아서 처리)
+        return String.format("users/%s/audio/%s/%s/%s", userId, year, month, fileName);
     }
 
     /**
      * S3 URL을 생성합니다.
+     * 공개 URL용이므로 경로 세그먼트별로 URL 인코딩 (슬래시는 보존)
      */
     private String generateS3Url(String s3Key) {
         try {
-            // S3 키가 이미 URL 인코딩되어 있는지 확인
-            if (s3Key.contains("%")) {
-                // 이미 인코딩된 경우 그대로 사용
-                return String.format("%s/%s/%s", endpoint, bucketName, s3Key);
-            } else {
-                // 인코딩되지 않은 경우 안전하게 인코딩
-                String encodedKey = URLEncoder.encode(s3Key, StandardCharsets.UTF_8.toString());
-                return String.format("%s/%s/%s", endpoint, bucketName, encodedKey);
-            }
+            // 경로 세그먼트별로 인코딩 (슬래시는 보존)
+            String encodedKey = encodePathForUrl(s3Key);
+            return String.format("%s/%s/%s", endpoint, bucketName, encodedKey);
         } catch (Exception e) {
             log.warn("S3 URL 생성 중 에러 발생, 원본 키 사용: {}", e.getMessage());
-            // 에러 발생 시 원본 키 사용
             return String.format("%s/%s/%s", endpoint, bucketName, s3Key);
+        }
+    }
+    
+    /**
+     * URL 표시용으로 경로 세그먼트별로 인코딩합니다.
+     * 슬래시는 보존하고, 각 세그먼트만 인코딩합니다.
+     */
+    private String encodePathForUrl(String key) {
+        if (key == null || key.isEmpty()) {
+            return key;
+        }
+        
+        return Arrays.stream(key.split("/"))
+            .map(segment -> {
+                try {
+                    // 각 세그먼트를 URL 인코딩하고, +를 %20으로 변환
+                    return URLEncoder.encode(segment, StandardCharsets.UTF_8.toString())
+                                   .replace("+", "%20");
+                } catch (Exception e) {
+                    log.warn("세그먼트 인코딩 실패: {}", segment);
+                    return segment;
+                }
+            })
+            .collect(Collectors.joining("/")); // 슬래시는 보존
+    }
+    
+    /**
+     * user metadata를 ASCII로 강제하여 S3 서명 문제를 방지합니다.
+     * 비-ASCII 값은 Base64로 인코딩하여 저장합니다.
+     */
+    private void putAsciiUserMeta(ObjectMetadata metadata, String key, String value) {
+        if (value == null) return;
+        
+        boolean isAscii = StandardCharsets.US_ASCII.newEncoder().canEncode(value);
+        if (isAscii) {
+            // ASCII인 경우 그대로 저장
+            metadata.addUserMetadata(key, value);
+        } else {
+            // 비-ASCII인 경우 Base64로 인코딩하여 저장
+            String encodedValue = Base64.getEncoder().encodeToString(value.getBytes(StandardCharsets.UTF_8));
+            metadata.addUserMetadata(key + "-utf8-b64", encodedValue);
+            log.info("비-ASCII user metadata를 Base64로 인코딩: {}={} -> {}-utf8-b64={}", 
+                    key, value, key, encodedValue);
         }
     }
 
@@ -335,12 +370,11 @@ public class S3FileService {
         int bucketIndex = s3Url.indexOf(bucketName);
         String s3Key = s3Url.substring(bucketIndex + bucketName.length() + 1);
         
+        // URL에서 추출한 키는 이미 인코딩되어 있으므로 디코딩하여 원본 키 반환
         try {
-            // URL 인코딩된 키를 디코딩하여 반환
             return URLDecoder.decode(s3Key, StandardCharsets.UTF_8.toString());
         } catch (Exception e) {
             log.warn("URL 디코딩 실패, 원본 키 사용: {}", s3Key);
-            // 디코딩 실패 시 원본 키 사용
             return s3Key;
         }
     }

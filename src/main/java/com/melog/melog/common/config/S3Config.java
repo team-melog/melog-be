@@ -10,6 +10,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
 
+
 @Slf4j
 @Configuration
 @Profile({"dev", "prod"})
@@ -38,7 +39,7 @@ public class S3Config {
         System.out.println("Access Key: " + (accessKey != null ? accessKey.substring(0, 10) + "..." : "null"));
         System.out.println("Secret Key: " + (secretKey != null ? secretKey.substring(0, 10) + "..." : "null"));
         System.out.println("Endpoint: " + endpoint);
-        System.out.println("Region: " + region);
+        System.out.println("Region: " + region); 
         System.out.println("=================");
         
         // Ncloud Storage 설정 (표준 S3 API 사용)
@@ -48,7 +49,7 @@ public class S3Config {
                                 endpoint, region))
                 .withCredentials(new AWSStaticCredentialsProvider(
                         new BasicAWSCredentials(accessKey, secretKey)))
-                .withPathStyleAccessEnabled(false) // Virtual-hosted-style 사용 (한글 닉네임 지원)
+                .withPathStyleAccessEnabled(true) 
                 .build();
     }
 }
