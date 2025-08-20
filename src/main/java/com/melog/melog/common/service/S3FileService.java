@@ -306,7 +306,21 @@ public class S3FileService {
      * S3 URL을 생성합니다.
      */
     private String generateS3Url(String s3Key) {
-        return String.format("%s/%s/%s", endpoint, bucketName, s3Key);
+        try {
+            // S3 키가 이미 URL 인코딩되어 있는지 확인
+            if (s3Key.contains("%")) {
+                // 이미 인코딩된 경우 그대로 사용
+                return String.format("%s/%s/%s", endpoint, bucketName, s3Key);
+            } else {
+                // 인코딩되지 않은 경우 안전하게 인코딩
+                String encodedKey = URLEncoder.encode(s3Key, StandardCharsets.UTF_8.toString());
+                return String.format("%s/%s/%s", endpoint, bucketName, encodedKey);
+            }
+        } catch (Exception e) {
+            log.warn("S3 URL 생성 중 에러 발생, 원본 키 사용: {}", e.getMessage());
+            // 에러 발생 시 원본 키 사용
+            return String.format("%s/%s/%s", endpoint, bucketName, s3Key);
+        }
     }
 
     /**
