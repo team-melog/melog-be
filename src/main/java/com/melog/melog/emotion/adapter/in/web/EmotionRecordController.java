@@ -13,6 +13,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.time.YearMonth;
 import java.util.List;
+import com.melog.melog.emotion.domain.InputValidationUtil;
 
 @Slf4j
 @RestController
@@ -68,6 +69,11 @@ public class EmotionRecordController {
         
         if (request == null || request.getText() == null || request.getText().trim().isEmpty()) {
             throw new IllegalArgumentException("텍스트는 필수입니다.");
+        }
+        
+        // 텍스트 유효성 검증 추가
+        if (!InputValidationUtil.isEmotionAnalysisSuitable(request.getText())) {
+            throw new IllegalArgumentException("의미 있는 텍스트를 입력해주세요. 감정 분석이 어려운 내용입니다.");
         }
         
         return ResponseEntity.status(HttpStatus.CREATED)
@@ -137,12 +143,19 @@ public class EmotionRecordController {
         
         // STT 요청인 경우 (audioFile이 제공된 경우)
         if (audioFile != null && !audioFile.isEmpty()) {
+            // 음성 파일 검증은 기존 로직 사용 (EmotionRecordCreationService, SpeechToTextService)
+            // STT 결과 텍스트에 대한 유효성 검증은 서비스 레이어에서 수행
             return ResponseEntity.status(HttpStatus.CREATED)
                     .body(emotionRecordUseCase.createEmotionRecordWithAudio(nickname, audioFile, userSelectedEmotionJson));
         }
         
         // 텍스트 요청인 경우 (JSON 바디가 제공된 경우)
         if (request != null && request.getText() != null && !request.getText().trim().isEmpty()) {
+            // 텍스트 유효성 검증 추가
+            if (!InputValidationUtil.isEmotionAnalysisSuitable(request.getText())) {
+                throw new IllegalArgumentException("의미 있는 텍스트를 입력해주세요. 감정 분석이 어려운 내용입니다.");
+            }
+            
             return ResponseEntity.status(HttpStatus.CREATED)
                     .body(emotionRecordUseCase.createEmotionRecord(nickname, request));
         }

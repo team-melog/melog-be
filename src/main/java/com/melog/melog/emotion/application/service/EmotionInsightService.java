@@ -7,7 +7,6 @@ import com.melog.melog.user.application.port.out.UserPersistencePort;
 import com.melog.melog.user.domain.User;
 import com.melog.melog.clova.application.port.in.MonthlySummaryUseCase;
 import com.melog.melog.clova.domain.model.request.MonthlySummaryRequest;
-import com.melog.melog.emotion.application.service.EmotionRecordQueryService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -28,7 +27,6 @@ public class EmotionInsightService {
 
     private final UserPersistencePort userPersistencePort;
     private final EmotionRecordPersistencePort emotionRecordPersistencePort;
-    private final EmotionScorePersistencePort emotionScorePersistencePort;
     private final EmotionKeywordPersistencePort emotionKeywordPersistencePort;
     private final EmotionRecordQueryService emotionRecordQueryService;
     private final MonthlySummaryUseCase monthlySummaryUseCase;

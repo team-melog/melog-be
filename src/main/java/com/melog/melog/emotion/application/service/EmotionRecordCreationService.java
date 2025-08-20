@@ -1,7 +1,6 @@
 package com.melog.melog.emotion.application.service;
 
 import com.melog.melog.emotion.domain.model.request.*;
-import com.melog.melog.emotion.domain.model.response.*;
 import com.melog.melog.emotion.domain.*;
 import com.melog.melog.emotion.application.port.out.*;
 import com.melog.melog.user.application.port.out.UserPersistencePort;
