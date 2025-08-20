@@ -10,6 +10,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
 
 import java.time.YearMonth;
 import java.util.List;
@@ -25,6 +27,24 @@ public class EmotionRecordController {
     private final ObjectMapper objectMapper;
 
     /**
+     * URL 인코딩된 nickname을 디코딩합니다.
+     * 한글이 포함된 경우에만 디코딩을 수행합니다.
+     */
+    private String decodeNickname(String nickname) {
+        // URL 인코딩된 경우에만 디코딩 (한글 포함 시)
+        if (nickname.contains("%")) {
+            try {
+                return URLDecoder.decode(nickname, StandardCharsets.UTF_8);
+            } catch (Exception e) {
+                log.warn("URL 디코딩 실패, 원본 nickname 사용: {}", nickname);
+                return nickname;
+            }
+        }
+        // 영어 닉네임의 경우 원본 그대로 반환
+        return nickname;
+    }
+
+    /**
      * 감정 등록 및 분석 요청 (STT - 음성 파일)
      * POST /api/users/{nickname}/emotions/stt
      * 
@@ -37,9 +57,12 @@ public class EmotionRecordController {
      */
     @PostMapping("/stt")
     public ResponseEntity<EmotionRecordResponse> createEmotionRecordWithSTT(
-            @PathVariable String nickname,
+            @PathVariable(value = "nickname", required = true) String nickname,
             @RequestParam(value = "audioFile", required = false) MultipartFile audioFile,
             @RequestParam(value = "userSelectedEmotion", required = false) String userSelectedEmotionJson) {
+        
+        // URL 디코딩 처리
+        nickname = decodeNickname(nickname);
         
         log.info("STT 요청 수신 - nickname: {}, audioFile: {}, userSelectedEmotion: {}", 
                 nickname, 
@@ -64,8 +87,11 @@ public class EmotionRecordController {
      */
     @PostMapping("/text")
     public ResponseEntity<EmotionRecordResponse> createEmotionRecordWithText(
-            @PathVariable String nickname,
+            @PathVariable(value = "nickname", required = true) String nickname,
             @RequestBody EmotionRecordCreateRequest request) {
+        
+        // URL 디코딩 처리
+        nickname = decodeNickname(nickname);
         
         if (request == null || request.getText() == null || request.getText().trim().isEmpty()) {
             throw new IllegalArgumentException("텍스트는 필수입니다.");
@@ -85,8 +111,11 @@ public class EmotionRecordController {
      * GET /api/users/{nickname}/emotions/calendar?month=YYYY-MM
      */
     @GetMapping("/calendar")
-    public ResponseEntity<List<EmotionCalendarResponse>> getEmotionCalendar(@PathVariable String nickname,
+    public ResponseEntity<List<EmotionCalendarResponse>> getEmotionCalendar(@PathVariable(value = "nickname", required = true) String nickname,
                                                                           @RequestParam String month) {
+        // URL 디코딩 처리
+        nickname = decodeNickname(nickname);
+        
         YearMonth yearMonth = YearMonth.parse(month);
         List<EmotionCalendarResponse> response = emotionRecordUseCase.getEmotionCalendar(nickname, yearMonth);
         return ResponseEntity.ok(response);
@@ -97,8 +126,11 @@ public class EmotionRecordController {
      * GET /api/users/{nickname}/emotions/summary/chart?month=YYYY-MM
      */
     @GetMapping("/summary/chart")
-    public ResponseEntity<EmotionChartResponse> getEmotionChart(@PathVariable String nickname,
+    public ResponseEntity<EmotionChartResponse> getEmotionChart(@PathVariable(value = "nickname", required = true) String nickname,
                                                               @RequestParam String month) {
+        // URL 디코딩 처리
+        nickname = decodeNickname(nickname);
+        
         YearMonth yearMonth = YearMonth.parse(month);
         EmotionChartResponse response = emotionRecordUseCase.getEmotionChart(nickname, yearMonth);
         return ResponseEntity.ok(response);
@@ -109,8 +141,11 @@ public class EmotionRecordController {
      * GET /api/users/{nickname}/emotions/summary/insight?month=YYYY-MM
      */
     @GetMapping("/summary/insight")
-    public ResponseEntity<EmotionInsightResponse> getEmotionInsight(@PathVariable String nickname,
+    public ResponseEntity<EmotionInsightResponse> getEmotionInsight(@PathVariable(value = "nickname", required = true) String nickname,
                                                                   @RequestParam String month) {
+        // URL 디코딩 처리
+        nickname = decodeNickname(nickname);
+        
         YearMonth yearMonth = YearMonth.parse(month);
         EmotionInsightResponse response = emotionRecordUseCase.getEmotionInsight(nickname, yearMonth);
         return ResponseEntity.ok(response);
@@ -121,9 +156,12 @@ public class EmotionRecordController {
      * GET /api/users/{nickname}/emotions?page=0&size=7
      */
     @GetMapping
-    public ResponseEntity<EmotionListResponse> getEmotionList(@PathVariable String nickname,
+    public ResponseEntity<EmotionListResponse> getEmotionList(@PathVariable(value = "nickname", required = true) String nickname,
                                                             @RequestParam(defaultValue = "0") int page,
                                                             @RequestParam(defaultValue = "7") int size) {
+        // URL 디코딩 처리
+        nickname = decodeNickname(nickname);
+        
         EmotionListResponse response = emotionRecordUseCase.getEmotionList(nickname, page, size);
         return ResponseEntity.ok(response);
     }
@@ -136,10 +174,13 @@ public class EmotionRecordController {
      */
     @PostMapping
     public ResponseEntity<EmotionRecordResponse> createEmotionRecord(
-            @PathVariable String nickname,
+            @PathVariable(value = "nickname", required = true) String nickname,
             @RequestParam(value = "audioFile", required = false) MultipartFile audioFile,
             @RequestParam(value = "userSelectedEmotion", required = false) String userSelectedEmotionJson,
             @RequestBody(required = false) EmotionRecordCreateRequest request) {
+        
+        // URL 디코딩 처리
+        nickname = decodeNickname(nickname);
         
         // STT 요청인 경우 (audioFile이 제공된 경우)
         if (audioFile != null && !audioFile.isEmpty()) {
@@ -169,9 +210,12 @@ public class EmotionRecordController {
      * PUT /api/users/{nickname}/emotions/{id}/select
      */
     @PutMapping("/{id}/select")
-    public ResponseEntity<EmotionRecordResponse> updateEmotionSelection(@PathVariable String nickname,
+    public ResponseEntity<EmotionRecordResponse> updateEmotionSelection(@PathVariable(value = "nickname", required = true) String nickname,
                                                                       @PathVariable Long id,
                                                                       @RequestBody EmotionRecordSelectRequest request) {
+        // URL 디코딩 처리
+        nickname = decodeNickname(nickname);
+        
         EmotionRecordResponse response = emotionRecordUseCase.updateEmotionSelection(nickname, id, request);
         return ResponseEntity.ok(response);
     }
@@ -181,9 +225,12 @@ public class EmotionRecordController {
      * PUT /api/users/{nickname}/emotions/{id}/text
      */
     @PutMapping("/{id}/text")
-    public ResponseEntity<EmotionRecordResponse> updateEmotionText(@PathVariable String nickname,
+    public ResponseEntity<EmotionRecordResponse> updateEmotionText(@PathVariable(value = "nickname", required = true) String nickname,
                                                                  @PathVariable Long id,
                                                                  @RequestBody EmotionRecordTextUpdateRequest request) {
+        // URL 디코딩 처리
+        nickname = decodeNickname(nickname);
+        
         EmotionRecordResponse response = emotionRecordUseCase.updateEmotionText(nickname, id, request);
         return ResponseEntity.ok(response);
     }
@@ -193,8 +240,11 @@ public class EmotionRecordController {
      * GET /api/users/{nickname}/emotions/{id}
      */
     @GetMapping("/{id}")
-    public ResponseEntity<EmotionRecordResponse> getEmotionRecord(@PathVariable String nickname,
+    public ResponseEntity<EmotionRecordResponse> getEmotionRecord(@PathVariable(value = "nickname", required = true) String nickname,
                                                                 @PathVariable Long id) {
+        // URL 디코딩 처리
+        nickname = decodeNickname(nickname);
+        
         EmotionRecordResponse response = emotionRecordUseCase.getEmotionRecord(nickname, id);
         return ResponseEntity.ok(response);
     }
@@ -204,8 +254,11 @@ public class EmotionRecordController {
      * DELETE /api/users/{nickname}/emotions/{id}
      */
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteEmotionRecord(@PathVariable String nickname,
+    public ResponseEntity<Void> deleteEmotionRecord(@PathVariable(value = "nickname", required = true) String nickname,
                                                   @PathVariable Long id) {
+        
+        // URL 디코딩 처리
+        nickname = decodeNickname(nickname);
         emotionRecordUseCase.deleteEmotionRecord(nickname, id);
         return ResponseEntity.noContent().build();
     }
