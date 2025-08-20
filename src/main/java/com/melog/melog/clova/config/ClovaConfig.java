@@ -2,10 +2,14 @@
 package com.melog.melog.clova.config;
 
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Bean;
 import org.springframework.stereotype.Component;
+import org.springframework.web.client.RestTemplate;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import jakarta.annotation.PostConstruct;
+import org.springframework.boot.web.client.RestTemplateBuilder;
+import java.time.Duration;
 
 @Slf4j
 @Component
@@ -57,7 +61,7 @@ public class ClovaConfig {
     @Value("${CLOVA_STUDIO_MODEL:HCX-005}")
     private String studioModel;
     
-    @Value("${CLOVA_STUDIO_TIMEOUT_MS:8000}")
+    @Value("${CLOVA_STUDIO_TIMEOUT_MS:15000}")
     private int studioTimeoutMs;
 
     // Voice API 설정
@@ -70,6 +74,17 @@ public class ClovaConfig {
     @Value("${CLOVA_VOICE_TIMEOUT_MS:20000}")
     private int voiceTimeoutMs;
     
+    /**
+     * Clova Studio API용 RestTemplate을 생성합니다.
+     * 타임아웃 설정을 포함하여 성능을 최적화합니다.
+     */
+    @Bean
+    public RestTemplate clovaStudioRestTemplate() {
+        return new RestTemplateBuilder()
+                .setConnectTimeout(Duration.ofMillis(studioTimeoutMs))
+                .setReadTimeout(Duration.ofMillis(studioTimeoutMs))
+                .build();
+    }
 
     @PostConstruct
     public void logConfig() {
@@ -78,8 +93,8 @@ public class ClovaConfig {
                 clovaAppUrl, clovaAppClientId, clovaAppClientSecret);
         log.info("Speech URL: {}, Client ID: {}, Client Secret: {}", 
                 speechUrl, speechClientId, speechClientSecret);
-        log.info("Studio Base URL: {}, API Key: {}, Model: {}", 
-                studioBaseUrl, studioApiKey, studioModel);
+        log.info("Studio Base URL: {}, API Key: {}, Model: {}, Timeout: {}ms", 
+                studioBaseUrl, studioApiKey, studioModel, studioTimeoutMs);
     }
 
     // 기존 코드와의 호환성을 위한 getter 메서드들

@@ -65,9 +65,9 @@ public class MonthlySummaryService implements MonthlySummaryUseCase {
             
             응답 형식 (간결하게):
             요약: [2-3줄로 간단히]
-            조언: [한줄로 간단히]
+            조언: [2-3줄로 간단히]
             
-            주의: 응답은 200자 이내로 간결하게 작성해주세요.
+            주의: 응답은 300자 이내로 간결하게 작성해주세요.
             """, month, combinedComments);
     }
 
@@ -89,9 +89,9 @@ public class MonthlySummaryService implements MonthlySummaryUseCase {
             
             응답 형식 (간결하게):
             요약: [2-3줄로 간단히]
-            조언: [한줄로 간단히]
+            조언: [2-3줄로 간단히]
             
-            주의: 응답은 200자 이내로 간결하게 작성해주세요.
+            주의: 응답은 300자 이내로 간결하게 작성해주세요.
             """, month, distributionText.toString().replaceAll(", $", ""));
     }
 
