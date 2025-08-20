@@ -60,6 +60,14 @@ public class SpeechToTextAdapter implements SpeechToTextPort {
             // Parse response according to CLOVA Speech API documentation
             SttResponse sttResponse = parseResponse(root, request);
             
+            // 🔍 SttResponse 객체 생성 후 데이터 검증
+            log.info("[CLOVA STT] ===== SttResponse 객체 검증 =====");
+            log.info("[CLOVA STT] 13. SttResponse 객체 생성 완료");
+            log.info("[CLOVA STT] 14. sttResponse.getText(): '{}'", sttResponse.getText());
+            log.info("[CLOVA STT] 15. sttResponse.getText() 길이: {}", sttResponse.getText().length());
+            log.info("[CLOVA STT] 16. sttResponse.getText()가 빈 문자열인가? {}", sttResponse.getText().isEmpty());
+            log.info("[CLOVA STT] 17. sttResponse 객체 전체: {}", sttResponse);
+            
             log.info("[CLOVA STT] SUCCESS rid={} text={}", requestId, sttResponse.getText());
 
             return sttResponse;
@@ -111,16 +119,42 @@ public class SpeechToTextAdapter implements SpeechToTextPort {
     }
 
     private SttResponse parseResponse(JsonNode root, SttRequest request) {
+        // 🔍 데이터 흐름 추적을 위한 상세 로깅
+        log.info("[CLOVA STT] ===== STT 응답 파싱 시작 =====");
+        log.info("[CLOVA STT] 1. 원본 응답 전체: {}", root.toPrettyString());
+        log.info("[CLOVA STT] 2. root 객체 타입: {}", root.getClass().getSimpleName());
+        log.info("[CLOVA STT] 3. root가 null인가? {}", root == null);
+        
+        // text 필드 추출 과정 상세 로깅
+        JsonNode textNode = root.path("text");
+        log.info("[CLOVA STT] 4. text 노드 존재 여부: {}", textNode.isMissingNode() ? "MISSING" : "EXISTS");
+        log.info("[CLOVA STT] 5. text 노드 타입: {}", textNode.getNodeType());
+        log.info("[CLOVA STT] 6. text 노드 값: '{}'", textNode.asText(""));
+        
         String text = root.path("text").asText("");
+        log.info("[CLOVA STT] 7. 파싱된 text: '{}'", text);
+        log.info("[CLOVA STT] 8. text 길이: {}", text.length());
+        log.info("[CLOVA STT] 9. text가 빈 문자열인가? {}", text.isEmpty());
+        
+        // 다른 필드들도 확인
         Integer quota = root.path("quota").asInt(0);
         Integer assessmentScore = root.path("assessment_score").asInt(0);
         String assessmentDetails = root.path("assessment_details").asText("");
+        
+        log.info("[CLOVA STT] 10. Quota: {}, Assessment Score: {}, Details: '{}'", quota, assessmentScore, assessmentDetails);
+        
+        // 모든 필드 키 확인
+        log.info("[CLOVA STT] 11. 응답에 포함된 모든 필드 키들:");
+        root.fieldNames().forEachRemaining(key -> {
+            JsonNode value = root.get(key);
+            log.info("[CLOVA STT]    - {}: {} (타입: {})", key, value.asText(""), value.getNodeType());
+        });
         
         // Parse graph arrays
         List<Integer> refGraph = parseGraphArray(root.path("ref_graph"));
         List<Integer> usrGraph = parseGraphArray(root.path("usr_graph"));
         
-        return SttResponse.builder()
+        SttResponse sttResponse = SttResponse.builder()
                 .text(text)
                 .quota(quota)
                 .assessmentScore(assessmentScore)
@@ -129,6 +163,11 @@ public class SpeechToTextAdapter implements SpeechToTextPort {
                 .usrGraph(usrGraph)
                 .language(request.getLanguage())
                 .build();
+        
+        log.info("[CLOVA STT] 12. 생성된 SttResponse 객체의 text: '{}'", sttResponse.getText());
+        log.info("[CLOVA STT] ===== STT 응답 파싱 완료 =====");
+        
+        return sttResponse;
     }
     
     private List<Integer> parseGraphArray(JsonNode graphNode) {

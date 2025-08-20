@@ -34,6 +34,22 @@ public class GlobalExceptionHandler {
     public ResponseEntity<Map<String, Object>> handleRuntimeException(RuntimeException e) {
         log.error("RuntimeException: {}", e.getMessage(), e);
         
+        // STT 변환 실패 관련 예외 처리
+        if (e.getMessage() != null && (
+            e.getMessage().contains("음성을 텍스트로 변환할 수 없습니다") ||
+            e.getMessage().contains("음성 인식 결과가 너무 짧습니다"))) {
+            
+            Map<String, Object> errorResponse = new HashMap<>();
+            errorResponse.put("timestamp", LocalDateTime.now());
+            errorResponse.put("status", HttpStatus.BAD_REQUEST.value());
+            errorResponse.put("error", "Speech Recognition Failed");
+            errorResponse.put("message", e.getMessage());
+            errorResponse.put("code", "STT_CONVERSION_FAILED");
+            
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
+        }
+        
+        // 기존 RuntimeException 처리
         Map<String, Object> errorResponse = new HashMap<>();
         errorResponse.put("timestamp", LocalDateTime.now());
         errorResponse.put("status", HttpStatus.INTERNAL_SERVER_ERROR.value());
