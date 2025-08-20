@@ -53,6 +53,11 @@ dependencies {
 	implementation platform('org.springframework.cloud:spring-cloud-dependencies:2021.0.8')
 }
 
+// bootRun을 위한 mainClass 설정
+bootRun {
+	mainClass = 'com.melog.melog.MelogApplication'
+}
+
 tasks.named('test') {
 	useJUnitPlatform()
 }
