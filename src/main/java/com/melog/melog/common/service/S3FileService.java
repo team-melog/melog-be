@@ -11,6 +11,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.net.URLDecoder;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.UUID;
@@ -143,7 +146,15 @@ public class S3FileService {
         String year = String.valueOf(now.getYear());
         String month = String.format("%02d", now.getMonthValue());
         
-        return String.format("users/%s/audio/%s/%s/%s", userId, year, month, fileName);
+        try {
+            // 한글 닉네임을 URL 인코딩하여 S3 키에 안전하게 포함
+            String encodedUserId = URLEncoder.encode(userId, StandardCharsets.UTF_8.toString());
+            return String.format("users/%s/audio/%s/%s/%s", encodedUserId, year, month, fileName);
+        } catch (Exception e) {
+            log.warn("URL 인코딩 실패, 원본 userId 사용: {}", userId);
+            // 인코딩 실패 시 원본 userId 사용
+            return String.format("users/%s/audio/%s/%s/%s", userId, year, month, fileName);
+        }
     }
 
     /**
@@ -163,6 +174,15 @@ public class S3FileService {
         }
         
         int bucketIndex = s3Url.indexOf(bucketName);
-        return s3Url.substring(bucketIndex + bucketName.length() + 1);
+        String s3Key = s3Url.substring(bucketIndex + bucketName.length() + 1);
+        
+        try {
+            // URL 인코딩된 키를 디코딩하여 반환
+            return URLDecoder.decode(s3Key, StandardCharsets.UTF_8.toString());
+        } catch (Exception e) {
+            log.warn("URL 디코딩 실패, 원본 키 사용: {}", s3Key);
+            // 디코딩 실패 시 원본 키 사용
+            return s3Key;
+        }
     }
 }

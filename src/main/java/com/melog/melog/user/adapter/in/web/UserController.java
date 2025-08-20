@@ -31,8 +31,12 @@ public class UserController {
      * GET /api/users/{nickname}
      */
     @GetMapping("/{nickname}")
-    public ResponseEntity<UserResponse> getUser(@PathVariable String nickname) {
-        UserResponse response = userUseCase.getUserByNickname(nickname);
+    public ResponseEntity<UserResponse> getUser(@PathVariable(value = "nickname", required = true) String nickname) {
+        // 한글 포함 여부 확인 후 필요시에만 디코딩
+        String decodedNickname = nickname.contains("%") ? 
+            java.net.URLDecoder.decode(nickname, java.nio.charset.StandardCharsets.UTF_8) : nickname;
+        
+        UserResponse response = userUseCase.getUserByNickname(decodedNickname);
         return ResponseEntity.ok(response);
     }
 
@@ -41,9 +45,13 @@ public class UserController {
      * PUT /api/users/{nickname}
      */
     @PutMapping("/{nickname}")
-    public ResponseEntity<UserResponse> updateUser(@PathVariable String nickname, 
+    public ResponseEntity<UserResponse> updateUser(@PathVariable(value = "nickname", required = true) String nickname, 
                                                  @RequestBody UserUpdateRequest request) {
-        UserResponse response = userUseCase.updateUserNickname(nickname, request);
+        // 한글 포함 여부 확인 후 필요시에만 디코딩
+        String decodedNickname = nickname.contains("%") ? 
+            java.net.URLDecoder.decode(nickname, java.nio.charset.StandardCharsets.UTF_8) : nickname;
+        
+        UserResponse response = userUseCase.updateUserNickname(decodedNickname, request);
         return ResponseEntity.ok(response);
     }
 
@@ -52,8 +60,12 @@ public class UserController {
      * DELETE /api/users/{nickname}
      */
     @DeleteMapping("/{nickname}")
-    public ResponseEntity<Void> deleteUser(@PathVariable String nickname) {
-        userUseCase.deleteUser(nickname);
+    public ResponseEntity<Void> deleteUser(@PathVariable(value = "nickname", required = true) String nickname) {
+        // 한글 포함 여부 확인 후 필요시에만 디코딩
+        String decodedNickname = nickname.contains("%") ? 
+            java.net.URLDecoder.decode(nickname, java.nio.charset.StandardCharsets.UTF_8) : nickname;
+        
+        userUseCase.deleteUser(decodedNickname);
         return ResponseEntity.noContent().build();
     }
 } 
