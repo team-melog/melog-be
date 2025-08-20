@@ -287,8 +287,16 @@ public class EmotionRecordCreationService {
                     userId, audioFile.getOriginalFilename(), audioFile.getSize());
             
             String s3Url = s3FileService.uploadAudioFile(audioFile, userId);
-            log.info("S3 업로드 성공: {}", s3Url);
-            return s3Url;
+            
+            // S3 URL이 유효한지 확인 (NCloud S3 URL 형식 검증)
+            if (s3Url != null && !s3Url.trim().isEmpty() && 
+                (s3Url.startsWith("https://") || s3Url.startsWith("http://"))) {
+                log.info("S3 업로드 성공: {}", s3Url);
+                return s3Url;
+            } else {
+                log.warn("S3 URL이 유효하지 않음, 로컬 저장으로 폴백: {}", s3Url);
+                return saveAudioFileLocally(audioFile, audioFile.getOriginalFilename());
+            }
             
         } catch (Exception e) {
             log.error("S3 파일 업로드 중 오류 발생: {}", e.getMessage(), e);
