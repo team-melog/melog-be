@@ -17,7 +17,7 @@ import java.util.regex.Pattern;
  * 2. 특수문자와 공백만 있는 경우 차단  
  * 3. 5자 이하인 경우 차단
  * 4. 한글 중간에 자음/모음이 섞인 경우 차단
- * 5. 의미 없는 문자 비율 20% 이상인 경우 차단 (40% → 20%로 강화)
+ * 5. 의미 없는 문자 비율 40% 이상인 경우 차단
  * 
  * 제거된 규칙 (안정성 고려):
  * - 감정 표현 반복 차단 (사용자 진짜 감정 차단 위험)
@@ -37,8 +37,8 @@ public class InputValidationUtil {
         "^[가-힣]*[ㄱ-ㅎㅏ-ㅣ]+[가-힣]*$"  // 한글 중간에 자음/모음이 섞인 경우
     );
     
-    // 의미 없는 문자 비율 임계값 (20% 이상이면 차단)
-    private static final double MEANINGLESS_CHAR_THRESHOLD = 0.2;
+    // 의미 없는 문자 비율 임계값 (40% 이상이면 차단)
+    private static final double MEANINGLESS_CHAR_THRESHOLD = 0.4;
 
     /**
      * 텍스트 입력의 유효성을 검증합니다.
