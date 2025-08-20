@@ -133,33 +133,19 @@ public class ClovaStudioEmotionService implements EmotionAnalysisUseCase {
             .build();
     }
 
-    // === [추가] 준수 실패 시 리트라이 포함 분석 래퍼 ===
+    // === [수정] 성능 개선을 위해 1차 시도만 수행 ===
     public EmotionAnalysisResponse analyzeCompliant(String text, int minLen, int maxLen) {
-        // 1차 시도
-        EmotionAnalysisResponse first = clovaStudioAdapter.analyzeEmotion(EmotionAnalysisRequest.builder()
+        // 1차 시도만 수행 (성능 개선)
+        EmotionAnalysisResponse response = clovaStudioAdapter.analyzeEmotion(EmotionAnalysisRequest.builder()
             .text(text)
             .build());
-        first = normalizeEmotionsAndKeywords(first);
-
-        if (isSummaryLengthOk(first.getSummary(), minLen, maxLen) && looksSecondPerson(first.getSummary())
-                && keywordsMatchTopEmotions(first.getKeywords(), first.getEmotions())) {
-            return first;
-        }
-
-        // 2차: "리비전" 요청(요약만 600~800자로 재작성, 1:1 대화체 고정)
-        EmotionAnalysisResponse second = clovaStudioAdapter.reviseSummaryOnly(
-                text, first, minLen, maxLen, /*disableFunction=*/true);
-        second = normalizeEmotionsAndKeywords(second);
-
-        if (isSummaryLengthOk(second.getSummary(), minLen, maxLen) && looksSecondPerson(second.getSummary())
-                && keywordsMatchTopEmotions(second.getKeywords(), second.getEmotions())) {
-            return second;
-        }
-
-        // 3차(최대): function-calling 다시 활성화해 한 번 더
-        EmotionAnalysisResponse third = clovaStudioAdapter.reviseSummaryOnly(
-                text, first, minLen, maxLen, /*disableFunction=*/false);
-        third = normalizeEmotionsAndKeywords(third);
-        return third; // 마지막 결과 반환(최소 길이 보정은 서버단에서 한 번 더 체크 가능)
+        
+        // 응답 정규화
+        response = normalizeEmotionsAndKeywords(response);
+        
+        log.info("Clova Studio 감정 분석 완료 (1차 시도): 요약 길이 = {}, 감정 개수 = {}", 
+                response.getSummary().length(), response.getEmotions().size());
+        
+        return response;
     }
 }
