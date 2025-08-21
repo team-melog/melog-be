@@ -46,6 +46,15 @@ public class SpeechToTextAdapter implements SpeechToTextPort {
             // Send raw binary data
             HttpEntity<byte[]> entity = new HttpEntity<>(request.getAudioBinary(), headers);
             
+            // 🔍 STT 요청 전 오디오 파일 상세 정보 로깅
+            log.info("[CLOVA STT] ===== STT 요청 전 오디오 파일 정보 =====");
+            log.info("[CLOVA STT] 1. 오디오 바이너리 크기: {} bytes", request.getAudioBinary().length);
+            log.info("[CLOVA STT] 2. Content-Type 헤더: {}", headers.getContentType());
+            log.info("[CLOVA STT] 3. API Key ID: {}", headers.get("X-NCP-APIGW-API-KEY-ID"));
+            log.info("[CLOVA STT] 4. API Key 길이: {} characters", headers.get("X-NCP-APIGW-API-KEY") != null ? headers.get("X-NCP-APIGW-API-KEY").get(0).length() : "N/A");
+            log.info("[CLOVA STT] 5. 요청 ID: {}", requestId);
+            log.info("[CLOVA STT] ===== STT 요청 전 오디오 파일 정보 완료 =====");
+            
             log.info("[CLOVA STT] REQUEST rid={} url={} headers={} bodySize={}bytes", 
                 requestId, url, headers.toSingleValueMap(), request.getAudioBinary().length);
 
@@ -107,7 +116,20 @@ public class SpeechToTextAdapter implements SpeechToTextPort {
             builder.queryParam("graph", request.getGraph());
         }
         
-        return builder.toUriString();
+        String finalUrl = builder.toUriString();
+        
+        // 🔍 STT API 요청 URL과 파라미터 상세 로깅
+        log.info("[CLOVA STT] ===== STT API 요청 URL 구성 =====");
+        log.info("[CLOVA STT] 1. 기본 URL: {}", props.getUrl());
+        log.info("[CLOVA STT] 2. STT 엔드포인트: {}", props.getStt().getEndpoint());
+        log.info("[CLOVA STT] 3. 언어 설정: {}", language);
+        log.info("[CLOVA STT] 4. Assessment: {}", request.getAssessment());
+        log.info("[CLOVA STT] 5. Utterance: {}", request.getUtterance());
+        log.info("[CLOVA STT] 6. Graph: {}", request.getGraph());
+        log.info("[CLOVA STT] 7. 최종 요청 URL: {}", finalUrl);
+        log.info("[CLOVA STT] ===== STT API 요청 URL 구성 완료 =====");
+        
+        return finalUrl;
     }
 
     private HttpHeaders buildHeaders(SpeechProps props, String requestId) {
@@ -142,6 +164,26 @@ public class SpeechToTextAdapter implements SpeechToTextPort {
         String assessmentDetails = root.path("assessment_details").asText("");
         
         log.info("[CLOVA STT] 10. Quota: {}, Assessment Score: {}, Details: '{}'", quota, assessmentScore, assessmentDetails);
+        
+        // 🔍 text가 비어있을 때 추가 분석
+        if (text == null || text.trim().isEmpty()) {
+            log.warn("[CLOVA STT] ⚠️ STT 결과가 비어있습니다! 상세 분석 시작");
+            log.warn("[CLOVA STT] ⚠️ 1. HTTP 상태: 성공 (200)");
+            log.warn("[CLOVA STT] ⚠️ 2. text 필드 존재: {}", !textNode.isMissingNode());
+            log.warn("[CLOVA STT] ⚠️ 3. text 필드 타입: {}", textNode.getNodeType());
+            log.warn("[CLOVA STT] ⚠️ 4. text 필드 원본 값: '{}'", textNode.toString());
+            log.warn("[CLOVA STT] ⚠️ 5. assessment_score: {}", assessmentScore);
+            log.warn("[CLOVA STT] ⚠️ 6. assessment_details: '{}'", assessmentDetails);
+            log.warn("[CLOVA STT] ⚠️ 7. quota: {}", quota);
+            
+            // NCloud STT API의 특정 응답 패턴 확인
+            if (assessmentScore != null && assessmentScore > 0) {
+                log.warn("[CLOVA STT] ⚠️ 8. 음성 품질 점수: {} (점수가 낮으면 인식률 저하)", assessmentScore);
+            }
+            if (assessmentDetails != null && !assessmentDetails.isEmpty()) {
+                log.warn("[CLOVA STT] ⚠️ 9. 음성 품질 상세: {}", assessmentDetails);
+            }
+        }
         
         // 모든 필드 키 확인
         log.info("[CLOVA STT] 11. 응답에 포함된 모든 필드 키들:");
